@@ -2,29 +2,45 @@ export function ExperiencePreview() {
   return (
     <section className="bg-white py-16 sm:py-20">
       <div className="section-frame">
-        <div className="relative overflow-hidden rounded-[8px]">
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#8ec3f0_0%,#abd0ef_35%,transparent_35%,transparent_100%)] md:bg-[linear-gradient(90deg,#8ec3f0_0%,#abd0ef_42%,transparent_42%,transparent_100%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.1))]" />
+        <div className="group relative h-[300px] w-full overflow-hidden rounded-2xl sm:h-[420px]">
           <img
             src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1500&q=80"
             alt="Summer collection"
-            className="h-[420px] w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full scale-x-[-1] object-cover object-right"
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#8fb3d1] via-[#8fb3d1]/60 to-transparent" />
 
-          <div className="absolute inset-0 flex items-end px-6 py-8 md:px-10 md:py-10">
-            <div className="max-w-[340px]">
-              <p className="font-display text-[42px] leading-none font-medium tracking-[-0.03em] text-[#123f73] sm:text-[56px]">
-                <span className="text-[#123f73]">Summer</span>{" "}
-                <span className="text-[#f1484b]">Collections</span>
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 space-y-6 sm:left-16">
+            <div className="leading-tight">
+              <p className="font-display text-2xl text-[#1f3a5f] sm:text-4xl">
+                Summer
               </p>
-              <a
-                href="#featured-stores"
-                className="mt-6 inline-flex h-11 items-center gap-2 bg-white px-5 text-[11px] font-bold uppercase tracking-[0.22em] text-[#f1484b] transition duration-300 hover:-translate-y-0.5"
-              >
-                Shop now
-                <span className="text-base leading-none">→</span>
-              </a>
+              <p className="font-display text-3xl text-[#e74c3c] sm:text-5xl">
+                Collections
+              </p>
             </div>
+
+            <a
+              href="#featured-stores"
+              className="inline-flex items-center rounded-sm bg-white px-6 py-3 text-xs tracking-widest text-black transition duration-300 hover:bg-[#f4f4f4]"
+            >
+              <span>SHOP NOW</span>
+              <span className="ml-3">→</span>
+            </a>
+          </div>
+
+          <div className="absolute bottom-6 left-6 flex gap-6 sm:left-16 sm:gap-10">
+            {[
+              { value: "07", label: "Days" },
+              { value: "08", label: "Hours" },
+              { value: "04", label: "Minutes" },
+              { value: "05", label: "Seconds" },
+            ].map((item) => (
+              <div key={item.label}>
+                <p className="text-lg font-semibold text-white">{item.value}</p>
+                <p className="mt-1 text-xs text-gray-200">{item.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

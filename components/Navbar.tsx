@@ -1,4 +1,12 @@
-const topLinks = ["Home", "Categories", "About Us", "Contact Us", "Sale"];
+import Link from "next/link";
+
+const topLinks = [
+  { label: "Home", href: "/" },
+  { label: "Categories", href: "/#featured-stores" },
+  { label: "About Us", href: "/about" },
+  { label: "Contact Us", href: "/#footer" },
+  { label: "Sale", href: "/#featured-stores" },
+];
 const categoryLinks = ["Men", "Women", "Kids", "Home", "Collections"];
 
 function SearchIcon() {
@@ -75,20 +83,20 @@ function ChevronDown() {
 
 export function Navbar() {
   return (
-    <header className="border-b border-gray-200 bg-[#f8f6f3]">
+    <header id="top" className="border-b border-gray-200 bg-[#f8f6f3]">
       <div className="relative border-b border-gray-200">
         <div className="flex items-center justify-between px-6 py-4 md:px-10 lg:px-12">
           <nav className="hidden items-center gap-8 text-xs uppercase tracking-widest text-gray-600 md:flex">
             {topLinks.map((item) => (
-              <a
-                key={item}
-                href="#"
+              <Link
+                key={item.label}
+                href={item.href}
                 className="group relative inline-block pb-2 transition-colors duration-200 hover:text-black"
               >
-                <span>{item}</span>
+                <span>{item.label}</span>
 
                 <span className="pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full scale-x-0 bg-black opacity-0 origin-left transition-all duration-300 ease-out group-hover:scale-x-100 group-hover:opacity-100 group-hover:origin-left group-[&:not(:hover)]:origin-right" />
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -100,12 +108,12 @@ export function Navbar() {
             <span className="block h-px w-4 bg-current shadow-[0_5px_0_0_currentColor,0_-5px_0_0_currentColor]" />
           </button>
 
-          <a
-            href="#"
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 font-serif text-xl font-medium tracking-[0.3em] text-gray-800"
+          <Link
+            href="/"
+            className="absolute left-1/2 -translate-x-1/2 font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
           >
             FITZO
-          </a>
+          </Link>
 
           <div className="ml-auto flex items-center gap-5 text-gray-700">
             <div className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 md:flex">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { ExperiencePreview } from "@/components/ExperiencePreview";
 
 const stores = [
   {
@@ -286,6 +287,8 @@ export function FeaturedStores() {
           </div>
         </div>
       </div>
+
+      <ExperiencePreview />
 
       <div className="bg-white py-14 sm:py-16">
         <div className="section-frame text-center">

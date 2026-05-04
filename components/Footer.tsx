@@ -125,7 +125,7 @@ function PaymentBadge({ label }: { label: string }) {
 
 export function Footer() {
   return (
-    <footer className="bg-[#f3f3f3] text-[#273041]">
+    <footer id="footer" className="bg-[#f3f3f3] text-[#273041]">
       <div className="mx-auto w-full max-w-[1440px] px-8 pb-10 pt-12 sm:px-10 lg:px-14 xl:px-20">
         <div className="grid grid-cols-1 gap-y-10 xl:grid-cols-[180px_160px_170px_160px_1fr_110px] xl:gap-x-8">
           <div className="xl:pt-1">
