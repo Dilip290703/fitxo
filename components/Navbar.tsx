@@ -4,7 +4,7 @@ const topLinks = [
   { label: "Home", href: "/" },
   { label: "Categories", href: "/#featured-stores" },
   { label: "About Us", href: "/about" },
-  { label: "Contact Us", href: "/#footer" },
+  { label: "Contact Us", href: "/contact" },
   { label: "Sale", href: "/#featured-stores" },
 ];
 const categoryLinks = ["Men", "Women", "Kids", "Home", "Collections"];
