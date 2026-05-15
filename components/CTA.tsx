@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function CTA() {
   return (
     <section className="bg-[#f3efe7] py-16">
@@ -17,18 +19,18 @@ export function CTA() {
           </div>
 
           <div className="flex flex-col justify-center gap-4 md:items-end">
-            <a
-              href="#"
+            <Link
+              href="/products"
               className="button-shadow inline-flex h-12 items-center justify-center rounded-[999px] bg-[color:var(--accent)] px-7 text-[11px] font-extrabold uppercase tracking-[0.26em] text-black transition duration-300 hover:-translate-y-0.5 hover:brightness-95"
             >
               Book your try-on
-            </a>
-            <a
-              href="#featured-stores"
+            </Link>
+            <Link
+              href="/products?collection=summer"
               className="inline-flex h-12 items-center justify-center rounded-[999px] border border-[#cab6a5] px-7 text-[11px] font-extrabold uppercase tracking-[0.26em] text-[#4b3b2e] transition duration-300 hover:bg-white/70"
             >
               Browse collections
-            </a>
+            </Link>
           </div>
         </div>
       </div>

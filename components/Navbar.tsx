@@ -1,13 +1,73 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { PincodeModal } from "@/components/PincodeModal";
+import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
+
+const megaCategories = [
+  {
+    title: "Men",
+    href: "/products?category=men",
+    links: [
+      { label: "Shirts", href: "/products?category=men" },
+      { label: "Streetwear", href: "/products?category=men&collection=summer" },
+      { label: "Sale picks", href: "/products?sale=true&category=men" },
+    ],
+  },
+  {
+    title: "Women",
+    href: "/products?category=women",
+    links: [
+      { label: "Dresses", href: "/products?category=women" },
+      { label: "Wedding wear", href: "/products?category=women&collection=summer" },
+      { label: "Try-at-home edits", href: "/products?category=women" },
+    ],
+  },
+  {
+    title: "Kids",
+    href: "/products?category=kids",
+    links: [
+      { label: "Festive fits", href: "/products?category=kids" },
+      { label: "Everyday styles", href: "/products?category=kids" },
+      { label: "Easy returns", href: "/products?category=kids" },
+    ],
+  },
+  {
+    title: "Home",
+    href: "/products?category=home",
+    links: [
+      { label: "Lounge sets", href: "/products?category=home" },
+      { label: "Soft essentials", href: "/products?category=home" },
+      { label: "Nearby delivery", href: "/products?category=home" },
+    ],
+  },
+  {
+    title: "Accessories",
+    href: "/products?category=accessories",
+    links: [
+      { label: "Weekend add-ons", href: "/products?category=accessories" },
+      { label: "Event-ready extras", href: "/products?category=accessories" },
+      { label: "Trending now", href: "/products?category=accessories" },
+    ],
+  },
+];
 
 const topLinks = [
   { label: "Home", href: "/" },
-  { label: "Categories", href: "/#featured-stores" },
-  { label: "About Us", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-  { label: "Sale", href: "/#featured-stores" },
+  { label: "Products", href: "/products" },
+  { label: "Categories", href: "/products", isTrigger: true },
+  { label: "Sale", href: "/products?sale=true" },
 ];
-const categoryLinks = ["Men", "Women", "Kids", "Home", "Collections"];
+
+const categoryLinks = [
+  { label: "Men", href: "/products?category=men" },
+  { label: "Women", href: "/products?category=women" },
+  { label: "Kids", href: "/products?category=kids" },
+  { label: "Home", href: "/products?category=home" },
+  { label: "Collections", href: "/products?collection=summer" },
+];
 
 function SearchIcon() {
   return (
@@ -51,6 +111,21 @@ function UserIcon() {
   );
 }
 
+function BagIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+      <path
+        d="M6 9h12l-1 10H7L6 9zm3-1V7a3 3 0 116 0v1"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+      />
+    </svg>
+  );
+}
+
 function PinIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
@@ -62,12 +137,12 @@ function PinIcon() {
   );
 }
 
-function ChevronDown() {
+function ChevronDown({ className = "" }: { className?: string }) {
   return (
     <svg
       aria-hidden="true"
       viewBox="0 0 20 20"
-      className="h-3 w-3 opacity-60"
+      className={`h-3 w-3 opacity-60 ${className}`}
     >
       <path
         d="M5 7.5L10 12.5L15 7.5"
@@ -82,89 +157,272 @@ function ChevronDown() {
 }
 
 export function Navbar() {
+  const router = useRouter();
+  const navRef = useRef<HTMLDivElement>(null);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isPincodeOpen, setIsPincodeOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pincode, setPincode] = useState("Enter Pincode");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const storedPincode = window.localStorage.getItem(PINCODE_STORAGE_KEY);
+    const storedAuth = window.localStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (storedPincode) {
+      setPincode(storedPincode);
+    }
+
+    setIsLoggedIn(storedAuth === "true");
+  }, []);
+
+  useEffect(() => {
+    if (!isCategoryOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsCategoryOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCategoryOpen]);
+
+  const userHref = useMemo(
+    () => (isLoggedIn ? "/profile" : "/login"),
+    [isLoggedIn],
+  );
+
+  const handleLogoClick = () => {
+    router.push("/");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsCategoryOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleSavePincode = (value: string) => {
+    window.localStorage.setItem(PINCODE_STORAGE_KEY, value);
+    setPincode(value);
+  };
+
   return (
-    <header id="top" className="border-b border-gray-200 bg-[#f8f6f3]">
-      <div className="relative border-b border-gray-200">
-        <div className="flex items-center justify-between px-6 py-4 md:px-10 lg:px-12">
-          <nav className="hidden items-center gap-8 text-xs uppercase tracking-widest text-gray-600 md:flex">
-            {topLinks.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="group relative inline-block pb-2 transition-colors duration-200 hover:text-black"
+    <>
+      <header
+        id="top"
+        className="sticky top-0 z-40 border-b border-gray-200 bg-[#f8f6f3]/95 backdrop-blur-sm"
+      >
+        <div ref={navRef} className="relative border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-4 md:px-10 lg:px-12">
+            <nav className="hidden items-center gap-8 text-xs uppercase tracking-widest text-gray-600 md:flex">
+              {topLinks.map((item) =>
+                item.isTrigger ? (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => setIsCategoryOpen((current) => !current)}
+                    className="group relative inline-flex items-center gap-2 pb-2 transition-colors duration-200 hover:text-black"
+                    aria-expanded={isCategoryOpen}
+                    aria-controls="fitzo-mega-menu"
+                  >
+                    <span>{item.label}</span>
+                    <ChevronDown
+                      className={`transition duration-200 ${isCategoryOpen ? "rotate-180" : ""}`}
+                    />
+                    <span className="pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full scale-x-0 bg-black opacity-0 origin-left transition-all duration-300 ease-out group-hover:scale-x-100 group-hover:opacity-100" />
+                  </button>
+                ) : (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="group relative inline-block pb-2 transition-colors duration-200 hover:text-black"
+                    onClick={() => {
+                      setIsCategoryOpen(false);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    <span className="pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full scale-x-0 bg-black opacity-0 origin-left transition-all duration-300 ease-out group-hover:scale-x-100 group-hover:opacity-100" />
+                  </Link>
+                ),
+              )}
+            </nav>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((current) => !current)}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d8d2c8] text-[#3a3a3a] md:hidden"
+              aria-label="Open menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <span className="block h-px w-4 bg-current shadow-[0_5px_0_0_currentColor,0_-5px_0_0_currentColor]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogoClick}
+              className="absolute left-1/2 -translate-x-1/2 font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
+            >
+              FITZO
+            </button>
+
+            <div className="ml-auto flex items-center gap-5 text-gray-700">
+              <button
+                type="button"
+                onClick={() => setIsPincodeOpen(true)}
+                className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition duration-200 hover:border-gray-400 md:flex"
               >
-                <span>{item.label}</span>
+                <PinIcon />
+                <span>{pincode}</span>
+                <ChevronDown />
+              </button>
 
-                <span className="pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full scale-x-0 bg-black opacity-0 origin-left transition-all duration-300 ease-out group-hover:scale-x-100 group-hover:opacity-100 group-hover:origin-left group-[&:not(:hover)]:origin-right" />
-              </Link>
-            ))}
-          </nav>
+              <button
+                type="button"
+                onClick={() => router.push("/search")}
+                className="transition duration-200 hover:text-black"
+                aria-label="Search"
+              >
+                <SearchIcon />
+              </button>
 
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d8d2c8] text-[#3a3a3a] md:hidden"
-            aria-label="Open menu"
-          >
-            <span className="block h-px w-4 bg-current shadow-[0_5px_0_0_currentColor,0_-5px_0_0_currentColor]" />
-          </button>
+              <button
+                type="button"
+                onClick={() => router.push("/products?liked=true")}
+                className="hidden transition duration-200 hover:text-black md:block"
+                aria-label="Wishlist"
+              >
+                <HeartIcon />
+              </button>
 
-          <Link
-            href="/"
-            className="absolute left-1/2 -translate-x-1/2 font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
-          >
-            FITZO
-          </Link>
+              <button
+                type="button"
+                onClick={() => router.push("/cart")}
+                className="transition duration-200 hover:text-black"
+                aria-label="Cart"
+              >
+                <BagIcon />
+              </button>
 
-          <div className="ml-auto flex items-center gap-5 text-gray-700">
-            <div className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 md:flex">
-              <PinIcon />
-              <span>Enter Pincode</span>
-              <ChevronDown />
+              <button
+                type="button"
+                onClick={() => router.push(userHref)}
+                className="transition duration-200 hover:text-black"
+                aria-label="Account"
+              >
+                <UserIcon />
+              </button>
             </div>
+          </div>
 
-            <button
-              type="button"
-              className="transition duration-200 hover:text-black"
-              aria-label="Search"
+          {isCategoryOpen ? (
+            <div
+              id="fitzo-mega-menu"
+              className="absolute inset-x-0 top-full z-50 border-t border-[#ebe1d6] bg-[#fffdf9] shadow-[0_24px_60px_rgba(22,22,22,0.08)]"
             >
-              <SearchIcon />
-            </button>
+              <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-5 md:px-10 lg:px-12">
+                {megaCategories.map((category) => (
+                  <div key={category.title}>
+                    <Link
+                      href={category.href}
+                      onClick={() => setIsCategoryOpen(false)}
+                      className="font-serif text-[24px] text-[#171717] transition duration-200 hover:text-[#575757]"
+                    >
+                      {category.title}
+                    </Link>
+                    <div className="mt-4 space-y-3">
+                      {category.links.map((link) => (
+                        <Link
+                          key={link.label}
+                          href={link.href}
+                          onClick={() => setIsCategoryOpen(false)}
+                          className="block text-[13px] text-[#6d665d] transition duration-200 hover:text-black"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
-            <button
-              type="button"
-              className="hidden transition duration-200 hover:text-black md:block"
-              aria-label="Wishlist"
-            >
-              <HeartIcon />
-            </button>
+          {isMobileMenuOpen ? (
+            <div className="border-t border-[#ebe1d6] bg-[#fffdf9] px-6 py-5 md:hidden">
+              <div className="space-y-4 text-sm uppercase tracking-[0.18em] text-[#57524b]">
+                {topLinks.map((item) =>
+                  item.isTrigger ? (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => setIsCategoryOpen((current) => !current)}
+                      className="flex w-full items-center justify-between"
+                    >
+                      <span>{item.label}</span>
+                      <ChevronDown
+                        className={`transition duration-200 ${isCategoryOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ),
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsPincodeOpen(true)}
+                  className="flex items-center gap-2 text-left"
+                >
+                  <PinIcon />
+                  <span>{pincode}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
-            <button
-              type="button"
-              className="transition duration-200 hover:text-black"
-              aria-label="Account"
-            >
-              <UserIcon />
-            </button>
+        <div className="px-6 py-2 md:px-10 lg:px-12">
+          <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
+            <nav className="flex min-w-max items-center gap-8 text-sm text-gray-600">
+              {categoryLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="flex items-center gap-2 transition duration-200 hover:text-black"
+                >
+                  <span>{item.label}</span>
+                  <ChevronDown />
+                </Link>
+              ))}
+            </nav>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="px-6 py-2 md:px-10 lg:px-12">
-        <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
-          <nav className="flex min-w-max items-center gap-8 text-sm text-gray-600">
-            {categoryLinks.map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="flex items-center gap-2 transition duration-200 hover:text-black"
-              >
-                <span>{item}</span>
-                <ChevronDown />
-              </a>
-            ))}
-          </nav>
-        </div>
-      </div>
-    </header>
+      <PincodeModal
+        isOpen={isPincodeOpen}
+        onClose={() => setIsPincodeOpen(false)}
+        onSave={handleSavePincode}
+        currentValue={/^\d{6}$/.test(pincode) ? pincode : ""}
+      />
+    </>
   );
 }

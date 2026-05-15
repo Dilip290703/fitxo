@@ -1,29 +1,9 @@
-const testimonials = [
-  {
-    name: "Mia Johnson",
-    role: "Remote stylist",
-    image:
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
-    quote:
-      "I picked three denim fits, tried them in my room, and only kept the pair that actually worked. The return pickup happened before I finished coffee.",
-  },
-  {
-    name: "Aadhira Nair",
-    role: "Weekend shopper",
-    image:
-      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80",
-    quote:
-      "The curated looks felt personal, and the rider waited while I compared sizes. It felt like a boutique fitting room showed up at my apartment.",
-  },
-  {
-    name: "Sana Ali",
-    role: "Content creator",
-    image:
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
-    quote:
-      "FitZo made a same-day event outfit possible. I tracked the order live, swapped one top instantly, and paid only for the final look.",
-  },
-];
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { testimonials } from "@/lib/mockData";
 
 function StarRow() {
   return (
@@ -53,6 +33,35 @@ function ArrowRightIcon() {
 }
 
 export function Testimonials() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const updateState = () => {
+      setCanScrollLeft(element.scrollLeft > 8);
+      setCanScrollRight(
+        element.scrollLeft + element.clientWidth < element.scrollWidth - 8,
+      );
+    };
+
+    updateState();
+    element.addEventListener("scroll", updateState, { passive: true });
+    window.addEventListener("resize", updateState);
+
+    return () => {
+      element.removeEventListener("scroll", updateState);
+      window.removeEventListener("resize", updateState);
+    };
+  }, []);
+
+  const handleScroll = (amount: number) => {
+    scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
   return (
     <section id="testimonials" className="bg-[#fcfbf8] py-18">
       <div className="section-frame">
@@ -63,16 +72,34 @@ export function Testimonials() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="grid flex-1 gap-5 lg:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => handleScroll(-320)}
+            disabled={!canScrollLeft}
+            className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#ddd7ce] text-[#7f776e] transition duration-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
+            aria-label="Previous testimonials"
+          >
+            <span className="rotate-180">
+              <ArrowRightIcon />
+            </span>
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="hide-scrollbar flex flex-1 gap-5 overflow-x-auto scroll-smooth"
+          >
             {testimonials.map((item) => (
-              <article
-                key={item.name}
-                className="card-shadow overflow-hidden rounded-[12px] border border-[#ece7de] bg-[#f5f0e8] p-4 transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_56px_rgba(24,24,28,0.12)]"
+              <Link
+                key={item.id}
+                href="/reviews"
+                className="card-shadow min-w-[280px] overflow-hidden rounded-[12px] border border-[#ece7de] bg-[#f5f0e8] p-4 transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_56px_rgba(24,24,28,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20 md:min-w-[340px] lg:min-w-[360px]"
               >
                 <div className="overflow-hidden rounded-[6px] bg-white">
-                  <img
+                  <Image
                     src={item.image}
                     alt={item.name}
+                    width={720}
+                    height={900}
                     className="h-[360px] w-full object-cover"
                   />
                 </div>
@@ -88,13 +115,15 @@ export function Testimonials() {
                     {item.quote}
                   </p>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
 
           <button
             type="button"
-            className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#ddd7ce] text-[#7f776e] transition duration-300 hover:bg-white lg:flex"
+            onClick={() => handleScroll(320)}
+            disabled={!canScrollRight}
+            className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#ddd7ce] text-[#7f776e] transition duration-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
             aria-label="More testimonials"
           >
             <ArrowRightIcon />
