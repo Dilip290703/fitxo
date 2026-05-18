@@ -156,7 +156,15 @@ function ChevronDown({ className = "" }: { className?: string }) {
   );
 }
 
-export function Navbar() {
+type NavbarProps = {
+  showSecondaryNav?: boolean;
+  searchMode?: "icon" | "field";
+};
+
+export function Navbar({
+  showSecondaryNav = true,
+  searchMode = "icon",
+}: NavbarProps = {}) {
   const router = useRouter();
   const navRef = useRef<HTMLDivElement>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -288,14 +296,36 @@ export function Navbar() {
                 <ChevronDown />
               </button>
 
-              <button
-                type="button"
-                onClick={() => router.push("/search")}
-                className="transition duration-200 hover:text-black"
-                aria-label="Search"
-              >
-                <SearchIcon />
-              </button>
+              {searchMode === "field" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/search")}
+                    className="transition duration-200 hover:text-black md:hidden"
+                    aria-label="Search"
+                  >
+                    <SearchIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/search")}
+                    className="hidden h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] text-[#78726a] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:text-black md:flex"
+                    aria-label="Search"
+                  >
+                    <span>Search</span>
+                    <SearchIcon />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => router.push("/search")}
+                  className="transition duration-200 hover:text-black"
+                  aria-label="Search"
+                >
+                  <SearchIcon />
+                </button>
+              )}
 
               <button
                 type="button"
@@ -399,22 +429,24 @@ export function Navbar() {
           ) : null}
         </div>
 
-        <div className="px-6 py-2 md:px-10 lg:px-12">
-          <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
-            <nav className="flex min-w-max items-center gap-8 text-sm text-gray-600">
-              {categoryLinks.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center gap-2 transition duration-200 hover:text-black"
-                >
-                  <span>{item.label}</span>
-                  <ChevronDown />
-                </Link>
-              ))}
-            </nav>
+        {showSecondaryNav ? (
+          <div className="px-6 py-2 md:px-10 lg:px-12">
+            <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
+              <nav className="flex min-w-max items-center gap-8 text-sm text-gray-600">
+                {categoryLinks.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex items-center gap-2 transition duration-200 hover:text-black"
+                  >
+                    <span>{item.label}</span>
+                    <ChevronDown />
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </div>
-        </div>
+        ) : null}
       </header>
 
       <PincodeModal

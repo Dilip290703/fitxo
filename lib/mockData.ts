@@ -211,6 +211,202 @@ export const products = [
   },
 ];
 
+export type CatalogProduct = {
+  id: string;
+  title: string;
+  subtitle: string;
+  brand: string;
+  brandSlug: string;
+  category: string;
+  price: number;
+  sale: boolean;
+  collection: string;
+  image: string;
+  oldPrice: number;
+  orders: number;
+  badge: string;
+  audience: "women" | "ladies" | "girls" | "babies";
+  productCategory:
+    | "dresses"
+    | "tops"
+    | "lingerie-lounge-wear"
+    | "blouse"
+    | "vintage";
+  sizeLabel: "Medium" | "Large" | "Plus Size" | "Sexy Plus Size";
+  popularity: number;
+  isNewArrival: boolean;
+};
+
+const catalogImage =
+  "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80";
+
+const catalogSeedProducts: Omit<CatalogProduct, "id" | "orders" | "popularity">[] = [
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Modern blouse edit",
+    brand: "H&M",
+    brandSlug: "hm",
+    category: "women",
+    price: 120.23,
+    sale: true,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "women",
+    productCategory: "blouse",
+    sizeLabel: "Medium",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Soft tailoring",
+    brand: "Zara",
+    brandSlug: "zara",
+    category: "women",
+    price: 120.23,
+    sale: false,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "ladies",
+    productCategory: "tops",
+    sizeLabel: "Large",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Statement wardrobe",
+    brand: "Gucci",
+    brandSlug: "gucci",
+    category: "women",
+    price: 120.23,
+    sale: false,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "girls",
+    productCategory: "vintage",
+    sizeLabel: "Plus Size",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Occasion dressing",
+    brand: "Dior",
+    brandSlug: "dior",
+    category: "women",
+    price: 120.23,
+    sale: true,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "women",
+    productCategory: "dresses",
+    sizeLabel: "Sexy Plus Size",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Everyday luxe",
+    brand: "Chanel",
+    brandSlug: "chanel",
+    category: "women",
+    price: 120.23,
+    sale: false,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "ladies",
+    productCategory: "blouse",
+    sizeLabel: "Medium",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Runway-inspired",
+    brand: "Prada",
+    brandSlug: "prada",
+    category: "women",
+    price: 120.23,
+    sale: true,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "girls",
+    productCategory: "tops",
+    sizeLabel: "Large",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Confident eveningwear",
+    brand: "Versace",
+    brandSlug: "versace",
+    category: "women",
+    price: 120.23,
+    sale: false,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "babies",
+    productCategory: "lingerie-lounge-wear",
+    sizeLabel: "Plus Size",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Classic glam",
+    brand: "Dolce & Gabbana",
+    brandSlug: "dolce-gabbana",
+    category: "women",
+    price: 120.23,
+    sale: true,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "women",
+    productCategory: "dresses",
+    sizeLabel: "Sexy Plus Size",
+    isNewArrival: true,
+  },
+  {
+    title: "Striped Flutter Sleeve Overlap Collar Peplum Hem Blouse",
+    subtitle: "Warm-weather edit",
+    brand: "Marks & Spencer",
+    brandSlug: "marks-spencer",
+    category: "women",
+    price: 120.23,
+    sale: false,
+    collection: "summer",
+    image: catalogImage,
+    oldPrice: 120.23,
+    badge: "New Arrivals",
+    audience: "ladies",
+    productCategory: "vintage",
+    sizeLabel: "Medium",
+    isNewArrival: true,
+  },
+];
+
+export const catalogProducts: CatalogProduct[] = Array.from({ length: 117 }, (_, index) => {
+  const seed = catalogSeedProducts[index % catalogSeedProducts.length];
+
+  return {
+    ...seed,
+    id: `catalog-look-${index + 1}`,
+    orders: 24 + (index % 5) * 3,
+    popularity: 100 - (index % 23),
+  };
+});
+
 export const testimonials = [
   {
     id: "mia-johnson",

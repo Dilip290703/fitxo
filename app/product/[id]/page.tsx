@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RoutePlaceholder } from "@/components/RoutePlaceholder";
-import { products } from "@/lib/mockData";
+import { catalogProducts, products } from "@/lib/mockData";
 
 type ProductDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -12,11 +12,17 @@ export default async function ProductDetailPage({
   params,
 }: ProductDetailPageProps) {
   const { id } = await params;
-  const product = products.find((item) => item.id === id);
+  const product =
+    products.find((item) => item.id === id) ??
+    catalogProducts.find((item) => item.id === id);
 
   if (!product) {
     notFound();
   }
+
+  const formattedPrice = id.startsWith("catalog-look-")
+    ? `$${product.price.toFixed(2)}`
+    : `₹${product.price}`;
 
   return (
     <RoutePlaceholder
@@ -50,7 +56,7 @@ export default async function ProductDetailPage({
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             {[
-              { label: "Price", value: `₹${product.price}` },
+              { label: "Price", value: formattedPrice },
               { label: "Collection", value: product.collection },
               { label: "Delivery", value: "Under 60 min" },
             ].map((item) => (
