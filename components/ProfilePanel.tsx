@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
+import { getStorageItem, removeStorageItem } from "@/lib/storage";
 
 export function ProfilePanel() {
   const router = useRouter();
@@ -11,8 +12,8 @@ export function ProfilePanel() {
   const [pincode, setPincode] = useState("Not set");
 
   useEffect(() => {
-    setIsLoggedIn(window.localStorage.getItem(AUTH_STORAGE_KEY) === "true");
-    const storedPincode = window.localStorage.getItem(PINCODE_STORAGE_KEY);
+    setIsLoggedIn(getStorageItem(AUTH_STORAGE_KEY) === "true");
+    const storedPincode = getStorageItem(PINCODE_STORAGE_KEY);
     if (storedPincode) {
       setPincode(storedPincode);
     }
@@ -63,7 +64,7 @@ export function ProfilePanel() {
       <button
         type="button"
         onClick={() => {
-          window.localStorage.removeItem(AUTH_STORAGE_KEY);
+          removeStorageItem(AUTH_STORAGE_KEY);
           router.push("/login");
         }}
         className="inline-flex h-12 items-center justify-center rounded-full border border-[#cab6a5] px-7 text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#4b3b2e] transition duration-300 hover:bg-white/70"

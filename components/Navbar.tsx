@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PincodeModal } from "@/components/PincodeModal";
 import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
+import { getStorageItem, setStorageItem } from "@/lib/storage";
 
 const megaCategories = [
   {
-    title: "Men",
+    title: "MEN",
     href: "/products?category=men",
     links: [
       { label: "Shirts", href: "/products?category=men" },
@@ -17,7 +18,7 @@ const megaCategories = [
     ],
   },
   {
-    title: "Women",
+    title: "WOMEN",
     href: "/products?category=women",
     links: [
       { label: "Dresses", href: "/products?category=women" },
@@ -26,7 +27,7 @@ const megaCategories = [
     ],
   },
   {
-    title: "Kids",
+    title: "KIDS",
     href: "/products?category=kids",
     links: [
       { label: "Festive fits", href: "/products?category=kids" },
@@ -35,7 +36,7 @@ const megaCategories = [
     ],
   },
   {
-    title: "Home",
+    title: "HOME",
     href: "/products?category=home",
     links: [
       { label: "Lounge sets", href: "/products?category=home" },
@@ -44,7 +45,7 @@ const megaCategories = [
     ],
   },
   {
-    title: "Accessories",
+    title: "ACCESSORIES",
     href: "/products?category=accessories",
     links: [
       { label: "Weekend add-ons", href: "/products?category=accessories" },
@@ -55,18 +56,19 @@ const megaCategories = [
 ];
 
 const topLinks = [
-  { label: "Home", href: "/" },
-  { label: "Products", href: "/products" },
-  { label: "Categories", href: "/products", isTrigger: true },
-  { label: "Sale", href: "/products?sale=true" },
+  { label: "HOME", href: "/" },
+  { label: "PRODUCTS", href: "/products" },
+  { label: "CATEGORIES", href: "/products", isTrigger: true },
+  { label: "ABOUT US", href: "/about" },
+  { label: "SALE", href: "/products?sale=true" },
 ];
 
 const categoryLinks = [
-  { label: "Men", href: "/products?category=men" },
-  { label: "Women", href: "/products?category=women" },
-  { label: "Kids", href: "/products?category=kids" },
-  { label: "Home", href: "/products?category=home" },
-  { label: "Collections", href: "/products?collection=summer" },
+  { label: "MEN", href: "/products?category=men" },
+  { label: "WOMEN", href: "/products?category=women" },
+  { label: "KIDS", href: "/products?category=kids" },
+  { label: "HOME", href: "/products?category=home" },
+  { label: "COLLECTIONS", href: "/products?collection=summer" },
 ];
 
 function SearchIcon() {
@@ -156,6 +158,14 @@ function ChevronDown({ className = "" }: { className?: string }) {
   );
 }
 
+/** Check whether the current pathname matches a given nav href */
+function isActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  // Strip query string for matching
+  const basePath = href.split("?")[0];
+  return pathname.startsWith(basePath);
+}
+
 type NavbarProps = {
   showSecondaryNav?: boolean;
   searchMode?: "icon" | "field";
@@ -166,6 +176,7 @@ export function Navbar({
   searchMode = "icon",
 }: NavbarProps = {}) {
   const router = useRouter();
+  const pathname = usePathname();
   const navRef = useRef<HTMLDivElement>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isPincodeOpen, setIsPincodeOpen] = useState(false);
@@ -174,8 +185,8 @@ export function Navbar({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const storedPincode = window.localStorage.getItem(PINCODE_STORAGE_KEY);
-    const storedAuth = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    const storedPincode = getStorageItem(PINCODE_STORAGE_KEY);
+    const storedAuth = getStorageItem(AUTH_STORAGE_KEY);
 
     if (storedPincode) {
       setPincode(storedPincode);
@@ -221,7 +232,7 @@ export function Navbar({
   };
 
   const handleSavePincode = (value: string) => {
-    window.localStorage.setItem(PINCODE_STORAGE_KEY, value);
+    setStorageItem(PINCODE_STORAGE_KEY, value);
     setPincode(value);
   };
 
@@ -240,7 +251,9 @@ export function Navbar({
                     key={item.label}
                     type="button"
                     onClick={() => setIsCategoryOpen((current) => !current)}
-                    className="group relative inline-flex items-center gap-2 pb-2 transition-colors duration-200 hover:text-black"
+                    className={`group relative inline-flex items-center gap-2 pb-2 transition-colors duration-200 hover:text-black ${
+                      isActive(pathname, item.href) ? "text-black" : ""
+                    }`}
                     aria-expanded={isCategoryOpen}
                     aria-controls="fitzo-mega-menu"
                   >
@@ -248,20 +261,34 @@ export function Navbar({
                     <ChevronDown
                       className={`transition duration-200 ${isCategoryOpen ? "rotate-180" : ""}`}
                     />
-                    <span className="pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full scale-x-0 bg-black opacity-0 origin-left transition-all duration-300 ease-out group-hover:scale-x-100 group-hover:opacity-100" />
+                    <span
+                      className={`pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full bg-black origin-left transition-all duration-300 ease-out ${
+                        isActive(pathname, item.href)
+                          ? "scale-x-100 opacity-100"
+                          : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
+                      }`}
+                    />
                   </button>
                 ) : (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="group relative inline-block pb-2 transition-colors duration-200 hover:text-black"
+                    className={`group relative inline-block pb-2 transition-colors duration-200 hover:text-black ${
+                      isActive(pathname, item.href) ? "text-black" : ""
+                    }`}
                     onClick={() => {
                       setIsCategoryOpen(false);
                       setIsMobileMenuOpen(false);
                     }}
                   >
                     <span>{item.label}</span>
-                    <span className="pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full scale-x-0 bg-black opacity-0 origin-left transition-all duration-300 ease-out group-hover:scale-x-100 group-hover:opacity-100" />
+                    <span
+                      className={`pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full bg-black origin-left transition-all duration-300 ease-out ${
+                        isActive(pathname, item.href)
+                          ? "scale-x-100 opacity-100"
+                          : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
+                      }`}
+                    />
                   </Link>
                 ),
               )}
@@ -398,7 +425,9 @@ export function Navbar({
                       key={item.label}
                       type="button"
                       onClick={() => setIsCategoryOpen((current) => !current)}
-                      className="flex w-full items-center justify-between"
+                      className={`flex w-full items-center justify-between ${
+                        isActive(pathname, item.href) ? "text-black font-semibold" : ""
+                      }`}
                     >
                       <span>{item.label}</span>
                       <ChevronDown
@@ -409,7 +438,9 @@ export function Navbar({
                     <Link
                       key={item.label}
                       href={item.href}
-                      className="block"
+                      className={`block ${
+                        isActive(pathname, item.href) ? "text-black font-semibold" : ""
+                      }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {item.label}
@@ -432,7 +463,7 @@ export function Navbar({
         {showSecondaryNav ? (
           <div className="px-6 py-2 md:px-10 lg:px-12">
             <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
-              <nav className="flex min-w-max items-center gap-8 text-sm text-gray-600">
+              <nav className="flex min-w-max items-center gap-8 text-sm uppercase tracking-widest text-gray-600">
                 {categoryLinks.map((item) => (
                   <Link
                     key={item.label}

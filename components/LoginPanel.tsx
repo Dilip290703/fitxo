@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AUTH_STORAGE_KEY } from "@/lib/mockData";
+import { setStorageItem } from "@/lib/storage";
 
 export function LoginPanel() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export function LoginPanel() {
   const handleDemoLogin = async () => {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 900));
-    window.localStorage.setItem(AUTH_STORAGE_KEY, "true");
+    setStorageItem(AUTH_STORAGE_KEY, "true");
     setIsLoading(false);
     router.push("/profile");
   };
