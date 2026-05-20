@@ -365,7 +365,7 @@ export function Navbar({
 
               <button
                 type="button"
-                onClick={() => router.push("/cart")}
+                onClick={() => router.push("/bag")}
                 className="transition duration-200 hover:text-black"
                 aria-label="Cart"
               >
