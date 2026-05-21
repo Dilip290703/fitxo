@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 type Product = {
   id: string;
@@ -17,21 +18,7 @@ type Product = {
   image: string;
 };
 
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-      <path
-        d="M12.1 20.3l-.1.1-.11-.1C7 15.9 4 13.17 4 9.8 4 7.03 6.02 5 8.6 5c1.46 0 2.86.67 3.78 1.72C13.3 5.67 14.7 5 16.16 5 18.74 5 20.76 7.03 20.76 9.8c0 3.37-3 6.1-8.66 10.5z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
-
 export function ProductCard({ product }: { product: Product }) {
-  const [wishlisted, setWishlisted] = useState(false);
   const formattedPrice = useMemo(
     () =>
       new Intl.NumberFormat("en-IN", {
@@ -72,22 +59,20 @@ export function ProductCard({ product }: { product: Product }) {
               {product.title}
             </Link>
           </div>
-          <button
-            type="button"
-            onClick={() => setWishlisted((current) => !current)}
-            className={`mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full border transition duration-200 ${
-              wishlisted
-                ? "border-[#111111] bg-[#111111] text-white"
-                : "border-[#ddd2c5] bg-white text-[#3b362f] hover:border-[#111111]"
-            }`}
-            aria-label={
-              wishlisted
-                ? `Remove ${product.title} from wishlist`
-                : `Add ${product.title} to wishlist`
-            }
-          >
-            <HeartIcon filled={wishlisted} />
-          </button>
+          <WishlistButton
+            item={{
+              id: product.id,
+              title: product.title,
+              brand: product.brand,
+              image: product.image,
+              priceValue: product.price,
+              displayPrice: formattedPrice,
+              availability: "Available nearby",
+            }}
+            className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full border transition duration-200"
+            defaultClassName="border-[#ddd2c5] bg-white text-[#3b362f] hover:border-[#111111]"
+            filledClassName="border-[#111111] bg-[#111111] text-white"
+          />
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-4">

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
+import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 type RecommendedProduct = {
   id: string;
@@ -91,6 +92,20 @@ export function RecommendedCarousel({
                   fill
                   className="object-cover transition duration-500 hover:scale-[1.04]"
                   sizes="240px"
+                />
+                <WishlistButton
+                  item={{
+                    id: product.id,
+                    title: product.title,
+                    brand: "FitZo Select",
+                    image: product.image,
+                    priceValue: product.price,
+                    displayPrice: `₹${Math.round(product.price)}`,
+                    availability: "Available nearby",
+                  }}
+                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-[#1d2330] backdrop-blur-sm transition duration-200"
+                  defaultClassName="bg-white/80 hover:bg-white"
+                  filledClassName="bg-[#1d2330] text-white"
                 />
               </div>
               <div className="px-4 py-4">

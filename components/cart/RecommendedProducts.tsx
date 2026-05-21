@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 type RecommendedProduct = {
   id: string;
@@ -18,38 +19,14 @@ type RecommendedProductsProps = {
   layout?: "grid" | "carousel";
 };
 
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-      <path
-        d="M12.1 20.3l-.1.1-.11-.1C7 15.9 4 13.17 4 9.8 4 7.03 6.02 5 8.6 5c1.46 0 2.86.67 3.78 1.72C13.3 5.67 14.7 5 16.16 5 18.74 5 20.76 7.03 20.76 9.8c0 3.37-3 6.1-8.66 10.5z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
-
 export function RecommendedProducts({
   title,
   products,
   layout = "grid",
 }: RecommendedProductsProps) {
-  const [wishlistedIds, setWishlistedIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const toggleWishlist = (id: string) => {
-    setWishlistedIds((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    );
-  };
-
   const cards = products.map((product) => {
-    const wished = wishlistedIds.includes(product.id);
-
     return (
       <Link
         key={product.id}
@@ -64,20 +41,23 @@ export function RecommendedProducts({
             className="object-cover transition duration-500 group-hover:scale-[1.04]"
             sizes={layout === "grid" ? "(max-width: 768px) 50vw, 180px" : "260px"}
           />
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              toggleWishlist(product.id);
+          <WishlistButton
+            item={{
+              id: product.id,
+              title: product.title,
+              brand: "FitZo Select",
+              image: product.image,
+              priceValue: product.price,
+              displayPrice: `₹${Math.round(product.price)}`,
+              displayOldPrice: product.oldPrice
+                ? `₹${Math.round(product.oldPrice)}`
+                : undefined,
+              availability: "Available nearby",
             }}
-            className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-white/80 text-[#1d2330] backdrop-blur-sm transition duration-200 hover:bg-white ${
-              wished ? "bg-[#1d2330] text-white" : ""
-            }`}
-            aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            <HeartIcon filled={wished} />
-          </button>
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-[#1d2330] backdrop-blur-sm transition duration-200"
+            defaultClassName="bg-white/80 hover:bg-white"
+            filledClassName="bg-[#1d2330] text-white"
+          />
           <div className="absolute bottom-0 inset-x-0 bg-black/85 px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-white">
             Limited Drop
           </div>

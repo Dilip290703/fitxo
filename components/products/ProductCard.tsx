@@ -2,25 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { CatalogProduct } from "@/lib/mockData";
-
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-      <path
-        d="M12.1 20.3l-.1.1-.11-.1C7 15.9 4 13.17 4 9.8 4 7.03 6.02 5 8.6 5c1.46 0 2.86.67 3.78 1.72C13.3 5.67 14.7 5 16.16 5 18.74 5 20.76 7.03 20.76 9.8c0 3.37-3 6.1-8.66 10.5z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
+import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 export function ProductCard({ product }: { product: CatalogProduct }) {
-  const [wishlisted, setWishlisted] = useState(false);
-
   const currentPrice = useMemo(
     () =>
       new Intl.NumberFormat("en-US", {
@@ -53,24 +39,23 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             className="object-cover transition duration-500 group-hover:scale-[1.04]"
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           />
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              setWishlisted((current) => !current);
+          <WishlistButton
+            item={{
+              id: product.id,
+              title: product.title,
+              brand: product.brand,
+              image: product.image,
+              priceValue: product.price,
+              displayPrice: currentPrice,
+              displayOldPrice: oldPrice,
+              color: "Black",
+              size: product.sizeLabel,
+              availability: "Available nearby",
             }}
-            className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-white/25 bg-[#5f716f]/70 text-white backdrop-blur-sm transition duration-200 hover:bg-[#465754]/85 ${
-              wishlisted ? "bg-[#1e293b]" : ""
-            }`}
-            aria-label={
-              wishlisted
-                ? `Remove ${product.title} from wishlist`
-                : `Add ${product.title} to wishlist`
-            }
-          >
-            <HeartIcon filled={wishlisted} />
-          </button>
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-white/25 text-white backdrop-blur-sm transition duration-200"
+            defaultClassName="bg-[#5f716f]/70 hover:bg-[#465754]/85"
+            filledClassName="bg-[#1e293b]"
+          />
         </div>
       </Link>
 

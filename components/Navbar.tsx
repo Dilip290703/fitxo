@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
 import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { useWishlist } from "@/store/wishlistStore";
 
 const megaCategories = [
   {
@@ -177,6 +179,8 @@ export function Navbar({
 }: NavbarProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const { count } = useWishlist();
+  const { totalItems } = useCart();
   const navRef = useRef<HTMLDivElement>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isPincodeOpen, setIsPincodeOpen] = useState(false);
@@ -356,20 +360,30 @@ export function Navbar({
 
               <button
                 type="button"
-                onClick={() => router.push("/products?liked=true")}
-                className="hidden transition duration-200 hover:text-black md:block"
+                onClick={() => router.push("/wishlist")}
+                className="relative transition duration-200 hover:text-black"
                 aria-label="Wishlist"
               >
                 <HeartIcon />
+                {count > 0 ? (
+                  <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
+                    {count}
+                  </span>
+                ) : null}
               </button>
 
               <button
                 type="button"
                 onClick={() => router.push("/bag")}
-                className="transition duration-200 hover:text-black"
+                className="relative transition duration-200 hover:text-black"
                 aria-label="Cart"
               >
                 <BagIcon />
+                {totalItems > 0 ? (
+                  <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
+                    {totalItems}
+                  </span>
+                ) : null}
               </button>
 
               <button

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { CartItem as CartItemType, useCart } from "@/components/cart/CartProvider";
+import { useWishlist } from "@/store/wishlistStore";
 
 type CartItemProps = {
   item: CartItemType;
@@ -10,6 +11,7 @@ type CartItemProps = {
 
 export function CartItem({ item, compact = false }: CartItemProps) {
   const { removeItem, moveToWishlist, updateQuantity } = useCart();
+  const { addToWishlist } = useWishlist();
 
   return (
     <article
@@ -83,7 +85,21 @@ export function CartItem({ item, compact = false }: CartItemProps) {
             <div className="flex items-center gap-4 text-[12px] font-medium uppercase tracking-[0.06em] text-[#4f4942]">
               <button
                 type="button"
-                onClick={() => moveToWishlist(item.key)}
+                onClick={() => {
+                  addToWishlist({
+                    id: item.id,
+                    title: item.title,
+                    brand: item.brand,
+                    image: item.image,
+                    priceValue: item.priceValue,
+                    displayPrice: item.displayPrice,
+                    displayOldPrice: item.displayOldPrice,
+                    color: item.color,
+                    size: item.size,
+                    availability: "Available nearby",
+                  });
+                  moveToWishlist(item.key);
+                }}
                 className="transition duration-200 hover:text-black"
               >
                 Move to Wishlist

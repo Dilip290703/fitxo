@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { ThumbnailRail } from "@/components/product/ThumbnailRail";
 import { ProductDetailData } from "@/components/product/types";
+import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   return (
@@ -19,19 +20,6 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
-      <path
-        d="M12.1 20.3l-.1.1-.11-.1C7 15.9 4 13.17 4 9.8 4 7.03 6.02 5 8.6 5c1.46 0 2.86.67 3.78 1.72C13.3 5.67 14.7 5 16.16 5 18.74 5 20.76 7.03 20.76 9.8c0 3.37-3 6.1-8.66 10.5z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.7"
       />
     </svg>
   );
@@ -54,7 +42,6 @@ function ShareIcon() {
 
 export function ProductGallery({ product }: { product: ProductDetailData }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [wishlisted, setWishlisted] = useState(false);
 
   const activeImage = useMemo(
     () => product.gallery[activeIndex] ?? product.gallery[0],
@@ -92,18 +79,24 @@ export function ProductGallery({ product }: { product: ProductDetailData }) {
           />
 
           <div className="absolute right-4 top-4 z-10 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => setWishlisted((current) => !current)}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-white/75 text-[#1d2330] backdrop-blur-sm transition duration-200 hover:bg-white ${
-                wishlisted ? "bg-[#1d2330] text-white" : ""
-              }`}
-              aria-label={
-                wishlisted ? "Remove from wishlist" : "Add to wishlist"
-              }
-            >
-              <HeartIcon filled={wishlisted} />
-            </button>
+            <WishlistButton
+              item={{
+                id: product.id,
+                title: product.title,
+                brand: product.brand,
+                image: product.gallery[0]?.src ?? activeImage.src,
+                priceValue: product.priceValue,
+                displayPrice: product.price,
+                displayOldPrice: product.oldPrice,
+                color: product.colors[0]?.name,
+                size: product.sizes[0],
+                availability: "Available nearby",
+              }}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 text-[#1d2330] backdrop-blur-sm transition duration-200"
+              defaultClassName="bg-white/75 hover:bg-white"
+              filledClassName="bg-[#1d2330] text-white"
+              iconClassName="h-5 w-5"
+            />
             <button
               type="button"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-white/75 text-[#1d2330] backdrop-blur-sm transition duration-200 hover:bg-white"
