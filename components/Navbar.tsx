@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
 import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
@@ -168,6 +168,43 @@ function isActive(pathname: string, href: string): boolean {
   return pathname.startsWith(basePath);
 }
 
+function NavIconButton({
+  label,
+  active,
+  onClick,
+  children,
+  badge,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  badge?: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 ${
+        active ? "text-[#1f2a3c]" : "text-[#6f6860]"
+      }`}
+      aria-label={label}
+    >
+      <span className="transition duration-200 group-hover:scale-105">{children}</span>
+      {typeof badge === "number" && badge > 0 ? (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
+          {badge}
+        </span>
+      ) : null}
+      <span
+        className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
+          active ? "opacity-100" : "opacity-0 group-hover:opacity-45"
+        }`}
+      />
+    </button>
+  );
+}
+
 type NavbarProps = {
   showSecondaryNav?: boolean;
   searchMode?: "icon" | "field";
@@ -223,11 +260,6 @@ export function Navbar({
     };
   }, [isCategoryOpen]);
 
-  const userHref = useMemo(
-    () => (isLoggedIn ? "/profile" : "/login"),
-    [isLoggedIn],
-  );
-
   const handleLogoClick = () => {
     router.push("/");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -239,6 +271,13 @@ export function Navbar({
     setStorageItem(PINCODE_STORAGE_KEY, value);
     setPincode(value);
   };
+
+  const profileHref = isLoggedIn ? "/profile" : "/login";
+  const isSearchActive = pathname.startsWith("/search");
+  const isWishlistActive = pathname.startsWith("/wishlist");
+  const isCartActive = pathname.startsWith("/cart");
+  const isProfileActive = pathname.startsWith("/profile");
+  const isLoginActive = pathname.startsWith("/login");
 
   return (
     <>
@@ -316,11 +355,11 @@ export function Navbar({
               FITZO
             </button>
 
-            <div className="ml-auto flex items-center gap-5 text-gray-700">
+            <div className="ml-auto flex items-center gap-3 text-gray-700 sm:gap-5">
               <button
                 type="button"
                 onClick={() => setIsPincodeOpen(true)}
-                className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition duration-200 hover:border-gray-400 md:flex"
+                className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition duration-200 hover:-translate-y-0.5 hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex"
               >
                 <PinIcon />
                 <span>{pincode}</span>
@@ -332,68 +371,86 @@ export function Navbar({
                   <button
                     type="button"
                     onClick={() => router.push("/search")}
-                    className="transition duration-200 hover:text-black md:hidden"
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:hidden ${
+                      isSearchActive ? "text-[#1f2a3c]" : "text-[#6f6860]"
+                    }`}
                     aria-label="Search"
                   >
                     <SearchIcon />
+                    <span
+                      className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
+                        isSearchActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
+                      }`}
+                    />
                   </button>
                   <button
                     type="button"
                     onClick={() => router.push("/search")}
-                    className="hidden h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] text-[#78726a] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:text-black md:flex"
+                    className={`group relative hidden h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:-translate-y-0.5 hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex ${
+                      isSearchActive ? "text-[#1f2a3c]" : "text-[#78726a]"
+                    }`}
                     aria-label="Search"
                   >
                     <span>Search</span>
                     <SearchIcon />
+                    <span
+                      className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
+                        isSearchActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
+                      }`}
+                    />
                   </button>
                 </>
               ) : (
-                <button
-                  type="button"
+                <NavIconButton
+                  label="Search"
+                  active={isSearchActive}
                   onClick={() => router.push("/search")}
-                  className="transition duration-200 hover:text-black"
-                  aria-label="Search"
                 >
                   <SearchIcon />
-                </button>
+                </NavIconButton>
               )}
 
-              <button
-                type="button"
+              <NavIconButton
+                label="Wishlist"
+                active={isWishlistActive}
                 onClick={() => router.push("/wishlist")}
-                className="relative transition duration-200 hover:text-black"
-                aria-label="Wishlist"
+                badge={count}
               >
                 <HeartIcon />
-                {count > 0 ? (
-                  <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
-                    {count}
-                  </span>
-                ) : null}
-              </button>
+              </NavIconButton>
 
-              <button
-                type="button"
+              <NavIconButton
+                label="Cart"
+                active={isCartActive}
                 onClick={() => router.push("/bag")}
-                className="relative transition duration-200 hover:text-black"
-                aria-label="Cart"
+                badge={totalItems}
               >
                 <BagIcon />
-                {totalItems > 0 ? (
-                  <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
-                    {totalItems}
-                  </span>
-                ) : null}
-              </button>
+              </NavIconButton>
 
-              <button
-                type="button"
-                onClick={() => router.push(userHref)}
-                className="transition duration-200 hover:text-black"
-                aria-label="Account"
+              <NavIconButton
+                label={isLoggedIn ? "Profile" : "Login"}
+                active={isProfileActive}
+                onClick={() => router.push(profileHref)}
               >
                 <UserIcon />
-              </button>
+              </NavIconButton>
+
+              {!isLoggedIn ? (
+                <Link
+                  href="/login"
+                  className={`group relative hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c] hover:bg-[#fff9e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
+                    isLoginActive ? "border-[#1f2a3c]" : "border-[#d8cbb9]"
+                  }`}
+                >
+                  Login / Signup
+                  <span
+                    className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-8 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
+                      isLoginActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
+                    }`}
+                  />
+                </Link>
+              ) : null}
             </div>
           </div>
 
@@ -469,6 +526,29 @@ export function Navbar({
                   <PinIcon />
                   <span>{pincode}</span>
                 </button>
+                {isLoggedIn ? (
+                  <Link
+                    href="/profile"
+                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-white px-4 py-3 font-semibold text-[#1f2a3c] ${
+                      isProfileActive ? "ring-1 ring-[#1f2a3c]" : ""
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <span>Profile</span>
+                    <ChevronDown className="-rotate-90" />
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-[#fff9e6] px-4 py-3 font-semibold text-[#1f2a3c] ${
+                      isLoginActive ? "ring-1 ring-[#1f2a3c]" : ""
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <span>Login / Signup</span>
+                    <ChevronDown className="-rotate-90" />
+                  </Link>
+                )}
               </div>
             </div>
           ) : null}
