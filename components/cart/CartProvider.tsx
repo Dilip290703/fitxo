@@ -47,90 +47,161 @@ function buildCartKey(item: AddCartItemInput) {
   return `${item.id}-${item.size}-${item.color}`;
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [latestItemKey, setLatestItemKey] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  // Load cart from localStorage
   useEffect(() => {
     setMounted(true);
+
     const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+
     if (storedCart) {
       try {
-        setItems(JSON.parse(storedCart));
+        const parsed = JSON.parse(storedCart);
+
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        } else {
+          setItems([]);
+          window.localStorage.removeItem(CART_STORAGE_KEY);
+        }
       } catch {
+        setItems([]);
         window.localStorage.removeItem(CART_STORAGE_KEY);
       }
     }
   }, []);
 
+  // Save cart to localStorage
   useEffect(() => {
     if (!mounted) return;
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify(items),
+    );
   }, [items, mounted]);
 
   const latestItem = useMemo(() => {
-    if (!latestItemKey) return items[items.length - 1] ?? null;
+    if (!Array.isArray(items)) return null;
+
+    if (!latestItemKey) {
+      return items[items.length - 1] ?? null;
+    }
+
     return items.find((item) => item.key === latestItemKey) ?? null;
   }, [items, latestItemKey]);
 
-  const subtotal = useMemo(
-    () =>
-      items.reduce((sum, item) => sum + item.priceValue * item.quantity, 0),
-    [items],
-  );
+  const subtotal = useMemo(() => {
+    if (!Array.isArray(items)) return 0;
 
-  const totalItems = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity, 0),
-    [items],
-  );
+    return items.reduce(
+      (sum, item) => sum + item.priceValue * item.quantity,
+      0,
+    );
+  }, [items]);
+
+  const totalItems = useMemo(() => {
+    if (!Array.isArray(items)) return 0;
+
+    return items.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+  }, [items]);
 
   const value = useMemo<CartContextValue>(
     () => ({
       items,
       isDrawerOpen,
       latestItem,
+
       addItem: (item) => {
         const key = buildCartKey(item);
+
         setItems((current) => {
-          const existingItem = current.find((entry) => entry.key === key);
+          const safeCurrent = Array.isArray(current)
+            ? current
+            : [];
+
+          const existingItem = safeCurrent.find(
+            (entry) => entry.key === key,
+          );
+
           if (existingItem) {
-            return current.map((entry) =>
+            return safeCurrent.map((entry) =>
               entry.key === key
-                ? { ...entry, quantity: entry.quantity + item.quantity }
+                ? {
+                    ...entry,
+                    quantity:
+                      entry.quantity + item.quantity,
+                  }
                 : entry,
             );
           }
 
-          return [...current, { ...item, key }];
+          return [...safeCurrent, { ...item, key }];
         });
+
         setLatestItemKey(key);
         setIsDrawerOpen(true);
       },
+
       removeItem: (key) => {
-        setItems((current) => current.filter((item) => item.key !== key));
-        setLatestItemKey((current) => (current === key ? null : current));
-      },
-      moveToWishlist: (key) => {
-        setItems((current) => current.filter((item) => item.key !== key));
-        setLatestItemKey((current) => (current === key ? null : current));
-      },
-      updateQuantity: (key, quantity) => {
         setItems((current) =>
-          current.map((item) =>
-            item.key === key
-              ? { ...item, quantity: Math.max(1, quantity) }
-              : item,
-          ),
+          Array.isArray(current)
+            ? current.filter((item) => item.key !== key)
+            : [],
+        );
+
+        setLatestItemKey((current) =>
+          current === key ? null : current,
         );
       },
+
+      moveToWishlist: (key) => {
+        setItems((current) =>
+          Array.isArray(current)
+            ? current.filter((item) => item.key !== key)
+            : [],
+        );
+
+        setLatestItemKey((current) =>
+          current === key ? null : current,
+        );
+      },
+
+      updateQuantity: (key, quantity) => {
+        setItems((current) =>
+          Array.isArray(current)
+            ? current.map((item) =>
+                item.key === key
+                  ? {
+                      ...item,
+                      quantity: Math.max(1, quantity),
+                    }
+                  : item,
+              )
+            : [],
+        );
+      },
+
       openDrawer: () => setIsDrawerOpen(true),
+
       closeDrawer: () => setIsDrawerOpen(false),
+
       subtotal,
       totalItems,
     }),
-    [isDrawerOpen, items, latestItem, subtotal, totalItems],
+    [items, isDrawerOpen, latestItem, subtotal, totalItems],
   );
 
   return (
@@ -145,7 +216,9 @@ export function useCart() {
   const context = useContext(CartContext);
 
   if (!context) {
-    throw new Error("useCart must be used within CartProvider");
+    throw new Error(
+      "useCart must be used within CartProvider",
+    );
   }
 
   return context;

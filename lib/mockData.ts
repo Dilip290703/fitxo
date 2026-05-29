@@ -116,7 +116,7 @@ export const products = [
     sale: false,
     collection: "summer",
     image:
-      "https://images.unsplash.com/photo-1610030469668-4d9c3f4e14f7?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
   },
   {
     id: "traditional-red",
@@ -129,7 +129,7 @@ export const products = [
     sale: true,
     collection: "summer",
     image:
-      "https://images.unsplash.com/photo-1614251056216-f748a1a8f0cd?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80",
   },
   {
     id: "street-wear-tee",
