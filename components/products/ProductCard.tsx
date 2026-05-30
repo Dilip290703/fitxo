@@ -3,24 +3,26 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
-import type { CatalogProduct } from "@/lib/mockData";
+import type { FrontendProduct } from "@/lib/supabase/products";
 import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
-export function ProductCard({ product }: { product: CatalogProduct }) {
+export function ProductCard({ product }: { product: FrontendProduct }) {
   const currentPrice = useMemo(
     () =>
-      new Intl.NumberFormat("en-US", {
+      new Intl.NumberFormat("en-IN", {
         style: "currency",
-        currency: "USD",
+        currency: "INR",
+        maximumFractionDigits: 0,
       }).format(product.price),
     [product.price],
   );
 
   const oldPrice = useMemo(
     () =>
-      new Intl.NumberFormat("en-US", {
+      new Intl.NumberFormat("en-IN", {
         style: "currency",
-        currency: "USD",
+        currency: "INR",
+        maximumFractionDigits: 0,
       }).format(product.oldPrice),
     [product.oldPrice],
   );
@@ -32,13 +34,17 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
         className="block focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20"
       >
         <div className="relative h-[262px] overflow-hidden sm:h-[298px]">
-          <Image
-            src={product.image}
-            alt={product.title}
-            fill
-            className="object-cover transition duration-500 group-hover:scale-[1.04]"
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-          />
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.title}
+              fill
+              className="object-cover transition duration-500 group-hover:scale-[1.04]"
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="h-full w-full bg-[#f0ece4]" />
+          )}
           <WishlistButton
             item={{
               id: product.id,
@@ -48,7 +54,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
               priceValue: product.price,
               displayPrice: currentPrice,
               displayOldPrice: oldPrice,
-              color: "Black",
+              color: "Default",
               size: product.sizeLabel,
               availability: "Available nearby",
             }}
@@ -72,18 +78,24 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
             <p className="text-[14px] font-semibold text-[#202020]">
               {currentPrice}
             </p>
-            <p className="mt-1 text-[12px] text-[#a3a09c] line-through">
-              {oldPrice}
-            </p>
+            {product.oldPrice !== product.price ? (
+              <p className="mt-1 text-[12px] text-[#a3a09c] line-through">
+                {oldPrice}
+              </p>
+            ) : null}
           </div>
-          <p className="text-[12px] text-[#66615a]">{product.orders} Orders</p>
+          {product.orders > 0 ? (
+            <p className="text-[12px] text-[#66615a]">{product.orders} Orders</p>
+          ) : null}
         </div>
 
-        <div className="mt-3">
-          <span className="inline-flex bg-[#171d2b] px-2.5 py-1 text-[10px] text-white">
-            {product.badge}
-          </span>
-        </div>
+        {product.badge ? (
+          <div className="mt-3">
+            <span className="inline-flex bg-[#171d2b] px-2.5 py-1 text-[10px] text-white">
+              {product.badge}
+            </span>
+          </div>
+        ) : null}
       </div>
     </article>
   );

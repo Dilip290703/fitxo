@@ -1,7 +1,7 @@
-import type { CatalogProduct } from "@/lib/mockData";
+import type { FrontendProduct } from "@/lib/supabase/products";
 import { ProductCard } from "@/components/products/ProductCard";
 
-export function ProductGrid({ products }: { products: CatalogProduct[] }) {
+export function ProductGrid({ products }: { products: FrontendProduct[] }) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
       {products.map((product) => (

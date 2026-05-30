@@ -21,7 +21,7 @@ export function PriceSlider({
     <div>
       <div className="flex items-center justify-between text-[11px] text-[#58524a]">
         <span>Range</span>
-        <span>${minValue.toFixed(0)} - ${maxValue.toFixed(0)}</span>
+        <span>₹{minValue.toFixed(0)} – ₹{maxValue.toFixed(0)}</span>
       </div>
 
       <div className="relative mt-6 h-6">

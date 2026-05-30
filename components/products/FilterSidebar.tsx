@@ -1,55 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import type { FilterOption } from "@/lib/supabase/products";
 import { PriceSlider } from "@/components/products/PriceSlider";
 
-type FilterKey = "audiences" | "brands" | "categories" | "sizes";
+type FilterKey = "brandIds" | "categoryIds";
 
-type SelectedFilters = {
-  audiences: string[];
-  brands: string[];
-  categories: string[];
-  sizes: string[];
+export type SelectedFilters = {
+  brandIds: string[];
+  categoryIds: string[];
   priceRange: [number, number];
 };
 
 type FilterSidebarProps = {
   filters: SelectedFilters;
+  brands: FilterOption[];
+  categories: FilterOption[];
+  priceMin: number;
+  priceMax: number;
   onToggleFilter: (group: FilterKey, value: string) => void;
   onPriceChange: (value: [number, number]) => void;
   onCloseMobile?: () => void;
 };
-
-const audienceOptions = ["Women", "Ladies", "Girls", "Babies"];
-const brandOptions = [
-  "H&M",
-  "Marks & Spencer",
-  "Victoria's Secret",
-  "Dior",
-  "Gucci",
-  "Fendi",
-  "Prada",
-  "Versace",
-  "Dolce & Gabbana",
-  "Zara",
-  "Chanel",
-];
-const categoryOptions = [
-  "Dresses",
-  "Tops",
-  "Lingerie & Lounge Wear",
-  "Blouse",
-  "Vintage",
-];
-
-const categoryValueMap: Record<string, string> = {
-  Dresses: "dresses",
-  Tops: "tops",
-  "Lingerie & Lounge Wear": "lingerie-lounge-wear",
-  Blouse: "blouse",
-  Vintage: "vintage",
-};
-const sizeOptions = ["Medium", "Large", "Plus Size", "Sexy Plus Size"];
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -113,16 +85,18 @@ function AccordionSection({
 
 export function FilterSidebar({
   filters,
+  brands,
+  categories,
+  priceMin,
+  priceMax,
   onToggleFilter,
   onPriceChange,
   onCloseMobile,
 }: FilterSidebarProps) {
   const [openSections, setOpenSections] = useState({
     prices: true,
-    filters: true,
     brands: true,
     categories: true,
-    size: true,
   });
 
   const toggleSection = (key: keyof typeof openSections) => {
@@ -153,26 +127,11 @@ export function FilterSidebar({
           onToggle={() => toggleSection("prices")}
         >
           <PriceSlider
-            min={120}
-            max={300}
+            min={priceMin}
+            max={priceMax}
             value={filters.priceRange}
             onChange={onPriceChange}
           />
-        </AccordionSection>
-
-        <AccordionSection
-          title="Filters"
-          open={openSections.filters}
-          onToggle={() => toggleSection("filters")}
-        >
-          {audienceOptions.map((option) => (
-            <CheckboxRow
-              key={option}
-              label={option}
-              checked={filters.audiences.includes(option.toLowerCase())}
-              onChange={() => onToggleFilter("audiences", option.toLowerCase())}
-            />
-          ))}
         </AccordionSection>
 
         <AccordionSection
@@ -180,15 +139,18 @@ export function FilterSidebar({
           open={openSections.brands}
           onToggle={() => toggleSection("brands")}
         >
-          {brandOptions.map((option) => (
-            <CheckboxRow
-              key={option}
-              label={option}
-              checked={filters.brands.includes(option.toLowerCase())}
-              onChange={() => onToggleFilter("brands", option.toLowerCase())}
-            />
-          ))}
-          <p className="pl-7 text-[12px] text-[#f06d6d]">+ 234 more</p>
+          {brands.length > 0 ? (
+            brands.map((brand) => (
+              <CheckboxRow
+                key={brand.id}
+                label={brand.name}
+                checked={filters.brandIds.includes(brand.id)}
+                onChange={() => onToggleFilter("brandIds", brand.id)}
+              />
+            ))
+          ) : (
+            <p className="text-[12px] text-[#a3a09c]">Loading brands…</p>
+          )}
         </AccordionSection>
 
         <AccordionSection
@@ -196,32 +158,18 @@ export function FilterSidebar({
           open={openSections.categories}
           onToggle={() => toggleSection("categories")}
         >
-          {categoryOptions.map((option) => (
-            <CheckboxRow
-              key={option}
-              label={option}
-              checked={filters.categories.includes(categoryValueMap[option])}
-              onChange={() =>
-                onToggleFilter("categories", categoryValueMap[option])
-              }
-            />
-          ))}
-          <p className="pl-7 text-[12px] text-[#f06d6d]">+ 4 more</p>
-        </AccordionSection>
-
-        <AccordionSection
-          title="Size"
-          open={openSections.size}
-          onToggle={() => toggleSection("size")}
-        >
-          {sizeOptions.map((option) => (
-            <CheckboxRow
-              key={option}
-              label={option}
-              checked={filters.sizes.includes(option.toLowerCase())}
-              onChange={() => onToggleFilter("sizes", option.toLowerCase())}
-            />
-          ))}
+          {categories.length > 0 ? (
+            categories.map((cat) => (
+              <CheckboxRow
+                key={cat.id}
+                label={cat.name}
+                checked={filters.categoryIds.includes(cat.id)}
+                onChange={() => onToggleFilter("categoryIds", cat.id)}
+              />
+            ))
+          ) : (
+            <p className="text-[12px] text-[#a3a09c]">Loading categories…</p>
+          )}
         </AccordionSection>
       </div>
     </aside>
