@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PINCODE_STORAGE_KEY } from "@/lib/mockData";
-import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { getStorageItem } from "@/lib/storage";
+import { useLocation, PINCODE_STORAGE_KEY } from "@/store/locationStore";
 import { createClient } from "@/lib/supabase/client";
 
 type UserProfile = {
@@ -111,6 +111,7 @@ function CloseIcon() {
 
 export function ProfilePanel() {
   const router = useRouter();
+  const { setPincode: setGlobalPincode } = useLocation();
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -144,7 +145,7 @@ export function ProfilePanel() {
       setAddresses(uiAddresses);
       const defaultAddr = uiAddresses.find((a) => a.isDefault);
       if (defaultAddr) {
-        setStorageItem(PINCODE_STORAGE_KEY, defaultAddr.pincode);
+        setGlobalPincode(defaultAddr.pincode); // persists + updates global state
         setPincode(defaultAddr.pincode);
       }
     }
@@ -152,7 +153,7 @@ export function ProfilePanel() {
 
   useEffect(() => {
     const storedPincode = getStorageItem(PINCODE_STORAGE_KEY);
-    if (storedPincode) setPincode(storedPincode);
+    if (storedPincode) setPincode(storedPincode); // local display only
 
     const supabase = createClient();
 

@@ -7,12 +7,23 @@ import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
 import { CheckoutButton } from "@/components/cart/CheckoutButton";
 import { PriceSummary } from "@/components/cart/PriceSummary";
 import { useCart } from "@/components/cart/CartProvider";
+import { useLocation } from "@/store/locationStore";
 
 export function CheckoutPageView() {
   const { items, subtotal } = useCart();
+  const { selectedPincode, deliveryStatus, hasChecked } = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
+
   const discount = items.length > 0 ? 300 : 0;
   const total = Math.max(0, Math.round(subtotal - discount));
+
+  // Block pay if pincode is known but not serviceable
+  const deliveryBlocked = hasChecked && !deliveryStatus.available;
+  const canPay = !deliveryBlocked && items.length > 0 && !isProcessing;
+
+  const pincodeDisplay = /^\d{6}$/.test(selectedPincode)
+    ? selectedPincode
+    : "Not set";
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
@@ -30,17 +41,31 @@ export function CheckoutPageView() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
           <div className="space-y-5">
+            {/* Delivery details */}
             <section className="rounded-[22px] border border-[#ece4da] bg-white p-6">
               <h2 className="text-[20px] font-medium text-[#171717]">Delivery details</h2>
               <p className="mt-4 text-[14px] leading-7 text-[#5f5851]">
-                Dilip · 411021
-                <br />
-                Navkar Avenue, DSK Ranwara Road
+                Pincode: {pincodeDisplay}
                 <br />
                 Pune, Maharashtra
               </p>
+
+              {/* Serviceability warning */}
+              {deliveryBlocked && (
+                <div className="mt-4 rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
+                  <strong>FitZo currently serves Pune locations only.</strong>
+                  <br />
+                  Please go back and update your pincode to a Pune area to proceed.
+                </div>
+              )}
+              {!hasChecked && (
+                <div className="mt-4 rounded-[12px] bg-[#fff8e1] px-4 py-3 text-[13px] text-[#856d00]">
+                  No pincode saved. Go back to your bag and set a delivery pincode.
+                </div>
+              )}
             </section>
 
+            {/* Payment method */}
             <section className="rounded-[22px] border border-[#ece4da] bg-white p-6">
               <h2 className="text-[20px] font-medium text-[#171717]">Payment method</h2>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -48,7 +73,8 @@ export function CheckoutPageView() {
                   <button
                     key={method}
                     type="button"
-                    className="rounded-[16px] border border-[#ddd4c9] bg-[#fbfaf7] px-4 py-4 text-left text-[14px] font-medium text-[#171717] transition duration-200 hover:border-[#171d2b]"
+                    disabled={deliveryBlocked}
+                    className="rounded-[16px] border border-[#ddd4c9] bg-[#fbfaf7] px-4 py-4 text-left text-[14px] font-medium text-[#171717] transition duration-200 hover:border-[#171d2b] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {method}
                   </button>
@@ -92,13 +118,21 @@ export function CheckoutPageView() {
             </div>
 
             <PriceSummary subtotal={subtotal} discount={discount} />
+
             <CheckoutButton
-              label={isProcessing ? "Processing..." : `Pay ₹${total}`}
+              label={
+                deliveryBlocked
+                  ? "Update Pincode to Continue"
+                  : isProcessing
+                  ? "Processing…"
+                  : `Pay ₹${total}`
+              }
               onClick={() => {
+                if (!canPay) return;
                 setIsProcessing(true);
                 window.setTimeout(() => setIsProcessing(false), 1800);
               }}
-              disabled={isProcessing || items.length === 0}
+              disabled={!canPay}
             />
           </aside>
         </div>

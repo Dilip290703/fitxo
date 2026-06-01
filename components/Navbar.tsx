@@ -5,9 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
-import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
-import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { AUTH_STORAGE_KEY } from "@/lib/mockData";
+import { getStorageItem } from "@/lib/storage";
 import { useWishlist } from "@/store/wishlistStore";
+import { useLocation } from "@/store/locationStore";
 
 const megaCategories = [
   {
@@ -222,17 +223,14 @@ export function Navbar({
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isPincodeOpen, setIsPincodeOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [pincode, setPincode] = useState("Enter Pincode");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { selectedPincode, setPincode } = useLocation();
+
+  // Display label: show pincode if set, otherwise prompt
+  const pincodeLabel = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Enter Pincode";
 
   useEffect(() => {
-    const storedPincode = getStorageItem(PINCODE_STORAGE_KEY);
     const storedAuth = getStorageItem(AUTH_STORAGE_KEY);
-
-    if (storedPincode) {
-      setPincode(storedPincode);
-    }
-
     setIsLoggedIn(storedAuth === "true");
   }, []);
 
@@ -268,8 +266,7 @@ export function Navbar({
   };
 
   const handleSavePincode = (value: string) => {
-    setStorageItem(PINCODE_STORAGE_KEY, value);
-    setPincode(value);
+    setPincode(value); // locationStore handles localStorage persistence
   };
 
   const profileHref = isLoggedIn ? "/profile" : "/login";
@@ -362,7 +359,7 @@ export function Navbar({
                 className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition duration-200 hover:-translate-y-0.5 hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex"
               >
                 <PinIcon />
-                <span>{pincode}</span>
+                <span>{pincodeLabel}</span>
                 <ChevronDown />
               </button>
 
@@ -524,7 +521,7 @@ export function Navbar({
                   className="flex items-center gap-2 text-left"
                 >
                   <PinIcon />
-                  <span>{pincode}</span>
+                  <span>{pincodeLabel}</span>
                 </button>
                 {isLoggedIn ? (
                   <Link
@@ -578,7 +575,7 @@ export function Navbar({
         isOpen={isPincodeOpen}
         onClose={() => setIsPincodeOpen(false)}
         onSave={handleSavePincode}
-        currentValue={/^\d{6}$/.test(pincode) ? pincode : ""}
+        currentValue={selectedPincode}
       />
     </>
   );

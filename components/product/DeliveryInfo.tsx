@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { getDeliveryStatus } from "@/lib/pincode";
+import { useLocation } from "@/store/locationStore";
 
 function BoltIcon() {
   return (
@@ -17,11 +19,46 @@ function BoltIcon() {
   );
 }
 
-export function DeliveryInfo() {
-  const [pincode, setPincode] = useState("");
-  const [message, setMessage] = useState(
-    "Available across nearby partner stores.",
+function CheckIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <path
+        d="M5 12l5 5L20 7"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
   );
+}
+
+export function DeliveryInfo() {
+  const { selectedPincode, setPincode, deliveryStatus, hasChecked } = useLocation();
+
+  // Local input field — pre-filled with saved pincode
+  const [input, setInput] = useState(selectedPincode);
+  // Live preview while typing (before clicking Check)
+  const liveStatus = /^\d{6}$/.test(input.trim())
+    ? getDeliveryStatus(input.trim())
+    : null;
+
+  const handleCheck = () => {
+    const clean = input.trim();
+    if (/^\d{6}$/.test(clean)) {
+      setPincode(clean); // persist globally
+    }
+  };
+
+  // What to display in the status area
+  const displayStatus = (() => {
+    // User has typed 6 digits → show live preview immediately
+    if (liveStatus) return liveStatus;
+    // Fallback: show stored pincode's status
+    if (hasChecked) return deliveryStatus;
+    return null;
+  })();
 
   return (
     <div className="space-y-4 rounded-[22px] bg-[#f4ede4] px-5 py-5">
@@ -37,36 +74,49 @@ export function DeliveryInfo() {
             Try at home before you pay
           </p>
           <p className="mt-2 text-[13px] leading-6 text-[#615a53]">
-            Available across nearby partner stores.
+            Available across Pune partner stores.
           </p>
         </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
-          value={pincode}
-          onChange={(event) =>
-            setPincode(event.target.value.replace(/\D/g, "").slice(0, 6))
-          }
+          value={input}
+          onChange={(e) => setInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onKeyDown={(e) => e.key === "Enter" && handleCheck()}
           placeholder="Enter pincode"
           className="h-12 flex-1 rounded-[14px] border border-[#ddd3c7] bg-[#fbfaf7] px-4 text-[14px] outline-none transition duration-200 focus:border-[#171d2b]"
         />
         <button
           type="button"
-          onClick={() =>
-            setMessage(
-              /^\d{6}$/.test(pincode)
-                ? `Available for ${pincode}. 60-Minute Delivery and try-at-home access confirmed.`
-                : "Enter a valid 6-digit pincode to check delivery.",
-            )
-          }
+          onClick={handleCheck}
           className="inline-flex h-12 items-center justify-center rounded-[14px] bg-[#171d2b] px-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-white transition duration-200 hover:bg-[#0f1522]"
         >
           Check
         </button>
       </div>
 
-      <p className="text-[13px] leading-6 text-[#5d5750]">{message}</p>
+      {/* Status feedback */}
+      {displayStatus ? (
+        <div
+          className={`flex items-start gap-2 rounded-[12px] px-4 py-3 text-[13px] font-medium ${
+            displayStatus.available
+              ? "bg-[#e8f5e9] text-[#2e7d32]"
+              : "bg-[#fdecea] text-[#c0392b]"
+          }`}
+        >
+          {displayStatus.available ? (
+            <span className="mt-0.5 shrink-0"><CheckIcon /></span>
+          ) : (
+            <span className="shrink-0 text-[15px] leading-none">✗</span>
+          )}
+          <span>{displayStatus.message}</span>
+        </div>
+      ) : (
+        <p className="text-[13px] leading-6 text-[#5d5750]">
+          Enter your pincode to check 60-min delivery availability.
+        </p>
+      )}
     </div>
   );
 }

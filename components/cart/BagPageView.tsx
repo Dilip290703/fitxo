@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { CartItem } from "@/components/cart/CartItem";
@@ -11,20 +12,15 @@ import { PriceSummary } from "@/components/cart/PriceSummary";
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
-import { PINCODE_STORAGE_KEY, catalogProducts, products } from "@/lib/mockData";
+import { useLocation } from "@/store/locationStore";
+import { catalogProducts, products } from "@/lib/mockData";
 
 export function BagPageView() {
+  const router = useRouter();
   const { items, subtotal } = useCart();
+  const { selectedPincode, setPincode, deliveryStatus, hasChecked } = useLocation();
   const [couponApplied, setCouponApplied] = useState(false);
-  const [pincode, setPincode] = useState("411021");
   const [isPincodeOpen, setIsPincodeOpen] = useState(false);
-
-  useEffect(() => {
-    const storedPincode = window.localStorage.getItem(PINCODE_STORAGE_KEY);
-    if (storedPincode) {
-      setPincode(storedPincode);
-    }
-  }, []);
 
   const recommendedProducts = useMemo(() => {
     const source = [...catalogProducts, ...products];
@@ -42,6 +38,17 @@ export function BagPageView() {
 
   const discount = couponApplied ? 300 : 0;
   const finalTotal = Math.max(0, subtotal - discount);
+
+  // A pincode has been saved but it's not in Pune
+  const deliveryBlocked = hasChecked && !deliveryStatus.available;
+
+  const handleCheckout = () => {
+    if (deliveryBlocked) return;
+    router.push("/checkout");
+  };
+
+  // Display label for the delivery address section
+  const pincodeLabel = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Not set";
 
   return (
     <>
@@ -93,6 +100,7 @@ export function BagPageView() {
               </div>
 
               <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
+                {/* Pincode / delivery address */}
                 <div className="rounded-[22px] border border-[#ece4da] bg-white px-6 py-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -100,18 +108,30 @@ export function BagPageView() {
                         Delivering to
                       </p>
                       <p className="mt-2 text-[15px] font-medium leading-6 text-[#171717]">
-                        Dilip, {pincode}
+                        {pincodeLabel}
                       </p>
-                      <p className="mt-1 text-[13px] text-[#5f5851]">
-                        FitZo partner pickup and doorstep try-on available nearby.
-                      </p>
+                      {hasChecked ? (
+                        <p
+                          className={`mt-1 text-[13px] ${
+                            deliveryStatus.available
+                              ? "text-[#388e3c]"
+                              : "text-[#c0392b]"
+                          }`}
+                        >
+                          {deliveryStatus.message}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[13px] text-[#5f5851]">
+                          Set your pincode to confirm availability.
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsPincodeOpen(true)}
                       className="text-[13px] font-semibold uppercase tracking-[0.06em] text-[#171717] transition duration-200 hover:text-black"
                     >
-                      Change
+                      {hasChecked ? "Change" : "Set"}
                     </button>
                   </div>
                 </div>
@@ -125,7 +145,24 @@ export function BagPageView() {
 
                 <PriceSummary subtotal={subtotal} discount={discount} />
 
-                <CheckoutButton label="Proceed to Checkout" />
+                {/* Checkout CTA — disabled if pincode is set but not serviceable */}
+                {deliveryBlocked ? (
+                  <div className="space-y-2">
+                    <div className="rounded-[14px] bg-[#fdecea] px-4 py-3 text-center text-[13px] text-[#c0392b]">
+                      FitZo serves Pune locations only. Please update your pincode.
+                    </div>
+                    <CheckoutButton
+                      label="Proceed to Checkout"
+                      onClick={() => setIsPincodeOpen(true)}
+                      className="opacity-60"
+                    />
+                  </div>
+                ) : (
+                  <CheckoutButton
+                    label="Proceed to Checkout"
+                    onClick={handleCheckout}
+                  />
+                )}
               </aside>
             </div>
           )}
@@ -142,24 +179,26 @@ export function BagPageView() {
         <Footer />
       </main>
 
+      {/* Mobile sticky bar */}
       {items.length > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e8dfd5] bg-[#fbfaf7]/95 px-4 py-3 backdrop-blur sm:hidden">
           <div className="mb-2 flex items-center justify-between text-[13px] text-[#5f5851]">
             <span>Grand Total</span>
             <span className="font-semibold text-[#171717]">₹{Math.round(finalTotal)}</span>
           </div>
-          <CheckoutButton label="Proceed to Checkout" />
+          <CheckoutButton
+            label="Proceed to Checkout"
+            onClick={handleCheckout}
+            disabled={deliveryBlocked}
+          />
         </div>
       ) : null}
 
       <PincodeModal
         isOpen={isPincodeOpen}
         onClose={() => setIsPincodeOpen(false)}
-        onSave={(value) => {
-          window.localStorage.setItem(PINCODE_STORAGE_KEY, value);
-          setPincode(value);
-        }}
-        currentValue={pincode}
+        onSave={setPincode}
+        currentValue={selectedPincode}
       />
     </>
   );

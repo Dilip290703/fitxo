@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { getDeliveryStatus, MOCK_DETECTED_PINCODE } from "@/lib/pincode";
 
 type PincodeModalProps = {
   isOpen: boolean;
@@ -28,23 +29,31 @@ export function PincodeModal({
 
   if (!isOpen) return null;
 
+  // Live status as the user types — shown when exactly 6 digits entered
+  const liveStatus =
+    /^\d{6}$/.test(manualPincode.trim())
+      ? getDeliveryStatus(manualPincode.trim())
+      : null;
+
+  // Detect location — mocks a Pune pincode (real geo-detection deferred)
   const handleDetect = async () => {
     setLoading(true);
     setError("");
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    onSave("560001");
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    onSave(MOCK_DETECTED_PINCODE);
     setLoading(false);
     onClose();
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!/^\d{6}$/.test(manualPincode.trim())) {
+    const clean = manualPincode.trim();
+    if (!/^\d{6}$/.test(clean)) {
       setError("Enter a valid 6-digit pincode.");
       return;
     }
     setError("");
-    onSave(manualPincode.trim());
+    onSave(clean);
     onClose();
   };
 
@@ -59,6 +68,9 @@ export function PincodeModal({
             <h2 className="mt-3 font-display text-[34px] leading-none text-[#181818]">
               Set your pincode
             </h2>
+            <p className="mt-2 text-[13px] text-[#706961]">
+              FitZo currently delivers across Pune.
+            </p>
           </div>
           <button
             type="button"
@@ -71,6 +83,7 @@ export function PincodeModal({
         </div>
 
         <div className="mt-6 space-y-4">
+          {/* Detect location */}
           <button
             type="button"
             onClick={handleDetect}
@@ -86,23 +99,40 @@ export function PincodeModal({
               </span>
             </span>
             <span className="text-[13px] font-semibold text-[#1d1d1d]">
-              {loading ? "Detecting..." : "Use"}
+              {loading ? "Detecting…" : "Use"}
             </span>
           </button>
 
+          {/* Manual entry */}
           <form onSubmit={handleSubmit} className="rounded-[18px] border border-[#e7ddd1] bg-white p-5">
             <label className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#8a7b6d]">
               Enter manually
             </label>
             <input
               value={manualPincode}
-              onChange={(event) => setManualPincode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setManualPincode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
               placeholder="6-digit pincode"
               className="mt-3 h-12 w-full rounded-[12px] border border-[#d9cfc4] bg-[#fffdf9] px-4 text-[14px] text-[#1f1f1f] outline-none transition duration-200 focus:border-[#161616]"
             />
-            {error ? (
+
+            {/* Live serviceability feedback */}
+            {liveStatus && (
+              <p
+                className={`mt-2 text-[12px] font-medium ${
+                  liveStatus.available ? "text-[#2e7d32]" : "text-[#c0392b]"
+                }`}
+              >
+                {liveStatus.available ? "✓ " : "✗ "}
+                {liveStatus.message}
+              </p>
+            )}
+
+            {error && (
               <p className="mt-2 text-[12px] text-[#c0392b]">{error}</p>
-            ) : null}
+            )}
+
             <button
               type="submit"
               className="mt-4 inline-flex h-11 items-center rounded-full bg-[#1f2a3c] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#141d2b]"
