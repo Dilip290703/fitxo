@@ -40,28 +40,35 @@ function ShareIcon() {
   );
 }
 
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80";
+
 export function ProductGallery({ product }: { product: ProductDetailData }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Guard: always have at least one gallery item to prevent crash
+  const gallery = product.gallery.length > 0
+    ? product.gallery
+    : [{ id: "placeholder", src: PLACEHOLDER_IMAGE, alt: product.title }];
+
   const activeImage = useMemo(
-    () => product.gallery[activeIndex] ?? product.gallery[0],
-    [activeIndex, product.gallery],
+    () => gallery[activeIndex] ?? gallery[0],
+    [activeIndex, gallery],
   );
 
   const changeImage = (direction: "prev" | "next") => {
     setActiveIndex((current) => {
       if (direction === "prev") {
-        return current === 0 ? product.gallery.length - 1 : current - 1;
+        return current === 0 ? gallery.length - 1 : current - 1;
       }
-
-      return current === product.gallery.length - 1 ? 0 : current + 1;
+      return current === gallery.length - 1 ? 0 : current + 1;
     });
   };
 
   return (
     <section className="self-start grid gap-4 lg:grid-cols-[92px_minmax(0,1fr)] lg:gap-6">
       <ThumbnailRail
-        images={product.gallery}
+        images={gallery}
         activeIndex={activeIndex}
         onChange={setActiveIndex}
       />
@@ -84,7 +91,7 @@ export function ProductGallery({ product }: { product: ProductDetailData }) {
                 id: product.id,
                 title: product.title,
                 brand: product.brand,
-                image: product.gallery[0]?.src ?? activeImage.src,
+                image: gallery[0]?.src ?? activeImage.src,
                 priceValue: product.priceValue,
                 displayPrice: product.price,
                 displayOldPrice: product.oldPrice,

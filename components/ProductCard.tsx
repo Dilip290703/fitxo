@@ -35,14 +35,20 @@ export function ProductCard({ product }: { product: Product }) {
         href={`/product/${product.id}`}
         className="block focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20"
       >
-        <div className="relative h-[250px] overflow-hidden">
-          <Image
-            src={product.image}
-            alt={product.title}
-            fill
-            className="object-cover transition duration-300 group-hover:scale-[1.04]"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          />
+        <div className="relative h-[250px] overflow-hidden bg-[#f0ece4]">
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.title}
+              fill
+              className="object-cover transition duration-300 group-hover:scale-[1.04]"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="text-[13px] text-[#b5a99a]">No image</span>
+            </div>
+          )}
         </div>
       </Link>
 

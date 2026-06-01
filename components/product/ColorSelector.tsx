@@ -24,24 +24,34 @@ export function ColorSelector({
       </div>
 
       <div className="mt-4 flex gap-3">
-        {colors.map((color) => (
+        {colors.map((color, i) => (
           <button
-            key={color.name}
+            // Use index fallback so keys are never duplicated even if names clash
+            key={color.name ? `${color.name}-${i}` : `color-${i}`}
             type="button"
             onClick={() => onChange(color.name)}
-            className={`relative h-[74px] w-[60px] overflow-hidden rounded-[14px] border bg-white transition duration-200 hover:border-[#1d2330]/50 ${
+            className={`relative h-[74px] w-[60px] overflow-hidden rounded-[14px] border transition duration-200 hover:border-[#1d2330]/50 ${
               selectedColor === color.name
                 ? "border-[#1d2330]"
                 : "border-[#ece4da]"
             }`}
           >
-            <Image
-              src={color.preview}
-              alt={color.name}
-              fill
-              className="object-cover"
-              sizes="60px"
-            />
+            {color.preview ? (
+              <Image
+                src={color.preview}
+                alt={color.name}
+                fill
+                className="object-cover"
+                sizes="60px"
+              />
+            ) : (
+              // No image — show solid color swatch
+              <span
+                className="block h-full w-full"
+                style={{ backgroundColor: color.value }}
+                aria-label={color.name}
+              />
+            )}
           </button>
         ))}
       </div>

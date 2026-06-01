@@ -1,5 +1,27 @@
 import type { ProductDetailData } from '@/components/product/types';
 
+// Supabase Storage base — used to normalise relative paths that were stored
+// without the full public URL (e.g. "products/1780299776255.avif").
+const SUPABASE_STORAGE_BASE =
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/product-images`;
+
+/**
+ * Ensures an image_url from the DB is always an absolute URL that
+ * next/image (and browsers) can load.  Handles three cases:
+ *  - already absolute  →  returned as-is
+ *  - starts with "/"   →  local/public asset, returned as-is
+ *  - relative path     →  prepended with the Supabase Storage public base
+ *  - null / empty      →  returns ""
+ */
+function normalizeImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  // Relative storage path — reconstruct the full public URL
+  return `${SUPABASE_STORAGE_BASE}/${url}`;
+}
+
 export type FrontendProduct = {
   id: string;
   title: string;
@@ -41,7 +63,7 @@ function pickPrimaryImage(images: any[]): string {
   if (!images?.length) return '';
   const sorted = [...images].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   const primary = sorted.find((img) => img.is_primary);
-  return (primary ?? sorted[0]).image_url ?? '';
+  return normalizeImageUrl((primary ?? sorted[0]).image_url);
 }
 
 export async function queryProducts(
@@ -201,29 +223,35 @@ export async function queryProductDetail(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sortedImages = [...(row.product_images ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order);
-  const gallery = sortedImages.map(
+  const gallery = sortedImages
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (img: any, i: number) => ({
+    .map((img: any, i: number) => ({
       id: img.id ?? `img-${i}`,
-      src: img.image_url,
+      src: normalizeImageUrl(img.image_url),
       alt: img.alt_text ?? row.name,
-    }),
-  );
+    }))
+    // Drop entries with no valid src — these crash next/image
+    .filter((img) => img.src !== '');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sortedColors = [...(row.product_colors ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const colors = sortedColors.filter((c: any) => c.is_available).map((c: any) => {
+  const colors = sortedColors.filter((c: any) => c.is_available && c.color_name).map((c: any) => {
     const colorImages = sortedImages.filter(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (img: any) => img.color_id === c.id,
     );
+    // Use per-color image first, then fall back to first gallery image (never empty string)
+    const preview =
+      normalizeImageUrl(colorImages[0]?.image_url) || gallery[0]?.src || null;
     return {
-      name: c.color_name,
-      value: c.color_hex ?? '#000000',
-      preview: colorImages[0]?.image_url ?? gallery[0]?.src ?? '',
+      name: c.color_name as string,
+      value: (c.color_hex as string) ?? '#000000',
+      preview,
     };
-  });
+  // Drop colors whose preview is null — they would crash ColorSelector's <Image>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }).filter((c: any) => c.preview !== null) as { name: string; value: string; preview: string }[];
 
   const sizeSet = new Set<string>();
   for (const v of row.product_variants ?? []) {
