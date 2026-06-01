@@ -31,6 +31,12 @@ export type ProductReview = {
   photo?: string;
 };
 
+export type SizeOption = {
+  label: string;
+  /** true = in stock & available, false = exists but sold out */
+  available: boolean;
+};
+
 export type ProductDetailData = {
   id: string;
   slug: string;
@@ -44,7 +50,7 @@ export type ProductDetailData = {
   subtitle: string;
   gallery: ProductGalleryImage[];
   colors: ProductColor[];
-  sizes: string[];
+  sizes: SizeOption[];
   offers: ProductOffer[];
   nearbyStores: NearbyStore[];
   reviews: ProductReview[];

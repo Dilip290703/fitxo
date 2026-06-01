@@ -253,10 +253,35 @@ export async function queryProductDetail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }).filter((c: any) => c.preview !== null) as { name: string; value: string; preview: string }[];
 
-  const sizeSet = new Set<string>();
+  // Build sizes: ALL variants with a valid size label, available ones first,
+  // unavailable ones (sold-out/disabled) included so users see the full range.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Build sizes — all variants with a valid, non-null size label.
+  // Available = in_stock AND available_qty > 0.
+  // If a size appears in multiple variants, mark it available if ANY variant is available.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sizeMap = new Map<string, boolean>(); // label → available
   for (const v of row.product_variants ?? []) {
-    if (v.is_available && v.available_qty > 0) sizeSet.add(v.size as string);
+    const raw = v.size;
+    if (raw === null || raw === undefined) continue;
+    const label = String(raw).trim();
+    if (!label) continue; // skip empty strings
+    const isAvailable = Boolean(v.is_available && (v.available_qty ?? 0) > 0);
+    if (!sizeMap.has(label) || isAvailable) {
+      sizeMap.set(label, isAvailable);
+    }
   }
+
+  // Fallback: if no size variants are configured at all, use "Free Size" so the
+  // product is still purchasable and Add to Bag is never permanently blocked.
+  if (sizeMap.size === 0) {
+    sizeMap.set('Free Size', true);
+  }
+
+  const sizes = Array.from(sizeMap.entries()).map(([label, available]) => ({
+    label,
+    available,
+  }));
 
   const details: string[] = [];
   if (row.description) details.push(row.description as string);
@@ -282,7 +307,7 @@ export async function queryProductDetail(
       'A FitZo pick designed for all-day comfort and doorstep try-on confidence.',
     gallery,
     colors,
-    sizes: [...sizeSet],
+    sizes,
     offers: [
       { code: 'SHOP10', title: 'SHOP10', description: 'Enjoy 10% off on orders above ₹2700' },
       { code: 'SHOP15', title: 'SHOP15', description: 'Enjoy 15% off on 2 or more styles' },

@@ -13,8 +13,17 @@ import { ProductDetailData } from "@/components/product/types";
 
 export function ProductInfo({ product }: { product: ProductDetailData }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name ?? "");
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] ?? "");
+  // Pre-select first AVAILABLE size; fall back to first size if all are sold out.
+  // Sold-out sizes remain selectable so users can still add / request restock.
+  const [selectedSize, setSelectedSize] = useState<string>(
+    () => (product.sizes.find((s) => s.available) ?? product.sizes[0])?.label ?? "",
+  );
   const [openSection, setOpenSection] = useState<"details" | "reviews" | "delivery" | "returns" | null>("details");
+
+  // Is the currently-selected size out of stock?
+  const isSoldOutSize =
+    !!selectedSize &&
+    product.sizes.some((s) => s.label === selectedSize && !s.available);
 
   const selectedColorValue = useMemo(
     () =>
@@ -77,6 +86,7 @@ export function ProductInfo({ product }: { product: ProductDetailData }) {
 
       <AddToBag
         selectedSize={selectedSize}
+        isSoldOutSize={isSoldOutSize}
         product={{
           id: product.id,
           title: product.title,

@@ -96,7 +96,7 @@ export function ProductGallery({ product }: { product: ProductDetailData }) {
                 displayPrice: product.price,
                 displayOldPrice: product.oldPrice,
                 color: product.colors[0]?.name,
-                size: product.sizes[0],
+                size: product.sizes[0]?.label,
                 availability: "Available nearby",
               }}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 text-[#1d2330] backdrop-blur-sm transition duration-200"
