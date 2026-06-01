@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createProduct, updateProduct } from './actions';
 import { useToast } from '@/components/admin/Toast';
 import ColorVariantBuilder, { ColorEntry } from '@/components/admin/ColorVariantBuilder';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -41,7 +41,6 @@ interface FormData {
 export default function ProductFormClient({ stores, brands, categories, mode, product }: ProductFormClientProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createClient();
 
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -96,48 +95,16 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
         is_deleted: false,
       };
 
-      let productId = product?.id;
+      const colorPayload = colors.map((c) => ({
+        color_name: c.color_name,
+        color_hex: c.color_hex,
+        variants: c.variants.map((v) => ({ size: v.size, sku: v.sku, stock_qty: v.stock_qty })),
+      }));
 
       if (mode === 'create') {
-        const { data, error } = await supabase.from('products').insert(payload).select('id').single();
-        if (error) throw error;
-        productId = data.id;
-      } else if (productId) {
-        const { error } = await supabase.from('products').update(payload).eq('id', productId);
-        if (error) throw error;
-      }
-
-      // Insert colors + variants
-      for (const color of colors) {
-        const { data: colorData, error: colorErr } = await supabase
-          .from('product_colors')
-          .insert({ product_id: productId!, color_name: color.color_name, color_hex: color.color_hex, sort_order: 0 })
-          .select('id')
-          .single();
-        if (colorErr) throw colorErr;
-
-        for (const v of color.variants) {
-          const { error: varErr } = await supabase.from('product_variants').insert({
-            product_id: productId!,
-            color_id: colorData.id,
-            size: v.size,
-            sku: v.sku,
-            stock_qty: v.stock_qty,
-            size_type: 'alpha',
-          });
-          if (varErr) throw varErr;
-        }
-      }
-
-      // Insert images
-      for (const url of imageUrls) {
-        await supabase.from('product_images').insert({
-          product_id: productId!,
-          image_url: url,
-          angle: 'front',
-          is_primary: imageUrls.indexOf(url) === 0,
-          sort_order: imageUrls.indexOf(url),
-        });
+        await createProduct(payload, colorPayload, imageUrls);
+      } else if (product?.id) {
+        await updateProduct(product.id, payload, colorPayload, imageUrls);
       }
 
       toast(mode === 'create' ? 'Product created successfully!' : 'Product updated!', 'success');

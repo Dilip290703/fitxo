@@ -280,6 +280,52 @@ export async function queryProductDetail(
   };
 }
 
+export async function queryFeaturedProducts(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  limit = 4,
+): Promise<FrontendProduct[]> {
+  const { data } = await supabase
+    .from('products')
+    .select(
+      `id, name, slug, base_price, discounted_price, tags, created_at,
+       brands(id, name, slug),
+       product_images(image_url, is_primary, sort_order),
+       product_variants(id, size, available_qty, is_available)`,
+    )
+    .eq('is_active', true)
+    .eq('is_deleted', false)
+    .eq('is_featured', true)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (!data) return [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map((row) => {
+    const price = row.discounted_price ?? row.base_price;
+    const oldPrice = row.discounted_price ? row.base_price : price;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const firstAvailableSize = (row.product_variants ?? []).find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (v: any) => v.is_available && v.available_qty > 0,
+    )?.size ?? 'M';
+
+    return {
+      id: row.id,
+      title: row.name,
+      brand: row.brands?.name ?? '',
+      brandSlug: row.brands?.slug ?? '',
+      image: pickPrimaryImage(row.product_images ?? []),
+      price,
+      oldPrice,
+      badge: row.tags?.[0] ?? 'Featured',
+      orders: 0,
+      sizeLabel: firstAvailableSize,
+    };
+  });
+}
+
 export async function queryRecommendedProducts(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,

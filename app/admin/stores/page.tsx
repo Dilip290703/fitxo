@@ -1,13 +1,13 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import StatusBadge from '@/components/admin/StatusBadge';
 
 export default async function StoresPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data: stores } = await supabase
     .from('stores')
-    .select('*, products(id), orders(id)')
+    .select('*, products(id)')
     .order('created_at', { ascending: false });
 
   return (
@@ -38,7 +38,6 @@ export default async function StoresPage() {
             <p className="text-xs text-gray-500 mt-0.5">{store.city ?? 'City not set'}</p>
             <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
               <span>{(store.products as {id:string}[])?.length ?? 0} products</span>
-              <span>{(store.orders as {id:string}[])?.length ?? 0} orders</span>
               {store.is_verified && <span className="text-green-400">✓ Verified</span>}
             </div>
           </Link>

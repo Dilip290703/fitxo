@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import ProductFormClient from '../ProductFormClient';
 
 export default async function NewProductPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const [{ data: stores }, { data: brands }, { data: categories }] = await Promise.all([
     supabase.from('stores').select('id, name').eq('is_active', true),

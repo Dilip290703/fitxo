@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AUTH_STORAGE_KEY, PINCODE_STORAGE_KEY } from "@/lib/mockData";
-import { getStorageItem, removeStorageItem, setStorageItem } from "@/lib/storage";
+import { PINCODE_STORAGE_KEY } from "@/lib/mockData";
+import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { createClient } from "@/lib/supabase/client";
 
 type UserProfile = {
   name: string;
@@ -31,39 +32,49 @@ type Order = {
   eta: string;
 };
 
-const initialUser: UserProfile = {
-  name: "Aarohi Mehta",
-  email: "aarohi.mehta@example.com",
-  phone: "+91 98765 43210",
-  membership: "Fitzo Muse",
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toUIAddress(addr: any): Address {
+  return {
+    id: addr.id,
+    label: addr.label === "Office" ? "Office" : "Home",
+    name: addr.full_name ?? "",
+    line: addr.line2 ? `${addr.line1}, ${addr.line2}` : (addr.line1 ?? ""),
+    city: addr.city ?? "",
+    pincode: addr.pincode ?? "",
+    isDefault: addr.is_default ?? false,
+  };
+}
 
-const initialAddresses: Address[] = [
-  {
-    id: "addr-home",
-    label: "Home",
-    name: "Aarohi Mehta",
-    line: "1204, Palm Court, Bandra West",
-    city: "Mumbai",
-    pincode: "400050",
-    isDefault: true,
-  },
-  {
-    id: "addr-office",
-    label: "Office",
-    name: "Aarohi Mehta",
-    line: "Fitzo Studio, Lower Parel",
-    city: "Mumbai",
-    pincode: "400013",
-    isDefault: false,
-  },
-];
+function formatOrderStatus(status: string): string {
+  const map: Record<string, string> = {
+    pending: "Order placed",
+    confirmed: "Confirmed",
+    assigned: "Rider assigned",
+    out_for_delivery: "Out for try-on",
+    delivered: "Delivered",
+    try_window_active: "Try-on window open",
+    return_requested: "Return requested",
+    return_picked: "Return picked",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
+  return map[status] ?? status;
+}
 
-const orders: Order[] = [
-  { id: "FZ-28491", status: "Out for try-on", items: 3, total: "Rs. 6,497", eta: "Today, 6:30 PM" },
-  { id: "FZ-28117", status: "Delivered", items: 2, total: "Rs. 3,298", eta: "May 18, 2026" },
-  { id: "FZ-27609", status: "Return picked", items: 4, total: "Rs. 4,999", eta: "May 11, 2026" },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toUIOrder(order: any): Order {
+  return {
+    id: order.order_number ?? order.id,
+    status: formatOrderStatus(order.status ?? ""),
+    items: Array.isArray(order.order_items) ? order.order_items.length : 0,
+    total: `Rs. ${Number(order.final_amount ?? 0).toLocaleString("en-IN")}`,
+    eta: new Date(order.created_at).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+  };
+}
 
 const actionCards = [
   { label: "My Orders", text: "Track try-at-home and past purchases.", href: "/orders" },
@@ -78,6 +89,9 @@ const actionCards = [
   { label: "Privacy & Security", text: "Password, sessions, and account controls.", href: "#security" },
   { label: "Notifications", text: "Delivery, offers, and style alerts.", href: "/notifications" },
 ];
+
+const emptyUser: UserProfile = { name: "", email: "", phone: "", membership: "Fitzo Muse" };
+const emptyAddress: Address = { id: "", label: "Home", name: "", line: "", city: "", pincode: "", isDefault: false };
 
 function ChevronRight() {
   return (
@@ -97,48 +111,131 @@ function CloseIcon() {
 
 export function ProfilePanel() {
   const router = useRouter();
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<UserProfile>(initialUser);
-  const [profileDraft, setProfileDraft] = useState<UserProfile>(initialUser);
-  const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
-  const [addressDraft, setAddressDraft] = useState<Address>(initialAddresses[0]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<UserProfile>(emptyUser);
+  const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyUser);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressDraft, setAddressDraft] = useState<Address>(emptyAddress);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [pincode, setPincode] = useState("400050");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [pincode, setPincode] = useState("");
   const [toast, setToast] = useState("");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [deleteAddressId, setDeleteAddressId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<"logout" | "delete-account" | null>(null);
 
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2200);
+  };
+
+  const refreshAddresses = useCallback(async (userId: string) => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("addresses")
+      .select("*")
+      .eq("user_id", userId)
+      .order("is_default", { ascending: false });
+    if (data) {
+      const uiAddresses = data.map(toUIAddress);
+      setAddresses(uiAddresses);
+      const defaultAddr = uiAddresses.find((a) => a.isDefault);
+      if (defaultAddr) {
+        setStorageItem(PINCODE_STORAGE_KEY, defaultAddr.pincode);
+        setPincode(defaultAddr.pincode);
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    setIsLoggedIn(getStorageItem(AUTH_STORAGE_KEY) === "true");
     const storedPincode = getStorageItem(PINCODE_STORAGE_KEY);
     if (storedPincode) setPincode(storedPincode);
-  }, []);
+
+    const supabase = createClient();
+
+    const loadProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setIsLoggedIn(false);
+        setLoading(false);
+        router.push("/login");
+        return;
+      }
+
+      setIsLoggedIn(true);
+      setAuthUserId(session.user.id);
+
+      const [userRes, ordersRes] = await Promise.all([
+        supabase.from("users").select("name, email, phone").eq("id", session.user.id).maybeSingle(),
+        supabase
+          .from("orders")
+          .select("id, order_number, status, final_amount, created_at, order_items(id)")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false })
+          .limit(3),
+      ]);
+
+      const userData = userRes.data;
+      const profile: UserProfile = {
+        name: userData?.name ?? session.user.user_metadata?.name ?? session.user.email?.split("@")[0] ?? "",
+        email: userData?.email ?? session.user.email ?? "",
+        phone: userData?.phone ?? session.user.phone ?? "",
+        membership: "Fitzo Muse",
+      };
+      setUser(profile);
+      setProfileDraft(profile);
+
+      if (ordersRes.data) {
+        setOrders(ordersRes.data.map(toUIOrder));
+      }
+
+      await refreshAddresses(session.user.id);
+      setLoading(false);
+    };
+
+    loadProfile();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        router.push("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router, refreshAddresses]);
 
   const initials = useMemo(
     () =>
-      user.name
+      (user.name || user.email || "?")
         .split(" ")
         .map((part) => part[0])
         .join("")
         .slice(0, 2)
         .toUpperCase(),
-    [user.name],
+    [user.name, user.email],
   );
-
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2200);
-  };
 
   const openProfileModal = () => {
     setProfileDraft(user);
     setIsProfileModalOpen(true);
   };
 
-  const saveProfile = (event: FormEvent<HTMLFormElement>) => {
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!authUserId) return;
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("users")
+      .update({ name: profileDraft.name, phone: profileDraft.phone })
+      .eq("id", authUserId);
+    if (error) {
+      showToast("Failed to save profile.");
+      return;
+    }
     setUser(profileDraft);
     setIsProfileModalOpen(false);
     showToast("Profile changes saved.");
@@ -151,7 +248,7 @@ export function ProfilePanel() {
     } else {
       setEditingAddressId(null);
       setAddressDraft({
-        id: `addr-${Date.now()}`,
+        id: "",
         label: "Home",
         name: user.name,
         line: "",
@@ -163,46 +260,68 @@ export function ProfilePanel() {
     setIsAddressModalOpen(true);
   };
 
-  const saveAddress = (event: FormEvent<HTMLFormElement>) => {
+  const saveAddress = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalized = addressDraft.isDefault
-      ? addresses.map((address) => ({ ...address, isDefault: false }))
-      : addresses;
+    if (!authUserId) return;
+    const supabase = createClient();
 
-    setAddresses(
-      editingAddressId
-        ? normalized.map((address) => (address.id === editingAddressId ? addressDraft : address))
-        : [...normalized, addressDraft],
-    );
     if (addressDraft.isDefault) {
-      setStorageItem(PINCODE_STORAGE_KEY, addressDraft.pincode);
-      setPincode(addressDraft.pincode);
+      await supabase.from("addresses").update({ is_default: false }).eq("user_id", authUserId);
     }
+
+    if (editingAddressId) {
+      await supabase
+        .from("addresses")
+        .update({
+          label: addressDraft.label,
+          full_name: addressDraft.name,
+          line1: addressDraft.line,
+          city: addressDraft.city,
+          pincode: addressDraft.pincode,
+          is_default: addressDraft.isDefault,
+        })
+        .eq("id", editingAddressId);
+    } else {
+      await supabase.from("addresses").insert({
+        user_id: authUserId,
+        label: addressDraft.label,
+        full_name: addressDraft.name,
+        phone: user.phone || "",
+        line1: addressDraft.line,
+        city: addressDraft.city,
+        state: "",
+        pincode: addressDraft.pincode,
+        is_default: addressDraft.isDefault,
+      });
+    }
+
+    await refreshAddresses(authUserId);
     setIsAddressModalOpen(false);
     showToast(editingAddressId ? "Address updated." : "Address added.");
   };
 
-  const deleteAddress = () => {
-    if (!deleteAddressId) return;
-    setAddresses((current) => current.filter((address) => address.id !== deleteAddressId));
+  const deleteAddress = async () => {
+    if (!deleteAddressId || !authUserId) return;
+    const supabase = createClient();
+    await supabase.from("addresses").delete().eq("id", deleteAddressId);
     setDeleteAddressId(null);
+    await refreshAddresses(authUserId);
     showToast("Address deleted.");
   };
 
-  const markDefaultAddress = (id: string) => {
-    const next = addresses.map((address) => ({ ...address, isDefault: address.id === id }));
-    const selected = next.find((address) => address.id === id);
-    setAddresses(next);
-    if (selected) {
-      setStorageItem(PINCODE_STORAGE_KEY, selected.pincode);
-      setPincode(selected.pincode);
-    }
+  const markDefaultAddress = async (id: string) => {
+    if (!authUserId) return;
+    const supabase = createClient();
+    await supabase.from("addresses").update({ is_default: false }).eq("user_id", authUserId);
+    await supabase.from("addresses").update({ is_default: true }).eq("id", id);
+    await refreshAddresses(authUserId);
     showToast("Default address updated.");
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (confirmAction === "logout") {
-      removeStorageItem(AUTH_STORAGE_KEY);
+      const supabase = createClient();
+      await supabase.auth.signOut();
       setIsLoggedIn(false);
       setConfirmAction(null);
       router.push("/login");
@@ -210,12 +329,20 @@ export function ProfilePanel() {
     }
 
     if (confirmAction === "delete-account") {
-      removeStorageItem(AUTH_STORAGE_KEY);
-      setIsLoggedIn(false);
       setConfirmAction(null);
-      showToast("Demo account deletion confirmed.");
+      showToast("Please contact support to delete your account.");
     }
   };
+
+  if (loading) {
+    return (
+      <section className="bg-[#f8f6f3] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
+        <div className="mx-auto max-w-7xl">
+          <div className="h-[400px] animate-pulse rounded-[32px] bg-[#ece3d9]" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[#f8f6f3] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
@@ -238,11 +365,11 @@ export function ProfilePanel() {
                 </div>
                 <div>
                   <h1 className="font-display text-[44px] leading-none tracking-[-0.04em] sm:text-[58px]">
-                    {user.name}
+                    {user.name || user.email}
                   </h1>
                   <div className="mt-5 flex flex-wrap gap-3 text-[13px] text-white/78">
-                    <span>{user.phone}</span>
-                    <span className="hidden text-white/35 sm:inline">/</span>
+                    {user.phone ? <span>{user.phone}</span> : null}
+                    {user.phone && user.email ? <span className="hidden text-white/35 sm:inline">/</span> : null}
                     <span>{user.email}</span>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -250,7 +377,7 @@ export function ProfilePanel() {
                       {user.membership}
                     </span>
                     <span className="rounded-full border border-white/20 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-white/72">
-                      {isLoggedIn ? "Mock session active" : "Demo profile preview"}
+                      {isLoggedIn ? "Logged in" : "Demo profile preview"}
                     </span>
                   </div>
                 </div>
@@ -283,10 +410,10 @@ export function ProfilePanel() {
 
             <div className="grid content-center gap-4 p-6 sm:grid-cols-2 sm:p-8 lg:p-10">
               {[
-                ["Active Orders", "1"],
-                ["Wishlist Items", "18"],
+                ["Active Orders", String(orders.filter((o) => !["Delivered", "Completed", "Cancelled", "Return picked"].includes(o.status)).length)],
+                ["Wishlist Items", "—"],
                 ["Saved Addresses", String(addresses.length)],
-                ["Style Match", "92%"],
+                ["Style Match", "—"],
               ].map(([label, value]) => (
                 <article
                   key={label}
@@ -323,10 +450,10 @@ export function ProfilePanel() {
 
             <Panel title="Security" eyebrow="Privacy & login" id="security">
               <div className="space-y-4 text-[14px] text-[#5e574f]">
-                <PreferenceRow label="Login method" value="Email, phone OTP, Google ready" />
+                <PreferenceRow label="Login method" value="Email, phone OTP, Google" />
                 <button
                   type="button"
-                  onClick={() => showToast("Password change flow is ready for backend integration.")}
+                  onClick={() => showToast("Password change flow coming soon.")}
                   className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c]"
                 >
                   Change password
@@ -334,7 +461,7 @@ export function ProfilePanel() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => showToast("Session manager is mocked for now.")}
+                  onClick={() => showToast("Session manager coming soon.")}
                   className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c]"
                 >
                   Manage sessions
@@ -435,32 +562,36 @@ export function ProfilePanel() {
             </Panel>
 
             <Panel title="Order Snapshot" eyebrow="Latest activity">
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <article
-                    key={order.id}
-                    className="grid gap-4 rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)] md:grid-cols-[1fr_auto]"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="font-semibold text-[#1f2a3c]">{order.id}</h3>
-                        <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.13em] text-[#7b6f63]">
-                          {order.status}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">
-                        {order.items} items / {order.total} / {order.eta}
-                      </p>
-                    </div>
-                    <Link
-                      href="/order-tracking"
-                      className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+              {orders.length > 0 ? (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <article
+                      key={order.id}
+                      className="grid gap-4 rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)] md:grid-cols-[1fr_auto]"
                     >
-                      Track
-                    </Link>
-                  </article>
-                ))}
-              </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h3 className="font-semibold text-[#1f2a3c]">{order.id}</h3>
+                          <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.13em] text-[#7b6f63]">
+                            {order.status}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">
+                          {order.items} items / {order.total} / {order.eta}
+                        </p>
+                      </div>
+                      <Link
+                        href="/order-tracking"
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+                      >
+                        Track
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[14px] text-[#8b8176]">No orders yet. Start shopping!</p>
+              )}
               <Link
                 href="/orders"
                 className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
@@ -472,9 +603,9 @@ export function ProfilePanel() {
             <Panel title="Coupons & Rewards" eyebrow="Wallet" id="rewards">
               <div className="grid gap-4 sm:grid-cols-3">
                 {[
-                  ["Rs. 750", "try-on credits"],
-                  ["3", "active coupons"],
-                  ["5 friends", "referred"],
+                  ["Rs. 0", "try-on credits"],
+                  ["0", "active coupons"],
+                  ["0 friends", "referred"],
                 ].map(([value, label]) => (
                   <div key={label} className="rounded-[20px] border border-[#eadfd4] bg-white p-5">
                     <p className="font-display text-[32px] leading-none tracking-[-0.04em] text-[#171717]">
@@ -546,7 +677,7 @@ export function ProfilePanel() {
       {deleteAddressId ? (
         <ConfirmModal
           title="Delete address?"
-          text="This saved delivery location will be removed from your demo address book."
+          text="This saved delivery location will be removed from your address book."
           confirmLabel="Delete"
           onCancel={() => setDeleteAddressId(null)}
           onConfirm={deleteAddress}
@@ -558,10 +689,10 @@ export function ProfilePanel() {
           title={confirmAction === "logout" ? "Logout now?" : "Delete account?"}
           text={
             confirmAction === "logout"
-              ? "Your mock session will end and you will return to login."
-              : "This is a mock confirmation. Real account deletion should call the backend."
+              ? "Your session will end and you will return to login."
+              : "Please contact support to permanently delete your account."
           }
-          confirmLabel={confirmAction === "logout" ? "Logout" : "Delete"}
+          confirmLabel={confirmAction === "logout" ? "Logout" : "Contact support"}
           onCancel={() => setConfirmAction(null)}
           onConfirm={handleConfirmAction}
         />

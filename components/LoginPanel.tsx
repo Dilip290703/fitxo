@@ -3,8 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AUTH_STORAGE_KEY } from "@/lib/mockData";
-import { setStorageItem } from "@/lib/storage";
+import { createClient } from "@/lib/supabase/client";
 
 type AuthMode = "login" | "signup";
 
@@ -61,11 +60,18 @@ export function LoginPanel() {
   const [signupErrors, setSignupErrors] = useState<SignupErrors>({});
   const [toast, setToast] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [otpPending, setOtpPending] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
 
   const contactLooksLikeEmail = useMemo(
     () => loginForm.contact.includes("@"),
     [loginForm.contact],
   );
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 3000);
+  };
 
   const validateLogin = () => {
     const nextErrors: LoginErrors = {};
@@ -99,29 +105,130 @@ export function LoginPanel() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const finishMockAuth = async (message: string) => {
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setStorageItem(AUTH_STORAGE_KEY, "true");
-    setToast(message);
-    setIsSubmitting(false);
-    window.setTimeout(() => router.push("/profile"), 650);
-  };
-
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateLogin()) return;
-    void finishMockAuth(contactLooksLikeEmail ? "Logged in successfully." : "OTP verified for demo.");
+
+    const contact = loginForm.contact.trim();
+    setIsSubmitting(true);
+
+    try {
+      const supabase = createClient();
+
+      if (contactLooksLikeEmail) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: contact,
+          password: loginForm.password.trim(),
+        });
+        if (error) {
+          showToast(error.message);
+          return;
+        }
+        showToast("Logged in successfully.");
+        window.setTimeout(() => router.push("/profile"), 500);
+      } else {
+        // Phone OTP
+        const phone = contact.replace(/[\s-]/g, "");
+        const { error } = await supabase.auth.signInWithOtp({ phone });
+        if (error) {
+          showToast(error.message);
+          return;
+        }
+        setOtpPending(true);
+        showToast("OTP sent to your phone.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSignup = (event: FormEvent<HTMLFormElement>) => {
+  const handleOtpVerify = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!otpToken.trim()) return;
+
+    const phone = loginForm.contact.trim().replace(/[\s-]/g, "");
+    setIsSubmitting(true);
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone,
+        token: otpToken.trim(),
+        type: "sms",
+      });
+      if (error) {
+        showToast(error.message);
+        return;
+      }
+      if (data.user) {
+        await supabase.from("users").upsert(
+          {
+            id: data.user.id,
+            email: data.user.email ?? "",
+            phone: data.user.phone ?? phone,
+            role: "customer",
+            preferred_sizes: {},
+            is_active: true,
+            is_blocked: false,
+          },
+          { onConflict: "id", ignoreDuplicates: true },
+        );
+      }
+      showToast("Phone verified. Welcome!");
+      window.setTimeout(() => router.push("/profile"), 500);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateSignup()) return;
-    void finishMockAuth("Account created successfully.");
+
+    setIsSubmitting(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: signupForm.email.trim(),
+        password: signupForm.password.trim(),
+        options: {
+          data: { name: signupForm.name.trim(), phone: signupForm.phone.trim() },
+        },
+      });
+      if (error) {
+        showToast(error.message);
+        return;
+      }
+      if (data.user) {
+        await supabase.from("users").upsert(
+          {
+            id: data.user.id,
+            email: signupForm.email.trim(),
+            name: signupForm.name.trim(),
+            phone: signupForm.phone.trim(),
+            role: "customer",
+            preferred_sizes: {},
+            is_active: true,
+            is_blocked: false,
+          },
+          { onConflict: "id", ignoreDuplicates: true },
+        );
+      }
+      showToast("Account created successfully.");
+      window.setTimeout(() => router.push("/profile"), 500);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleGoogle = () => {
-    void finishMockAuth("Google sign-in connected for demo.");
+  const handleGoogle = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
   };
 
   return (
@@ -195,7 +302,7 @@ export function LoginPanel() {
               <p className="mx-auto mt-3 max-w-sm text-[14px] leading-6 text-[#625b53]">
                 {mode === "login"
                   ? "Sign in to manage orders, wishlists, addresses, and your AI style profile."
-                  : "Create a mock account now. Real authentication can plug into this flow later."}
+                  : "Create your account and start your try-at-home shopping experience."}
               </p>
             </div>
 
@@ -204,7 +311,7 @@ export function LoginPanel() {
                 <button
                   key={item}
                   type="button"
-                  onClick={() => setMode(item)}
+                  onClick={() => { setMode(item); setOtpPending(false); setOtpToken(""); }}
                   className={`h-11 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] transition duration-200 ${
                     mode === item
                       ? "bg-[#1f2a3c] text-white shadow-[0_10px_22px_rgba(31,42,60,0.18)]"
@@ -217,42 +324,66 @@ export function LoginPanel() {
             </div>
 
             {mode === "login" ? (
-              <form onSubmit={handleLogin} className="mt-5 space-y-3.5" noValidate>
-                <Field
-                  label="Phone or email"
-                  value={loginForm.contact}
-                  error={loginErrors.contact}
-                  autoComplete="username"
-                  onChange={(value) => {
-                    setLoginForm((current) => ({ ...current, contact: value }));
-                    setLoginErrors((current) => ({ ...current, contact: undefined }));
-                  }}
-                />
-                {contactLooksLikeEmail || loginForm.contact.trim() === "" ? (
+              otpPending ? (
+                <form onSubmit={handleOtpVerify} className="mt-5 space-y-3.5" noValidate>
+                  <p className="text-[13px] text-[#625b53]">
+                    Enter the OTP sent to <strong>{loginForm.contact}</strong>.
+                  </p>
                   <Field
-                    label="Password"
-                    type="password"
-                    value={loginForm.password}
-                    error={loginErrors.password}
-                    autoComplete="current-password"
-                    onChange={(value) => {
-                      setLoginForm((current) => ({ ...current, password: value }));
-                      setLoginErrors((current) => ({ ...current, password: undefined }));
-                    }}
+                    label="OTP code"
+                    value={otpToken}
+                    autoComplete="one-time-code"
+                    onChange={(value) => setOtpToken(value)}
                   />
-                ) : null}
-                <div className="flex justify-end">
+                  <PrimaryButton disabled={isSubmitting}>
+                    {isSubmitting ? "Verifying..." : "Verify OTP"}
+                  </PrimaryButton>
                   <button
                     type="button"
-                    className="text-[12px] font-semibold text-[#806f5c] transition duration-200 hover:text-[#1f2a3c]"
+                    onClick={() => { setOtpPending(false); setOtpToken(""); }}
+                    className="block w-full text-center text-[12px] font-semibold text-[#806f5c] hover:text-[#1f2a3c]"
                   >
-                    Forgot password?
+                    ← Back
                   </button>
-                </div>
-                <PrimaryButton disabled={isSubmitting}>
-                  {isSubmitting ? "Please wait..." : contactLooksLikeEmail ? "Login" : "Get OTP"}
-                </PrimaryButton>
-              </form>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="mt-5 space-y-3.5" noValidate>
+                  <Field
+                    label="Phone or email"
+                    value={loginForm.contact}
+                    error={loginErrors.contact}
+                    autoComplete="username"
+                    onChange={(value) => {
+                      setLoginForm((current) => ({ ...current, contact: value }));
+                      setLoginErrors((current) => ({ ...current, contact: undefined }));
+                    }}
+                  />
+                  {contactLooksLikeEmail || loginForm.contact.trim() === "" ? (
+                    <Field
+                      label="Password"
+                      type="password"
+                      value={loginForm.password}
+                      error={loginErrors.password}
+                      autoComplete="current-password"
+                      onChange={(value) => {
+                        setLoginForm((current) => ({ ...current, password: value }));
+                        setLoginErrors((current) => ({ ...current, password: undefined }));
+                      }}
+                    />
+                  ) : null}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      className="text-[12px] font-semibold text-[#806f5c] transition duration-200 hover:text-[#1f2a3c]"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <PrimaryButton disabled={isSubmitting}>
+                    {isSubmitting ? "Please wait..." : contactLooksLikeEmail ? "Login" : "Get OTP"}
+                  </PrimaryButton>
+                </form>
+              )
             ) : (
               <form onSubmit={handleSignup} className="mt-5 space-y-3.5" noValidate>
                 <Field
@@ -331,7 +462,7 @@ export function LoginPanel() {
             </p>
 
             <p className="mt-5 rounded-2xl bg-[#f6f1e8] px-4 py-3 text-center text-[12px] leading-6 text-[#6a6259]">
-              Trusted demo flow for saved addresses, try-at-home order tracking, and AI style preferences.
+              Secure login with Supabase Auth. Your data is protected and private.
             </p>
           </div>
         </div>

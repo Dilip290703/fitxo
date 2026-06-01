@@ -48,7 +48,9 @@ export default function ImageUploader({
         .upload(path, file, { upsert: false });
 
       if (uploadError) throw uploadError;
-      onUpload(path);
+
+      const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
+      onUpload(publicUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
       setPreview(null);

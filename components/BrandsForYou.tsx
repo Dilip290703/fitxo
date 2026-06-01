@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { brandLogoLinks } from "@/lib/mockData";
 
-export function BrandsForYou() {
+type BrandLink = { name: string; slug: string };
+
+export function BrandsForYou({ brands }: { brands?: BrandLink[] }) {
+  const displayBrands = brands ?? brandLogoLinks;
+
   return (
     <div className="bg-white py-14 sm:py-16">
       <div className="section-frame text-center">
@@ -11,7 +15,7 @@ export function BrandsForYou() {
         <div className="mx-auto mt-2 h-px w-16 bg-[#1c1c1c]" />
 
         <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
-          {brandLogoLinks.map((brand) => (
+          {displayBrands.map((brand) => (
             <Link
               key={brand.slug}
               href={`/brand/${brand.slug}`}
