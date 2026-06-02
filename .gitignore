@@ -15,17 +15,24 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# env files
+# env files (any depth — keep secrets out of every app/package)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
 
 # macOS / editor
 .DS_Store
 .vscode/
 .idea/
+
+# next.js generated type shim (regenerated per app)
+next-env.d.ts
+
+# vercel
+.vercel
 
 # misc
 coverage/
