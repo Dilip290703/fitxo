@@ -214,8 +214,12 @@ export function LoginPanel() {
           { onConflict: "id", ignoreDuplicates: true },
         );
       }
-      showToast("Account created successfully.");
-      window.setTimeout(() => router.push("/profile"), 500);
+      if (data.session) {
+        showToast("Account created successfully.");
+        window.setTimeout(() => router.push("/profile"), 500);
+      } else {
+        showToast("Account created. Check your email to confirm your account.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -223,12 +227,15 @@ export function LoginPanel() {
 
   const handleGoogle = async () => {
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
+    if (error) {
+      showToast(error.message);
+    }
   };
 
   return (
