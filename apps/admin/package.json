@@ -1,0 +1,31 @@
+{
+  "name": "@fitzo/admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fitzo/supabase": "workspace:*",
+    "@fitzo/ui": "workspace:*",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.106.2",
+    "next": "15.3.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "@fitzo/config": "workspace:*",
+    "@tailwindcss/postcss": "4.1.4",
+    "@types/node": "22.14.1",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "tailwindcss": "4.1.4",
+    "typescript": "5.8.3"
+  }
+}
