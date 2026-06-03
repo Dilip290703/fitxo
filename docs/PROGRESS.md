@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-03 _(synced to reality via `/audit`)_
+Last updated: 2026-06-04
 
 > **Audit summary (2026-06-03, strict):** ~17 of 72 screens genuinely built, plus several
 > partials. Customer **8** solid (+3 partial), Admin **9** solid (+2 partial), Agent **0**,
@@ -46,7 +46,7 @@ Last updated: 2026-06-03 _(synced to reality via `/audit`)_
 - [ ] 14. Return Pickup Scheduling
 - [x] 15. Profile Page
 - [x] 16. Wishlist Page
-- [ ] 17. Order History Page  *(placeholder)*
+- [x] 17. Order History Page — D  *(verified in real browser; PR open)*
 - [ ] 18. AI Skin Tone Setup Page  *(placeholder)*
 - [ ] 19. Notifications Page  *(placeholder)*
 - [ ] 20. Brand / Store Page  *(placeholder, uses mockData)*

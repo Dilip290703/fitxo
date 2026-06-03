@@ -1,15 +1,13 @@
-import { RoutePlaceholder } from "@/components/RoutePlaceholder";
+import { OrderHistoryView } from "@/components/orders/OrderHistoryView";
+import { Footer } from "@/components/Footer";
+import { Navbar } from "@/components/Navbar";
 
 export default function OrdersPage() {
   return (
-    <RoutePlaceholder
-      eyebrow="My orders"
-      title="Track active try-ons and past Fitzo deliveries."
-      description="Order history is mocked for now. Backend order APIs can connect here when checkout and delivery tracking are wired."
-      primaryLabel="Back to profile"
-      primaryHref="/profile"
-      secondaryLabel="Browse products"
-      secondaryHref="/products"
-    />
+    <main className="page-shell min-h-screen">
+      <Navbar showSecondaryNav={false} />
+      <OrderHistoryView />
+      <Footer />
+    </main>
   );
 }
