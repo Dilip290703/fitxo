@@ -17,28 +17,34 @@
   --font-sans: "Avenir Next", "Segoe UI", Inter, Helvetica, Arial, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+/* Base element resets live in @layer base so Tailwind utilities
+   (e.g. text-white) can override them. Without the layer, the unlayered
+   `a { color: inherit }` rule beats `.text-white`, making navy <Link>
+   buttons render with dark, invisible text. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), sans-serif;
-}
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), sans-serif;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button {
-  font: inherit;
+  button {
+    font: inherit;
+  }
 }
 
 .font-display {
