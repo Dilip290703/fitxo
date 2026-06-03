@@ -46,7 +46,7 @@ Last updated: 2026-06-04
 - [ ] 14. Return Pickup Scheduling
 - [x] 15. Profile Page
 - [x] 16. Wishlist Page
-- [~] 17. Order History Page — D  *(in progress, feat/customer-order-history)*
+- [x] 17. Order History Page — D  *(verified in real browser; PR open)*
 - [ ] 18. AI Skin Tone Setup Page  *(placeholder)*
 - [ ] 19. Notifications Page  *(placeholder)*
 - [ ] 20. Brand / Store Page  *(placeholder, uses mockData)*
