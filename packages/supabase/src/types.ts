@@ -1,4 +1,9 @@
 export type UserRole = 'customer' | 'admin' | 'store_manager' | 'rider';
+export type TrySessionStatus = 'active' | 'expired' | 'completed';
+export type ReturnCondition   = 'good' | 'damaged';
+export type ReturnStatus      = 'requested' | 'scheduled' | 'picked_up' | 'completed';
+export type PaymentTxnStatus  = 'pending' | 'initiated' | 'success' | 'failed' | 'refunded';
+export type PayoutStatus      = 'pending' | 'processing' | 'paid';
 export type GenderType = 'men' | 'women' | 'kids' | 'unisex';
 export type FitType = 'slim' | 'regular' | 'oversized' | 'relaxed';
 export type SizeType = 'alpha' | 'numeric' | 'uk' | 'eu' | 'us';
@@ -287,6 +292,58 @@ export interface ActivityLog {
   admin?: User;
 }
 
+export interface TrySession {
+  id: string;
+  order_id: string;
+  started_at: string;
+  deadline_at: string;
+  status: TrySessionStatus;
+  created_at: string;
+  order?: Order;
+}
+
+export interface Return {
+  id: string;
+  order_id: string;
+  order_item_id: string;
+  reason: string | null;
+  condition: ReturnCondition;
+  status: ReturnStatus;
+  requested_at: string;
+  completed_at: string | null;
+  order?: Order;
+  order_item?: OrderItem;
+}
+
+export interface Payment {
+  id: string;
+  order_id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  status: PaymentTxnStatus;
+  payment_method: PaymentMethod;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  razorpay_signature: string | null;
+  paid_at: string | null;
+  created_at: string;
+  order?: Order;
+  user?: User;
+}
+
+export interface Payout {
+  id: string;
+  store_id: string;
+  order_id: string;
+  amount: number;
+  status: PayoutStatus;
+  paid_at: string | null;
+  created_at: string;
+  store?: Store;
+  order?: Order;
+}
+
 // Database type map for typed Supabase queries
 export interface Database {
   public: {
@@ -308,6 +365,10 @@ export interface Database {
       coupons: { Row: Coupon; Insert: Omit<Coupon, 'id'>; Update: Partial<Omit<Coupon, 'id'>> };
       notifications: { Row: Notification; Insert: Omit<Notification, 'id' | 'created_at'>; Update: Partial<Omit<Notification, 'id'>> };
       activity_logs: { Row: ActivityLog; Insert: Omit<ActivityLog, 'id' | 'created_at' | 'admin'>; Update: never };
+      try_sessions: { Row: TrySession; Insert: Omit<TrySession, 'id' | 'created_at' | 'order'>; Update: Partial<Omit<TrySession, 'id' | 'order'>> };
+      returns: { Row: Return; Insert: Omit<Return, 'id' | 'order' | 'order_item'>; Update: Partial<Omit<Return, 'id' | 'order' | 'order_item'>> };
+      payments: { Row: Payment; Insert: Omit<Payment, 'id' | 'created_at' | 'order' | 'user'>; Update: Partial<Omit<Payment, 'id' | 'order' | 'user'>> };
+      payouts: { Row: Payout; Insert: Omit<Payout, 'id' | 'created_at' | 'store' | 'order'>; Update: Partial<Omit<Payout, 'id' | 'store' | 'order'>> };
     };
   };
 }
