@@ -35,6 +35,7 @@ type CartContextValue = {
   removeItem: (key: string) => void;
   moveToWishlist: (key: string) => void;
   updateQuantity: (key: string, quantity: number) => void;
+  clearCart: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
   subtotal: number;
@@ -192,6 +193,11 @@ export function CartProvider({
               )
             : [],
         );
+      },
+
+      clearCart: () => {
+        setItems([]);
+        setLatestItemKey(null);
       },
 
       openDrawer: () => setIsDrawerOpen(true),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
@@ -8,22 +9,42 @@ import { CheckoutButton } from "@/components/cart/CheckoutButton";
 import { PriceSummary } from "@/components/cart/PriceSummary";
 import { useCart } from "@/components/cart/CartProvider";
 import { useLocation } from "@/store/locationStore";
+import { placeOrder } from "@/app/checkout/actions";
+
+const PAYMENT_METHODS = ["UPI", "Card", "Pay Later", "Cash on Delivery"] as const;
 
 export function CheckoutPageView() {
-  const { items, subtotal } = useCart();
+  const router = useRouter();
+  const { items, subtotal, clearCart } = useCart();
   const { selectedPincode, deliveryStatus, hasChecked } = useLocation();
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const discount = items.length > 0 ? 300 : 0;
   const total = Math.max(0, Math.round(subtotal - discount));
 
-  // Block pay if pincode is known but not serviceable
   const deliveryBlocked = hasChecked && !deliveryStatus.available;
-  const canPay = !deliveryBlocked && items.length > 0 && !isProcessing;
+  const canPay = !deliveryBlocked && items.length > 0 && selectedMethod !== null && !isProcessing;
 
-  const pincodeDisplay = /^\d{6}$/.test(selectedPincode)
-    ? selectedPincode
-    : "Not set";
+  const pincodeDisplay = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Not set";
+
+  async function handlePlaceOrder() {
+    if (!canPay || !selectedMethod) return;
+    setIsProcessing(true);
+    setError(null);
+
+    const result = await placeOrder(items, selectedMethod);
+
+    if (!result.success) {
+      setError(result.error);
+      setIsProcessing(false);
+      return;
+    }
+
+    clearCart();
+    router.push(`/order-confirmation/${result.orderId}`);
+  }
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
@@ -50,7 +71,6 @@ export function CheckoutPageView() {
                 Pune, Maharashtra
               </p>
 
-              {/* Serviceability warning */}
               {deliveryBlocked && (
                 <div className="mt-4 rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
                   <strong>FitZo currently serves Pune locations only.</strong>
@@ -68,18 +88,33 @@ export function CheckoutPageView() {
             {/* Payment method */}
             <section className="rounded-[22px] border border-[#ece4da] bg-white p-6">
               <h2 className="text-[20px] font-medium text-[#171717]">Payment method</h2>
+              <p className="mt-1 text-[13px] text-[#8b7058]">
+                You&apos;ll only be charged for items you decide to keep.
+              </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {["UPI", "Card", "Pay Later", "Cash on Delivery"].map((method) => (
+                {PAYMENT_METHODS.map((method) => (
                   <button
                     key={method}
                     type="button"
                     disabled={deliveryBlocked}
-                    className="rounded-[16px] border border-[#ddd4c9] bg-[#fbfaf7] px-4 py-4 text-left text-[14px] font-medium text-[#171717] transition duration-200 hover:border-[#171d2b] disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => setSelectedMethod(method)}
+                    className={[
+                      "rounded-[16px] border px-4 py-4 text-left text-[14px] font-medium transition duration-200",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
+                      selectedMethod === method
+                        ? "border-[#171d2b] bg-[#171d2b] text-white"
+                        : "border-[#ddd4c9] bg-[#fbfaf7] text-[#171717] hover:border-[#171d2b]",
+                    ].join(" ")}
                   >
                     {method}
                   </button>
                 ))}
               </div>
+              {!selectedMethod && !deliveryBlocked && items.length > 0 && (
+                <p className="mt-3 text-[12px] text-[#8b7058]">
+                  Select a payment method to continue.
+                </p>
+              )}
             </section>
 
             <CartDeliveryInfo />
@@ -95,6 +130,12 @@ export function CheckoutPageView() {
                 You will only be billed for what you keep after your at-home try-on window closes.
               </p>
             </section>
+
+            {error && (
+              <div className="rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
+                {error}
+              </div>
+            )}
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
@@ -123,15 +164,13 @@ export function CheckoutPageView() {
               label={
                 deliveryBlocked
                   ? "Update Pincode to Continue"
+                  : !selectedMethod
+                  ? "Select a Payment Method"
                   : isProcessing
-                  ? "Processing…"
-                  : `Pay ₹${total}`
+                  ? "Placing order…"
+                  : `Place Order — ₹${total}`
               }
-              onClick={() => {
-                if (!canPay) return;
-                setIsProcessing(true);
-                window.setTimeout(() => setIsProcessing(false), 1800);
-              }}
+              onClick={handlePlaceOrder}
               disabled={!canPay}
             />
           </aside>
