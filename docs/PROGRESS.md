@@ -48,9 +48,9 @@ Last updated: 2026-06-04
 - [x] 16. Wishlist Page
 - [x] 17. Order History Page — D  *(verified in real browser; PR open)*
 - [ ] 18. AI Skin Tone Setup Page  *(placeholder)*
-- [~] 19. Notifications Page — D  *(in progress, feat/customer-search-notifications)*
+- [x] 19. Notifications Page — D  *(verified; PR #6)*
 - [ ] 20. Brand / Store Page  *(placeholder, uses mockData)*
-- [~] 21. Search Results Page — D  *(in progress, feat/customer-search-notifications)*
+- [x] 21. Search Results Page — D  *(verified; PR #6)*
 - [ ] 22. How It Works Page  *(only a homepage section, no route)*
 - [x] 23. Contact / Support Page
 - [~] 24. Size Guide  *(SizeChartModal component exists; no standalone screen)*
