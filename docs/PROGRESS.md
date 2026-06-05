@@ -54,7 +54,7 @@ Last updated: 2026-06-04
 - [ ] 22. How It Works Page  *(only a homepage section, no route)*
 - [x] 23. Contact / Support Page
 - [~] 24. Size Guide  *(SizeChartModal component exists; no standalone screen)*
-- [ ] 25. 404 Error Page  *(no custom not-found)*
+- [x] 25. 404 Error Page — D  *(verified in preview)*
 
 ## P2 — Delivery Agent Panel (12) — empty shell, not started
 - [ ] 1. Agent Login
