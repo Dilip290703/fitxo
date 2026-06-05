@@ -56,6 +56,7 @@ export type FetchProductsParams = {
   sortBy?: 'new-arrivals' | 'popular' | 'price-low' | 'price-high';
   page?: number;
   perPage?: number;
+  searchQuery?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,6 +81,7 @@ export async function queryProducts(
     sortBy = 'new-arrivals',
     page = 1,
     perPage = 9,
+    searchQuery,
   } = params;
 
   let query = supabase
@@ -94,6 +96,7 @@ export async function queryProducts(
     .eq('is_active', true)
     .eq('is_deleted', false);
 
+  if (searchQuery?.trim()) query = query.ilike('name', `%${searchQuery.trim()}%`);
   if (brandIds?.length) query = query.in('brand_id', brandIds);
   if (categoryIds?.length) query = query.in('category_id', categoryIds);
   if (priceMin != null) query = query.gte('base_price', priceMin);
