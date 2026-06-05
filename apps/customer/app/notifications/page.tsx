@@ -1,15 +1,13 @@
-import { RoutePlaceholder } from "@/components/RoutePlaceholder";
+import { NotificationsView } from "@/components/notifications/NotificationsView";
+import { Footer } from "@/components/Footer";
+import { Navbar } from "@/components/Navbar";
 
 export default function NotificationsPage() {
   return (
-    <RoutePlaceholder
-      eyebrow="Notifications"
-      title="Control delivery, offer, wishlist, and style alerts."
-      description="Notification preferences are mocked until account settings and messaging providers are connected."
-      primaryLabel="Back to profile"
-      primaryHref="/profile"
-      secondaryLabel="Contact support"
-      secondaryHref="/contact"
-    />
+    <main className="page-shell min-h-screen">
+      <Navbar showSecondaryNav={false} />
+      <NotificationsView />
+      <Footer />
+    </main>
   );
 }

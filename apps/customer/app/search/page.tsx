@@ -1,18 +1,19 @@
-import { RoutePlaceholder } from "@/components/RoutePlaceholder";
-import { SearchPanel } from "@/components/SearchPanel";
+import { SearchResultsView } from "@/components/search/SearchResultsView";
+import { Footer } from "@/components/Footer";
+import { Navbar } from "@/components/Navbar";
 
-export default function SearchPage() {
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q = "" } = await searchParams;
+
   return (
-    <RoutePlaceholder
-      eyebrow="Search Fitzo"
-      title="Find the next look to try at home."
-      description="Search brands, outfits, and categories, then jump straight into a product or brand page."
-      primaryLabel="See all products"
-      primaryHref="/products"
-      secondaryLabel="Back to home"
-      secondaryHref="/"
-    >
-      <SearchPanel />
-    </RoutePlaceholder>
+    <main className="page-shell min-h-screen">
+      <Navbar showSecondaryNav={false} />
+      <SearchResultsView initialQuery={q} />
+      <Footer />
+    </main>
   );
 }
