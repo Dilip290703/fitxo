@@ -49,7 +49,7 @@ Last updated: 2026-06-04
 - [x] 17. Order History Page — D  *(verified in real browser; PR open)*
 - [ ] 18. AI Skin Tone Setup Page  *(placeholder)*
 - [x] 19. Notifications Page — D  *(verified; PR #6)*
-- [~] 20. Brand / Store Page — D  *(in progress, feat/customer-brand-pages)*
+- [x] 20. Brand / Store Page — D  *(verified in preview; PR open)*
 - [x] 21. Search Results Page — D  *(verified; PR #6)*
 - [ ] 22. How It Works Page  *(only a homepage section, no route)*
 - [x] 23. Contact / Support Page
