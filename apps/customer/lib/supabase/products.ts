@@ -57,6 +57,7 @@ export type FetchProductsParams = {
   page?: number;
   perPage?: number;
   searchQuery?: string;
+  brandSlug?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,6 +83,7 @@ export async function queryProducts(
     page = 1,
     perPage = 9,
     searchQuery,
+    brandSlug,
   } = params;
 
   let query = supabase
@@ -97,6 +99,16 @@ export async function queryProducts(
     .eq('is_deleted', false);
 
   if (searchQuery?.trim()) query = query.ilike('name', `%${searchQuery.trim()}%`);
+  // brandSlug: resolve to brand_id first so the filter is on the FK column, not a join
+  if (brandSlug?.trim() && !brandIds?.length) {
+    const { data: brandRow } = await supabase
+      .from('brands')
+      .select('id')
+      .eq('slug', brandSlug.trim())
+      .single();
+    if (brandRow?.id) query = query.eq('brand_id', brandRow.id);
+    else return { products: [], total: 0 }; // unknown brand → no results
+  }
   if (brandIds?.length) query = query.in('brand_id', brandIds);
   if (categoryIds?.length) query = query.in('category_id', categoryIds);
   if (priceMin != null) query = query.gte('base_price', priceMin);
