@@ -51,9 +51,9 @@ Last updated: 2026-06-04
 - [x] 19. Notifications Page — D  *(verified; PR #6)*
 - [x] 20. Brand / Store Page — D  *(verified in preview; PR open)*
 - [x] 21. Search Results Page — D  *(verified; PR #6)*
-- [~] 22. How It Works Page — D  *(in progress)*
+- [x] 22. How It Works Page — D  *(verified in preview; PR open)*
 - [x] 23. Contact / Support Page
-- [~] 24. Size Guide — D  *(in progress)*
+- [x] 24. Size Guide — D  *(verified in preview; PR open)*
 - [x] 25. 404 Error Page — D  *(verified in preview)*
 
 ## P2 — Delivery Agent Panel (12) — empty shell, not started
