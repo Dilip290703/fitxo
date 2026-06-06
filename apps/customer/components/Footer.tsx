@@ -20,9 +20,9 @@ const footerColumns = [
     items: [
       { label: "Shipping Info", href: "/contact" },
       { label: "Returns", href: "/refund-policy" },
-      { label: "How to Order", href: "/products" },
+      { label: "How to Order", href: "/how-it-works" },
       { label: "How to Track", href: "/reviews" },
-      { label: "Size Chart", href: "/about" },
+      { label: "Size Chart", href: "/size-guide" },
     ],
   },
   {
