@@ -76,7 +76,7 @@ Last updated: 2026-06-04
 > Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.
 > Data model: store user = role `store_manager` + `store_managers` row (user↔store); products via `products.store_id`; a store's orders via `order_items → products WHERE store_id = mine` (no store_id on order_items). Store dev server runs on **:3003** (`pnpm dev:store`).
 - [T] 1. Store Login — D  *(email+pw + store_manager gate, reusable `getStoreContext`, auth-gated root stub; login verified across all conditions in a real browser; PR #11 open)*
-- [~] 2. Store Dashboard — D
+- [~] 2. Store Dashboard — D  *(sidebar shell + KPI cards + low-stock & recent-orders panels; needs migrations 004 (manager-read RLS) & 005 (RLS fix) applied + dashboard seed, then real-browser verify)*
 - [ ] 3. Product Catalog Page
 - [ ] 4. Add Product Page
 - [ ] 5. Edit Product Page
@@ -132,6 +132,8 @@ Last updated: 2026-06-04
 - 2026-06-04: **Work split** — D wraps the Customer panel (standalone screens) and moves to the **Store panel**. Partner owns Razorpay/customer-loop finish + the Agent panel.
 
 ## Known issues / TODO
+- 🔴 **SECURITY (2026-06-08): RLS was DISABLED on `users`, `orders`, `order_items` in the live DB** — anon key + no session could read all customer PII (names/emails/phones) + all orders. Found while building the Store Dashboard (dashboard showed 6 orders with no session). Policies in schema.sql are intact; RLS had just been turned off. Fix = run **migration 005** (`packages/supabase/migrations/005_reenable_rls.sql`, re-enables RLS on all tables, idempotent). **Affects the customer panel too — apply ASAP.** Verify with `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public';`
+- **Store panel:** migration **004** (`004_store_manager_read.sql`) adds manager SELECT on products/variants/orders/order_items/returns — required for Dashboard + Orders/Returns/Earnings. Apply before testing the store dashboard.
 - **Customer loop:** Payment (Razorpay) not built yet — kept items can't be charged (#13). Return Pickup (#14) + Checkout Time Slot (#8) also pending. (Partner.)
 - Store-manager RLS for viewing orders that contain their products likely needs a policy (order_items has no store_id → join via products.store_id). Verify during Store build.
 - No automated tests anywhere (0). `/finish-task` should start adding smoke tests per screen.
