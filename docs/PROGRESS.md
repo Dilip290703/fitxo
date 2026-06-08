@@ -76,7 +76,7 @@ Last updated: 2026-06-04
 > Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.
 > Data model: store user = role `store_manager` + `store_managers` row (user↔store); products via `products.store_id`; a store's orders via `order_items → products WHERE store_id = mine` (no store_id on order_items). Store dev server runs on **:3003** (`pnpm dev:store`).
 - [T] 1. Store Login — D  *(email+pw + store_manager gate, reusable `getStoreContext`, auth-gated root stub; login verified across all conditions in a real browser; PR #11 open)*
-- [ ] 2. Store Dashboard
+- [~] 2. Store Dashboard — D
 - [ ] 3. Product Catalog Page
 - [ ] 4. Add Product Page
 - [ ] 5. Edit Product Page
