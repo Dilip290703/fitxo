@@ -8,23 +8,25 @@ Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
 Last updated: 2026-06-04
 
-> **Audit summary (2026-06-03, strict):** ~17 of 72 screens genuinely built, plus several
-> partials. Customer **8** solid (+3 partial), Admin **9** solid (+2 partial), Agent **0**,
-> Store **0** (empty shells). **No automated tests exist anywhere (0).** The signature
-> **order → 24h try → keep/return → payment** loop is **not functional**: checkout doesn't
-> persist orders, the `try_sessions/returns/payments/payouts` tables don't exist, and
-> Razorpay + the AI skin-tone endpoint are not integrated (only DB columns / display fields).
-> Firebase is **not** in the current codebase (0 refs) — stack of record is Supabase.
+> **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
+> **Customer panel: standalone screens complete** — Dilip wrapped his customer work
+> (Order History, Notifications, Search, Brand pages, How It Works, Size Guide, 404,
+> plus the login + navy-button fixes). The core **order → 24h try → keep/return** loop
+> is wired (checkout creates a real order + try_session; confirmation + tracking +
+> keep/return work). Remaining customer items are flow/Razorpay: **Payment (#13)**,
+> Return Pickup (#14), Time Slot (#8), AI Skin Setup (#18) — owned by partner.
+> **Now in progress: Store panel (P3) — owned by D.** Agent panel + Razorpay — partner.
+> No automated tests yet. Stack is Supabase (no Firebase).
 
 ---
 
 ## Foundation
 - [x] Monorepo restructure — 4 app folders + shared packages, pnpm workspaces (see Decisions log)
 - [ ] 4 hosting projects + subdomains wired (host TBD)
-- [~] Supabase schema — 17 tables present (users, products, product_colors/variants/images, brands, categories, stores, store_managers, addresses, orders, order_items, riders, deliveries, coupons, notifications, activity_logs). **Missing: `try_sessions`, `returns`, `payments`, `payouts`.**
-- [~] RLS policies — ~40 policies / RLS enabled on existing tables; pending for the missing loop tables.
-- [~] Auth — customer phone+OTP works (Supabase `signInWithOtp`/`verifyOtp`); admin email+password works but **no 2FA**; store/agent auth not built.
-- [ ] Razorpay integration (payments) — only type fields + admin display; no SDK/flow
+- [x] Supabase schema — full loop now present incl. `try_sessions`, `returns`, `payments`, `payouts` (migration 002) + `order_items` update policy (003).
+- [~] RLS policies — enabled across tables; ⚠️ **store-manager visibility of orders containing their products may need a policy** (order_items has no store_id; store sees orders via products.store_id join). Verify/add during Store panel build.
+- [~] Auth — customer email+password & phone OTP work; admin email+password works (no 2FA); **store/agent auth not built yet** (store login is the first Store-panel task).
+- [ ] Razorpay integration (payments) — still not built; no SDK/flow/payment route (partner's task)
 - [ ] Razorpay Payouts integration (store + agent)
 - [ ] AI skin-tone endpoint — only DB columns + hardcoded display; no endpoint
 - [~] Shared UI kit — `packages/ui` exists but thin; admin has its own `components/admin/*`
@@ -35,26 +37,26 @@ Last updated: 2026-06-04
 - [x] 3. Product Detail Page  *(Supabase-wired; AI skin-tone badge still placeholder)*
 - [x] 4. Login / Signup Page  *(LoginPanel, Supabase auth)*
 - [~] 5. OTP Verification  *(handled inline in LoginPanel; no standalone screen)*
-- [x] 6. Cart / Bag Page  *(CartProvider; localStorage, not yet persisted as an order)*
-- [~] 7. Checkout — Address Page  *(UI exists but does NOT create an order in Supabase)*
-- [ ] 8. Checkout — Time Slot Page
-- [ ] 9. Order Confirmation Page
-- [ ] 10. Order Tracking Page  *(placeholder)*
-- [ ] 11. Try Timer Page  *(placeholder — the signature 24h countdown)*
-- [ ] 12. Keep or Return Page
-- [ ] 13. Payment Page  *(blocked: no Razorpay, no payments table)*
-- [ ] 14. Return Pickup Scheduling
+- [x] 6. Cart / Bag Page  *(CartProvider; localStorage)*
+- [x] 7. Checkout — Address Page  *(creates a real order + try_session in Supabase — partner)*
+- [ ] 8. Checkout — Time Slot Page  *(partner)*
+- [x] 9. Order Confirmation Page  *(partner)*
+- [x] 10. Order Tracking Page  *(timeline + 24h countdown — partner)*
+- [~] 11. Try Timer  *(the 24h countdown is built into Order Tracking; no standalone screen)*
+- [x] 12. Keep or Return  *(keep/return actions live in Order Tracking — partner)*
+- [ ] 13. Payment Page  *(not built — Razorpay, partner)*
+- [ ] 14. Return Pickup Scheduling  *(partner)*
 - [x] 15. Profile Page
 - [x] 16. Wishlist Page
-- [x] 17. Order History Page — D  *(verified in real browser; PR open)*
-- [ ] 18. AI Skin Tone Setup Page  *(placeholder)*
-- [x] 19. Notifications Page — D  *(verified; PR #6)*
-- [x] 20. Brand / Store Page — D  *(verified in preview; PR open)*
-- [x] 21. Search Results Page — D  *(verified; PR #6)*
-- [x] 22. How It Works Page — D  *(verified in preview; PR open)*
+- [x] 17. Order History Page — D
+- [ ] 18. AI Skin Tone Setup Page  *(placeholder — blocked on AI endpoint)*
+- [x] 19. Notifications Page — D
+- [x] 20. Brand / Store Page — D
+- [x] 21. Search Results Page — D
+- [x] 22. How It Works Page — D
 - [x] 23. Contact / Support Page
-- [x] 24. Size Guide — D  *(verified in preview; PR open)*
-- [x] 25. 404 Error Page — D  *(verified in preview)*
+- [x] 24. Size Guide — D
+- [x] 25. 404 Error Page — D
 
 ## P2 — Delivery Agent Panel (12) — empty shell, not started
 - [ ] 1. Agent Login
@@ -70,7 +72,9 @@ Last updated: 2026-06-04
 - [ ] 11. Support Page (Agent)
 - [ ] 12. Onboarding / Training (Agent)
 
-## P3 — Store Panel (14) — empty shell, not started
+## P3 — Store Panel (14) — 🔨 IN PROGRESS, owned by D (started week of 2026-06-04)
+> Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.
+> Data model: store user = role `store_manager` + `store_managers` row (user↔store); products via `products.store_id`; a store's orders via `order_items → products WHERE store_id = mine` (no store_id on order_items). Store dev server runs on **:3003** (`pnpm dev:store`).
 - [ ] 1. Store Login
 - [ ] 2. Store Dashboard
 - [ ] 3. Product Catalog Page
@@ -114,20 +118,24 @@ Last updated: 2026-06-04
 
 ---
 
-## Recommended next 5 tasks (ordered by what unblocks the most)
-1. **Schema: add `try_sessions`, `returns`, `payments`, `payouts` (+ RLS, + types)** — unblocks the entire signature loop and several admin screens. Foundation, do first.
-2. **Wire customer Checkout → create order** in Supabase (orders + order_items + address); cart is currently localStorage-only.
-3. **Order Confirmation + Order Tracking** pages reading the real order (replace placeholders).
-4. **Try Timer (24h) + Keep-or-Return** wired to `try_sessions` — the product differentiator.
-5. **Razorpay Payment** for kept items (needs #1, #2) — the money step that closes the loop.
+## Recommended next tasks
+**D (Store panel):** Store Login → Dashboard → Product Catalog → Add/Edit Product → Order Management.
+**Partner (close the loop + new panel):**
+1. **Razorpay Payment** for kept items — the money step that closes the customer loop (#13).
+2. Return Pickup scheduling (#14) + Checkout Time Slot (#8).
+3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the 24h try timer).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
 - 2026-06-03: Restructured the single Next.js app into a **pnpm monorepo** — one app per panel (`apps/{customer,agent,store,admin}`) + shared `packages/{supabase,ui,config}`. Admin is now a separate build/deploy so admin code & the service-role key never ship in the customer bundle. Kept the `/admin` route prefix inside the admin app to avoid rewriting ~45 links. History preserved via `git mv`. (branch `chore/monorepo-restructure`, PR #1)
+- 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
+- 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.
+- 2026-06-04: **Work split** — D wraps the Customer panel (standalone screens) and moves to the **Store panel**. Partner owns Razorpay/customer-loop finish + the Agent panel.
 
 ## Known issues / TODO
-- **Critical-path blocker:** order→try→keep/return→payment loop not functional — no order creation on checkout, missing `try_sessions/returns/payments/payouts` tables, no Razorpay.
+- **Customer loop:** Payment (Razorpay) not built yet — kept items can't be charged (#13). Return Pickup (#14) + Checkout Time Slot (#8) also pending. (Partner.)
+- Store-manager RLS for viewing orders that contain their products likely needs a policy (order_items has no store_id → join via products.store_id). Verify during Store build.
 - No automated tests anywhere (0). `/finish-task` should start adding smoke tests per screen.
 - Admin has no 2FA (spec requires it for admin login).
 - AI skin-tone endpoint not built; Product Detail badge + AI Style Setup are placeholders.
 - Hosting provider not chosen (does not affect code; decide before Week 8).
-- `agent` and `store` apps are empty shells.
+- `agent` app is still an empty shell; `store` app is now in active development (D).
