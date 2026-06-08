@@ -75,7 +75,7 @@ Last updated: 2026-06-04
 ## P3 — Store Panel (14) — 🔨 IN PROGRESS, owned by D (started week of 2026-06-04)
 > Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.
 > Data model: store user = role `store_manager` + `store_managers` row (user↔store); products via `products.store_id`; a store's orders via `order_items → products WHERE store_id = mine` (no store_id on order_items). Store dev server runs on **:3003** (`pnpm dev:store`).
-- [~] 1. Store Login — D
+- [~] 1. Store Login — D  *(built: email+pw + store_manager gate, reusable `getStoreContext`, auth-gated root stub; pending seed + real-browser login test)*
 - [ ] 2. Store Dashboard
 - [ ] 3. Product Catalog Page
 - [ ] 4. Add Product Page
