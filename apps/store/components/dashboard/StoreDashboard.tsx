@@ -7,23 +7,7 @@ import {
   type LowStockVariant,
   type RecentOrder,
 } from "@/lib/dashboard";
-
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: "Order placed",
-  confirmed: "Confirmed",
-  assigned: "Rider assigned",
-  out_for_delivery: "Out for try-on",
-  delivered: "Delivered",
-  try_window_active: "Try window open",
-  return_requested: "Return requested",
-  return_picked: "Return picked",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
-function formatStatus(status: string) {
-  return ORDER_STATUS_LABELS[status] ?? status;
-}
+import { formatOrderStatus } from "@/lib/orderStatus";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -196,7 +180,7 @@ function RecentOrdersPanel({ orders }: { orders: RecentOrder[] }) {
                   <td className="py-2.5 pr-3 font-mono text-[12px] text-[#171d2b]">
                     {o.orderNumber}
                   </td>
-                  <td className="py-2.5 pr-3 text-[#5f574e]">{formatStatus(o.status)}</td>
+                  <td className="py-2.5 pr-3 text-[#5f574e]">{formatOrderStatus(o.status)}</td>
                   <td className="py-2.5 pr-3 text-right text-[#171d2b]">
                     {formatCurrency(o.amount)}
                   </td>

@@ -18,7 +18,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { key: "dashboard", label: "Dashboard", icon: "▣", href: "/", ready: true },
   { key: "catalogue", label: "Catalogue", icon: "🛍", href: "/catalogue", ready: true },
-  { key: "orders", label: "Orders", icon: "🧾" },
+  { key: "orders", label: "Orders", icon: "🧾", href: "/orders", ready: true },
   { key: "returns", label: "Returns", icon: "↩" },
   { key: "earnings", label: "Earnings", icon: "₹" },
   { key: "analytics", label: "Analytics", icon: "📊" },
