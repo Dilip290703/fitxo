@@ -77,7 +77,7 @@ Last updated: 2026-06-04
 > Data model: store user = role `store_manager` + `store_managers` row (user↔store); products via `products.store_id`; a store's orders via `order_items → products WHERE store_id = mine` (no store_id on order_items). Store dev server runs on **:3003** (`pnpm dev:store`).
 - [T] 1. Store Login — D  *(email+pw + store_manager gate, reusable `getStoreContext`, auth-gated root stub; login verified across all conditions in a real browser; PR #11 open)*
 - [T] 2. Store Dashboard — D  *(sidebar shell + KPI cards + low-stock & recent-orders panels; migrations 004 & 005 applied; verified in a real browser with seed data — store-scoped RLS confirmed; PR #12 open)*
-- [ ] 3. Product Catalog Page
+- [~] 3. Product Catalog Page — D  *(store's own products: table + search/status filter + activate/deactivate + soft-delete; Add/Edit entry points stubbed "Soon" pending #4/#5; layout verified via preview with seed data, write actions pending real-browser test)*
 - [ ] 4. Add Product Page
 - [ ] 5. Edit Product Page
 - [ ] 6. Order Management Page
