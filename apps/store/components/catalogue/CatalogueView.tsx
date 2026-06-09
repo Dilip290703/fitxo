@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   loadStoreProducts,
   setProductActive,
@@ -107,16 +108,12 @@ export function CatalogueView({ storeId }: { storeId: string }) {
             ) : null}
           </h1>
         </div>
-        {/* Add Product lands here once screen #4 ships. */}
-        <span
-          title="Coming soon"
-          className="inline-flex cursor-default items-center gap-2 rounded-full bg-[#ece5da] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#9a9034]"
+        <Link
+          href="/catalogue/new"
+          className="inline-flex items-center gap-2 rounded-full bg-[#171d2b] px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#1f2a3c]"
         >
           + Add product
-          <span className="rounded-full bg-white px-2 py-0.5 text-[9px] tracking-[0.12em] text-[#958675]">
-            Soon
-          </span>
-        </span>
+        </Link>
       </header>
 
       <div className="mt-6 flex flex-wrap gap-3">
@@ -221,13 +218,12 @@ export function CatalogueView({ storeId }: { storeId: string }) {
                         >
                           {p.isActive ? "Deactivate" : "Activate"}
                         </button>
-                        {/* Edit lands here once screen #5 ships. */}
-                        <span
-                          title="Coming soon"
-                          className="cursor-default rounded-lg border border-[#ece5da] px-3 py-1.5 text-[12px] font-semibold text-[#bcb3a6]"
+                        <Link
+                          href={`/catalogue/${p.id}/edit`}
+                          className="rounded-lg border border-[#ded3c6] px-3 py-1.5 text-[12px] font-semibold text-[#5f574e] transition hover:border-[#171d2b] hover:text-[#171d2b]"
                         >
                           Edit
-                        </span>
+                        </Link>
                         <button
                           type="button"
                           onClick={() => setConfirmDelete(p)}

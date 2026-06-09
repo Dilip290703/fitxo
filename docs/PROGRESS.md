@@ -78,8 +78,8 @@ Last updated: 2026-06-04
 - [T] 1. Store Login — D  *(email+pw + store_manager gate, reusable `getStoreContext`, auth-gated root stub; login verified across all conditions in a real browser; PR #11 open)*
 - [T] 2. Store Dashboard — D  *(sidebar shell + KPI cards + low-stock & recent-orders panels; migrations 004 & 005 applied; verified in a real browser with seed data — store-scoped RLS confirmed; PR #12 open)*
 - [~] 3. Product Catalog Page — D  *(store's own products: table + search/status filter + activate/deactivate + soft-delete; Add/Edit entry points stubbed "Soon" pending #4/#5; layout verified via preview with seed data, write actions pending real-browser test)*
-- [ ] 4. Add Product Page
-- [ ] 5. Edit Product Page
+- [~] 4. Add Product Page — D  *(combined with #5 — shared ProductForm at /catalogue/new)*
+- [~] 5. Edit Product Page — D  *(combined with #4 — shared ProductForm at /catalogue/[id]/edit; details + colours/variants; edit is RESTRICT-safe (updates variants in place, soft-disables ordered ones instead of deleting). Needs migration 006 (manager product write) applied, then real-browser test. Images deferred.)*
 - [ ] 6. Order Management Page
 - [ ] 7. Order Detail (Store)
 - [ ] 8. Returns Management
