@@ -80,8 +80,8 @@ Last updated: 2026-06-04
 - [~] 3. Product Catalog Page — D  *(store's own products: table + search/status filter + activate/deactivate + soft-delete; Add/Edit entry points stubbed "Soon" pending #4/#5; layout verified via preview with seed data, write actions pending real-browser test)*
 - [T] 4. Add Product Page — D  *(combined with #5 — shared ProductForm at /catalogue/new; migration 006 applied; verified in browser)*
 - [T] 5. Edit Product Page — D  *(combined with #4 — shared ProductForm at /catalogue/[id]/edit; RESTRICT-safe variant edits; verified in browser. Images deferred.)*
-- [~] 6. Order Management Page — D  *(combined with #7 — /orders list, RLS-scoped to store's own items, status-bucket filter, per-store subtotal + ready/kept/returned counts; needs migration 007, then real-browser test)*
-- [~] 7. Order Detail (Store) — D  *(combined with #6 — /orders/[id]; store's line items + SKU + keep/return outcome; per-item "Mark ready" + "Mark all ready" via guarded set_order_item_prepared RPC (migration 007). No customer PII (RLS).)*
+- [T] 6. Order Management Page — D  *(combined with #7 — /orders list, RLS-scoped, status-bucket filter, per-store subtotal + ready/kept/returned counts; migration 007 applied; verified in browser. Rows are now fully clickable with a › affordance.)*
+- [T] 7. Order Detail (Store) — D  *(combined with #6 — /orders/[id]; store's line items + SKU + keep/return outcome; per-item "Mark ready" + "Mark all ready" via guarded set_order_item_prepared RPC; verified in browser. No customer PII (RLS).)*
 - [ ] 8. Returns Management
 - [ ] 9. Earnings Page (Store)
 - [ ] 10. Analytics Page (Store)

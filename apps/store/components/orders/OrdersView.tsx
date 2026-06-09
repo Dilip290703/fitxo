@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { loadStoreOrders, type StoreOrderSummary } from "@/lib/orders";
 import { formatOrderStatus, statusBadgeClass } from "@/lib/orderStatus";
 
@@ -38,6 +38,7 @@ function formatDate(ts: string) {
 }
 
 export function OrdersView() {
+  const router = useRouter();
   const [orders, setOrders] = useState<StoreOrderSummary[] | null>(null);
   const [error, setError] = useState("");
   const [bucket, setBucket] = useState<Bucket>("all");
@@ -76,6 +77,9 @@ export function OrdersView() {
         <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-[#171d2b] sm:text-[32px]">
           Order management
         </h1>
+        <p className="mt-1 text-[13px] text-[#958675]">
+          Select an order to see its items and mark them ready for pickup.
+        </p>
       </header>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -123,15 +127,20 @@ export function OrdersView() {
                   <th className="px-4 py-3 text-left font-semibold">Outcome</th>
                   <th className="px-4 py-3 text-right font-semibold">Subtotal</th>
                   <th className="px-4 py-3 text-right font-semibold">Placed</th>
+                  <th className="px-2 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((o) => (
-                  <tr key={o.id} className="border-b border-[#f0ebe3] last:border-0 hover:bg-[#fbfaf7]">
+                  <tr
+                    key={o.id}
+                    onClick={() => router.push(`/orders/${o.id}`)}
+                    className="cursor-pointer border-b border-[#f0ebe3] last:border-0 hover:bg-[#fbfaf7]"
+                  >
                     <td className="px-4 py-3">
-                      <Link href={`/orders/${o.id}`} className="font-mono text-[12px] font-semibold text-[#171d2b] hover:underline">
+                      <span className="font-mono text-[12px] font-semibold text-[#171d2b]">
                         {o.orderNumber}
-                      </Link>
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusBadgeClass(o.status)}`}>
@@ -156,6 +165,7 @@ export function OrdersView() {
                       {formatCurrency(o.subtotal)}
                     </td>
                     <td className="px-4 py-3 text-right text-[#958675]">{formatDate(o.createdAt)}</td>
+                    <td className="px-2 py-3 text-right text-[16px] leading-none text-[#bcb3a6]">›</td>
                   </tr>
                 ))}
               </tbody>
