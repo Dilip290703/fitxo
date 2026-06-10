@@ -15,7 +15,11 @@ Last updated: 2026-06-04
 > is wired (checkout creates a real order + try_session; confirmation + tracking +
 > keep/return work). Remaining customer items are flow/Razorpay: **Payment (#13)**,
 > Return Pickup (#14), Time Slot (#8), AI Skin Setup (#18) — owned by partner.
-> **Now in progress: Store panel (P3) — owned by D.** Agent panel + Razorpay — partner.
+> **Store panel (P3) COMPLETE (2026-06-10) — owned by D.** All 14 screens merged +
+> browser-verified, with 5 store migrations (004 manager-read, 005 RLS security fix,
+> 006 product-write, 007 mark-ready, 008 profile/staff) and seeds under
+> `apps/store/seed/`. Store-side writes go through guarded SECURITY DEFINER RPCs.
+> Agent panel + Razorpay — partner.
 > No automated tests yet. Stack is Supabase (no Firebase).
 
 ---
@@ -72,7 +76,7 @@ Last updated: 2026-06-04
 - [ ] 11. Support Page (Agent)
 - [ ] 12. Onboarding / Training (Agent)
 
-## P3 — Store Panel (14) — 🔨 IN PROGRESS, owned by D (started week of 2026-06-04)
+## P3 — Store Panel (14) — ✅ COMPLETE, owned by D (built week of 2026-06-04..10; all 14 merged + browser-verified)
 > Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.
 > Data model: store user = role `store_manager` + `store_managers` row (user↔store); products via `products.store_id`; a store's orders via `order_items → products WHERE store_id = mine` (no store_id on order_items). Store dev server runs on **:3003** (`pnpm dev:store`).
 - [T] 1. Store Login — D  *(email+pw + store_manager gate, reusable `getStoreContext`, auth-gated root stub; login verified across all conditions in a real browser; PR #11 open)*
@@ -85,10 +89,10 @@ Last updated: 2026-06-04
 - [T] 8. Returns Management — D  *(combined with #9/#10 — /returns: read-only tracking (lifecycle owned by agent/admin flow), status filter, condition badges; multi-store leak closed client-side; verified in browser with seed)*
 - [T] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger + recent kept items; no commission math — commission config doesn't exist yet, see Known issues; verified in browser)*
 - [T] 10. Analytics Page (Store) — D  *(/analytics: 30-day CSS bar charts, keep-vs-return rate, top products; verified in browser with seed)*
-- [~] 11. Store Profile Settings — D  *(combined with #12/#13/#14 — /settings: contact/description/address editable via guarded update_store_profile RPC (migration 008); name/slug/verified stay admin-owned)*
-- [~] 12. Staff Management — D  *(/staff: read-only roster via get_store_staff RPC (migration 008 — co-managers' names/emails without widening users RLS); add/remove stays admin-provisioned)*
-- [~] 13. Support Page (Store) — D  *(/support: partner contact + FAQ accordion; static — no complaints table exists yet)*
-- [~] 14. Store Onboarding — D  *(/onboarding "Guide": 6-step seller walkthrough linking into the panel; sidebar fully live, no "Soon" chips left. Needs migration 008, then real-browser test)*
+- [T] 11. Store Profile Settings — D  *(/settings: contact/description/address editable via guarded update_store_profile RPC (migration 008); name/slug/verified stay admin-owned; verified in browser)*
+- [T] 12. Staff Management — D  *(/staff: read-only roster via get_store_staff RPC (migration 008 — co-managers' names/emails without widening users RLS); add/remove admin-provisioned; verified in browser)*
+- [T] 13. Support Page (Store) — D  *(/support: partner contact + FAQ accordion; static — no complaints table exists yet; verified in browser)*
+- [T] 14. Store Onboarding — D  *(/onboarding "Guide": 6-step seller walkthrough; sidebar fully live, no "Soon" chips left; verified in browser)*
 
 ## P4 — Admin Panel (21)
 > Admin is the most-built panel: 20 of 21 page components are Supabase-wired. Verified by
