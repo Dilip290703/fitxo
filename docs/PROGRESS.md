@@ -82,9 +82,9 @@ Last updated: 2026-06-04
 - [T] 5. Edit Product Page — D  *(combined with #4 — shared ProductForm at /catalogue/[id]/edit; RESTRICT-safe variant edits; verified in browser. Images deferred.)*
 - [T] 6. Order Management Page — D  *(combined with #7 — /orders list, RLS-scoped, status-bucket filter, per-store subtotal + ready/kept/returned counts; migration 007 applied; verified in browser. Rows are now fully clickable with a › affordance.)*
 - [T] 7. Order Detail (Store) — D  *(combined with #6 — /orders/[id]; store's line items + SKU + keep/return outcome; per-item "Mark ready" + "Mark all ready" via guarded set_order_item_prepared RPC; verified in browser. No customer PII (RLS).)*
-- [ ] 8. Returns Management
-- [ ] 9. Earnings Page (Store)
-- [ ] 10. Analytics Page (Store)
+- [~] 8. Returns Management — D  *(combined with #9/#10 — /returns: read-only tracking (lifecycle owned by agent/admin flow), status filter, condition badges; multi-store leak closed client-side via item-level filter)*
+- [~] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger (pending/processing/paid) + recent kept items; no commission math — commission config doesn't exist yet, see Known issues)*
+- [~] 10. Analytics Page (Store) — D  *(/analytics: 30-day orders & revenue CSS bar charts, keep-vs-return rate, top products by kept revenue; all queries filter products.store_id explicitly. Needs returns/earnings seed, then real-browser test)*
 - [ ] 11. Store Profile Settings
 - [ ] 12. Staff Management
 - [ ] 13. Support Page (Store)
@@ -132,6 +132,7 @@ Last updated: 2026-06-04
 - 2026-06-04: **Work split** — D wraps the Customer panel (standalone screens) and moves to the **Store panel**. Partner owns Razorpay/customer-loop finish + the Agent panel.
 
 ## Known issues / TODO
+- **No commission/system-settings storage exists** — the admin System Settings screen is a mock (toast only, persists nothing), and there is no `system_settings` table. CLAUDE.md requires the commission rate to be config, so the store Earnings screen shows gross kept revenue + the `payouts` ledger (admin-issued amounts) and does **no** commission math. Needs: a settings table + admin UI + payout computation (ties into Razorpay Payouts, partner/admin scope).
 - 🔴 **SECURITY (2026-06-08): RLS was DISABLED on `users`, `orders`, `order_items` in the live DB** — anon key + no session could read all customer PII (names/emails/phones) + all orders. Found while building the Store Dashboard (dashboard showed 6 orders with no session). Policies in schema.sql are intact; RLS had just been turned off. Fix = run **migration 005** (`packages/supabase/migrations/005_reenable_rls.sql`, re-enables RLS on all tables, idempotent). **Affects the customer panel too — apply ASAP.** Verify with `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public';`
 - **Store panel:** migration **004** (`004_store_manager_read.sql`) adds manager SELECT on products/variants/orders/order_items/returns — required for Dashboard + Orders/Returns/Earnings. Apply before testing the store dashboard.
 - **Customer loop:** Payment (Razorpay) not built yet — kept items can't be charged (#13). Return Pickup (#14) + Checkout Time Slot (#8) also pending. (Partner.)
