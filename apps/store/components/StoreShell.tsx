@@ -22,9 +22,10 @@ const NAV: NavItem[] = [
   { key: "returns", label: "Returns", icon: "↩", href: "/returns", ready: true },
   { key: "earnings", label: "Earnings", icon: "₹", href: "/earnings", ready: true },
   { key: "analytics", label: "Analytics", icon: "📊", href: "/analytics", ready: true },
-  { key: "staff", label: "Staff", icon: "👥" },
-  { key: "settings", label: "Settings", icon: "⚙" },
-  { key: "support", label: "Support", icon: "💬" },
+  { key: "staff", label: "Staff", icon: "👥", href: "/staff", ready: true },
+  { key: "settings", label: "Settings", icon: "⚙", href: "/settings", ready: true },
+  { key: "support", label: "Support", icon: "💬", href: "/support", ready: true },
+  { key: "onboarding", label: "Guide", icon: "🧭", href: "/onboarding", ready: true },
 ];
 
 export function StoreShell({
