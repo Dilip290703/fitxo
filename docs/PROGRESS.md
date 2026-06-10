@@ -82,13 +82,13 @@ Last updated: 2026-06-04
 - [T] 5. Edit Product Page — D  *(combined with #4 — shared ProductForm at /catalogue/[id]/edit; RESTRICT-safe variant edits; verified in browser. Images deferred.)*
 - [T] 6. Order Management Page — D  *(combined with #7 — /orders list, RLS-scoped, status-bucket filter, per-store subtotal + ready/kept/returned counts; migration 007 applied; verified in browser. Rows are now fully clickable with a › affordance.)*
 - [T] 7. Order Detail (Store) — D  *(combined with #6 — /orders/[id]; store's line items + SKU + keep/return outcome; per-item "Mark ready" + "Mark all ready" via guarded set_order_item_prepared RPC; verified in browser. No customer PII (RLS).)*
-- [~] 8. Returns Management — D  *(combined with #9/#10 — /returns: read-only tracking (lifecycle owned by agent/admin flow), status filter, condition badges; multi-store leak closed client-side via item-level filter)*
-- [~] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger (pending/processing/paid) + recent kept items; no commission math — commission config doesn't exist yet, see Known issues)*
-- [~] 10. Analytics Page (Store) — D  *(/analytics: 30-day orders & revenue CSS bar charts, keep-vs-return rate, top products by kept revenue; all queries filter products.store_id explicitly. Needs returns/earnings seed, then real-browser test)*
-- [ ] 11. Store Profile Settings
-- [ ] 12. Staff Management
-- [ ] 13. Support Page (Store)
-- [ ] 14. Store Onboarding
+- [T] 8. Returns Management — D  *(combined with #9/#10 — /returns: read-only tracking (lifecycle owned by agent/admin flow), status filter, condition badges; multi-store leak closed client-side; verified in browser with seed)*
+- [T] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger + recent kept items; no commission math — commission config doesn't exist yet, see Known issues; verified in browser)*
+- [T] 10. Analytics Page (Store) — D  *(/analytics: 30-day CSS bar charts, keep-vs-return rate, top products; verified in browser with seed)*
+- [~] 11. Store Profile Settings — D  *(combined with #12/#13/#14 — /settings: contact/description/address editable via guarded update_store_profile RPC (migration 008); name/slug/verified stay admin-owned)*
+- [~] 12. Staff Management — D  *(/staff: read-only roster via get_store_staff RPC (migration 008 — co-managers' names/emails without widening users RLS); add/remove stays admin-provisioned)*
+- [~] 13. Support Page (Store) — D  *(/support: partner contact + FAQ accordion; static — no complaints table exists yet)*
+- [~] 14. Store Onboarding — D  *(/onboarding "Guide": 6-step seller walkthrough linking into the panel; sidebar fully live, no "Soon" chips left. Needs migration 008, then real-browser test)*
 
 ## P4 — Admin Panel (21)
 > Admin is the most-built panel: 20 of 21 page components are Supabase-wired. Verified by
