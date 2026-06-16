@@ -15,7 +15,7 @@ const sections = [
     content: [
       {
         subtitle: "Personal Information",
-        text: "When you create an account, place an order, or contact our support team, we may collect your name, email address, phone number, delivery address, and pincode. For try-at-home orders, we also collect your preferred delivery time slot and sizing preferences.",
+        text: "When you create an account, place an order, or contact our support team, we may collect your name, email address, phone number, delivery address, and pincode. For try-on orders, we also collect your chosen delivery slot and sizing preferences.",
       },
       {
         subtitle: "Payment Information",
@@ -37,7 +37,7 @@ const sections = [
     content: [
       {
         subtitle: "Order Fulfilment",
-        text: "We use your information to process orders, coordinate 60-minute deliveries, manage doorstep try-ons, handle returns and pickups, and process payments for items you choose to keep.",
+        text: "We use your information to process orders, coordinate slot-based deliveries, manage doorstep try-ons, handle on-the-spot returns, and process payments for items you choose to keep.",
       },
       {
         subtitle: "Personalization",

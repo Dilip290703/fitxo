@@ -107,9 +107,13 @@ export async function placeOrder(
     return { success: false, error: itemsError.message };
   }
 
-  // Create try_session — deadline starts now (agent panel will reset started_at on delivery)
+  // Create try_session. The real window is the rider's 15–30 min wait, which
+  // starts when the rider ARRIVES — the agent panel resets started_at/deadline_at
+  // on delivery. This is a placeholder until then. (TODO: move duration to Admin
+  // settings; see docs/PROGRESS.md Known issues.)
+  const TRY_WINDOW_MINUTES = 30;
   const startedAt = new Date();
-  const deadlineAt = new Date(startedAt.getTime() + 24 * 60 * 60 * 1000);
+  const deadlineAt = new Date(startedAt.getTime() + TRY_WINDOW_MINUTES * 60 * 1000);
 
   const { error: sessionError } = await supabase.from('try_sessions').insert({
     order_id: order.id,

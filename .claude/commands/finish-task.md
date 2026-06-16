@@ -14,7 +14,7 @@ The current screen/task is complete. Do the following in order, stopping to repo
    - If you made any non-obvious decision, add one line to the Decisions log.
    - If you left anything incomplete, add it to Known issues / TODO.
 4. Stage everything and create a conventional commit:
-   `type(scope): short summary` (e.g. `feat(customer): try timer page with 24h countdown`).
+   `type(scope): short summary` (e.g. `feat(customer): try-window countdown on order tracking`).
 5. Print the branch name and remind me to push + open a PR (do NOT push to main, do NOT merge).
 
 Keep PROGRESS.md honest — only mark done what is actually working.

@@ -18,8 +18,8 @@ Steps:
    - Does it have any tests?
 
 3. Cross-check the critical flows specifically, since these are the product:
-   - Order → Checkout (address + time slot) → Confirmation → Tracking
-   - Delivery confirmed → 24h Try Timer starts → Keep/Return → Payment (Razorpay) OR Return Pickup
+   - Order → Checkout (address + delivery-slot booking) → Confirmation → Tracking
+   - Rider delivers at slot → 15–30 min try window (rider waits) → Keep/Return on the spot → Payment (Razorpay) for kept items
    - Store: Add/Edit Product → appears in Customer catalog
    - Payouts: Razorpay Payouts to stores + agents
    - AI skin-tone endpoint exists and Product Detail consumes it

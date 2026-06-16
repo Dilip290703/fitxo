@@ -1,8 +1,9 @@
 # Fitzo
 
-**Fitzo is a "try-at-home" fashion commerce platform.** A customer orders clothes, a
-rider delivers them, a **24-hour try-on window** starts, and then the customer either
-**keeps** (and pays for) what they like or **returns** the rest with a free pickup.
+**Fitzo is a try-before-you-buy fashion commerce platform.** A customer orders clothes and
+**books a delivery slot**; a rider brings the picks to their door and **waits 15–30 minutes**
+while they try on; the customer **keeps** (and pays for) what they love and **hands the rest
+straight back to the waiting rider** — no return to schedule.
 
 The product is delivered as **four separate apps**, one per audience, each on its own
 subdomain — all sharing one Postgres database (Supabase) and a set of internal packages.
@@ -19,13 +20,15 @@ subdomain — all sharing one Postgres database (Supabase) and a set of internal
 ## The core flow
 
 ```
-Customer orders  →  Rider picks up from store  →  Rider delivers
-      →  24-hour try window starts  →  Customer keeps (pays) or returns (free pickup)
-      →  Store is paid out for kept items; returned items come back to the store
+Customer orders + books a delivery slot  →  Rider picks up from store  →  Rider delivers at the slot
+      →  Rider waits 15–30 min while the customer tries on
+      →  Customer keeps (pays) what they love, hands the rest back to the rider on the spot
+      →  Store is paid out for kept items; returned items go back with the rider
 ```
 
-The try-window duration (24h) and commission rate are intended to be **configuration
-values** (Admin → System Settings), never hardcoded constants.
+The try-window duration (the rider's wait, ~15–30 min) and commission rate are intended to be
+**configuration values** (Admin → System Settings), never hardcoded constants. The window
+**starts when the rider arrives**, not at checkout.
 
 ---
 
@@ -160,7 +163,7 @@ Run from the repo root:
 
 - Never commit secrets — Supabase/Razorpay/OTP keys live in `.env.local` only (gitignored).
 - Every user-data table must have RLS policies before UI ships against it.
-- The try-window (24h) and commission rate are config, not constants.
+- The try-window (rider's wait, ~15–30 min) and commission rate are config, not constants.
 
 ---
 
@@ -169,7 +172,7 @@ Run from the repo root:
 | Panel        | Status                                                                            |
 | ------------ | --------------------------------------------------------------------------------- |
 | **Store**    | ✅ **Complete** — all 14 screens (login, dashboard, catalogue, add/edit product, orders + detail, returns, earnings, analytics, settings, staff, support, onboarding). |
-| **Customer** | 🟢 Mostly built — storefront, auth, cart, checkout, order tracking + 24h try loop, account pages. Pending: Razorpay **Payment**, Return-Pickup scheduling, Time-Slot, AI skin-tone setup. |
+| **Customer** | 🟢 Mostly built — storefront, auth, cart, checkout, order tracking + try loop, account pages. Pending: Razorpay **Payment**, **delivery-slot booking**, AI skin-tone setup, and wiring the try window to start on rider arrival. |
 | **Admin**    | 🟢 Mostly built — most pages are Supabase-wired (orders, customers, stores, riders, revenue, coupons, settings, inventory, bulk upload). Pending: payments/payout records, complaints, CMS, 2FA. |
 | **Agent**    | 🟡 Shell — not yet started. |
 

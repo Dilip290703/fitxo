@@ -33,10 +33,10 @@ export function CartDeliveryInfo() {
         </div>
         <div>
           <p className="text-[14px] font-semibold text-[#171717]">
-            60-Minute Delivery
+            Slot-based delivery
           </p>
           <p className="mt-1 text-[13px] text-[#5d5750]">
-            Try at home before paying
+            Try on at your door before paying
           </p>
           <p className="mt-1 text-[12px] text-[#726b63]">
             Enter your pincode to check availability
@@ -55,10 +55,10 @@ export function CartDeliveryInfo() {
         </div>
         <div>
           <p className="text-[14px] font-semibold text-[#2e7d32]">
-            60-Minute Delivery Available ✓
+            Delivery Available ✓
           </p>
           <p className="mt-1 text-[13px] text-[#388e3c]">
-            Try at home before paying
+            Try on at your door before paying
           </p>
           <p className="mt-1 text-[12px] text-[#4caf50]">
             Doorstep try-on from nearby Pune stores

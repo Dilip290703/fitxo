@@ -10,10 +10,10 @@ export function AboutHero() {
             Fashion that fits your life.
           </h1>
           <p className="fade-up fade-delay-2 mt-6 text-[18px] leading-8 text-[#5a554f] sm:text-[20px]">
-            Try at home. Pay only for what you love.
+            Try on at your door. Pay only for what you love.
           </p>
           <p className="fade-up fade-delay-3 mt-4 text-[11px] font-extrabold uppercase tracking-[0.28em] text-[#8b7b69]">
-            Delivered in under 60 minutes.
+            Delivered to a slot you choose.
           </p>
         </div>
       </div>

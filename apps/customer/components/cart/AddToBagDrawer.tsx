@@ -107,7 +107,7 @@ export function AddToBagDrawer() {
             View Bag
           </Link>
           <p className="mt-3 text-center text-[12px] text-[#706961]">
-            {items.length} {items.length === 1 ? "item" : "items"} ready for try-at-home checkout
+            {items.length} {items.length === 1 ? "item" : "items"} ready for try-on checkout
           </p>
         </div>
       </aside>

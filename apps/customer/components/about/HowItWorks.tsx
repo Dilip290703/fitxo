@@ -1,7 +1,7 @@
 const steps = [
   "Pick outfits",
-  "Get delivery",
-  "Try at home",
+  "Book a delivery slot",
+  "Try on while the rider waits",
   "Pay for what you keep",
 ];
 

@@ -139,7 +139,7 @@ export function OrderHistoryView() {
           <div className="rounded-[22px] border border-[#eadfd4] bg-white p-10 text-center shadow-[0_14px_34px_rgba(34,28,20,0.05)]">
             <p className="text-[15px] font-semibold text-[#1f2a3c]">No orders yet</p>
             <p className="mx-auto mt-2 max-w-sm text-[14px] leading-6 text-[#6b6258]">
-              Your try-at-home orders will show up here once you place your first one.
+              Your try-on orders will show up here once you place your first one.
             </p>
             <Link
               href="/products"

@@ -62,8 +62,8 @@ export function getDeliveryStatus(pincode: string): DeliveryStatus {
   if (isPunePincode(clean)) {
     return {
       available: true,
-      eta: "60 Minutes",
-      message: "Delivery available — 60-minute doorstep try-on.",
+      eta: "Book a slot",
+      message: "Delivery available — book a slot for doorstep try-on.",
     };
   }
 

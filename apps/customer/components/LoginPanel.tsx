@@ -263,7 +263,7 @@ export function LoginPanel() {
                 FITZO
               </p>
               <span className="rounded-full border border-white/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em]">
-                60 min try-on
+                Try-on at your door
               </span>
             </div>
 
@@ -275,7 +275,7 @@ export function LoginPanel() {
                 Your fitting room, delivered.
               </h1>
               <p className="mt-4 max-w-sm text-[14px] leading-6 text-white/82 sm:text-[15px] sm:leading-7">
-                Save sizes, sync wishlists, track try-at-home orders, and get style picks tuned to your wardrobe.
+                Save sizes, sync wishlists, track try-on deliveries, and get style picks tuned to your wardrobe.
               </p>
             </div>
 
@@ -309,7 +309,7 @@ export function LoginPanel() {
               <p className="mx-auto mt-3 max-w-sm text-[14px] leading-6 text-[#625b53]">
                 {mode === "login"
                   ? "Sign in to manage orders, wishlists, addresses, and your AI style profile."
-                  : "Create your account and start your try-at-home shopping experience."}
+                  : "Create your account and start your try-on-at-your-door shopping experience."}
               </p>
             </div>
 

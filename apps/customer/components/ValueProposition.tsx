@@ -22,7 +22,7 @@ export function ValueProposition() {
             Why FitZo
           </h2>
           <p className="mt-3 text-[14px] leading-7 text-[#66605a]">
-            Designed for same-day fashion decisions without the stress of buying blind.
+            Designed for try-before-you-buy decisions at your door, without the stress of buying blind.
           </p>
         </div>
 

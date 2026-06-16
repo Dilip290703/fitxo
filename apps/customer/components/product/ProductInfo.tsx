@@ -104,10 +104,10 @@ export function ProductInfo({ product }: { product: ProductDetailData }) {
           Try first, pay later
         </p>
         <p className="mt-3 text-[16px] font-medium text-[#171717]">
-          Try at home before paying.
+          Try on at your door before paying.
         </p>
         <p className="mt-3 text-[14px] leading-7 text-[#5f5851]">
-          Receive your picks in under 60 minutes, compare the fit in your own mirror, and return instantly if it doesn&apos;t feel right.
+          Book a delivery slot, try your picks on while the rider waits, and hand back anything that doesn&apos;t feel right on the spot.
         </p>
       </div>
 

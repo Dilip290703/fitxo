@@ -1,5 +1,5 @@
 const highlights = [
-  { label: "60 min", text: "Average delivery window" },
+  { label: "15–30 min", text: "Try on while the rider waits" },
   { label: "Pay later", text: "Only for what you keep" },
   { label: "Nearby", text: "Live inventory from local stores" },
 ];

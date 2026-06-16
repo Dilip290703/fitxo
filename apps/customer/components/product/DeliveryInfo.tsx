@@ -68,10 +68,10 @@ export function DeliveryInfo() {
         </div>
         <div>
           <p className="text-[18px] font-medium text-[#171717]">
-            60-Minute Delivery
+            Slot-based delivery
           </p>
           <p className="mt-2 text-[13px] font-medium text-[#5d5750]">
-            Try at home before you pay
+            Try on at your door before you pay
           </p>
           <p className="mt-2 text-[13px] leading-6 text-[#615a53]">
             Available across Pune partner stores.
@@ -114,7 +114,7 @@ export function DeliveryInfo() {
         </div>
       ) : (
         <p className="text-[13px] leading-6 text-[#5d5750]">
-          Enter your pincode to check 60-min delivery availability.
+          Enter your pincode to check delivery-slot availability.
         </p>
       )}
     </div>

@@ -14,14 +14,14 @@ const proofItems = [
     text: "Fast fittings, easier decisions, and zero pressure at checkout.",
   },
   {
-    rating: "60 min",
-    label: "Average delivery time",
-    text: "Built for last-minute plans and same-day wardrobe moments.",
+    rating: "15–30 min",
+    label: "Try-on window at your door",
+    text: "The rider waits while you try on, so you decide with the clothes on.",
   },
   {
     rating: "Pay later",
     label: "Confidence-first checkout",
-    text: "Keep only what feels right and return the rest at the doorstep.",
+    text: "Keep only what feels right and hand the rest back to the rider on the spot.",
   },
 ];
 

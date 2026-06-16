@@ -7,7 +7,7 @@ export function NearbyStores({ stores }: { stores: NearbyStore[] }) {
         Available nearby
       </p>
       <p className="mt-3 text-[15px] leading-7 text-[#3d3731]">
-        Try at home before paying, or visit the closest partner store right away.
+        Try on at your door before paying, or visit the closest partner store right away.
       </p>
 
       <div className="mt-5 space-y-3">

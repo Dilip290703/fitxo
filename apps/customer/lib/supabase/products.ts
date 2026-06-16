@@ -304,7 +304,7 @@ export async function queryProductDetail(
   if (row.care_instructions) details.push(row.care_instructions as string);
   if (!details.length) {
     details.push('Premium quality garment for all-day comfort.');
-    details.push('Try-at-home support with free doorstep return pickup.');
+    details.push('Doorstep try-on — hand back what you skip to the waiting rider.');
   }
 
   return {
@@ -335,12 +335,12 @@ export async function queryProductDetail(
     reviews: [],
     details,
     delivery: [
-      '60-Minute Delivery across nearby partner stores.',
-      'Try at home before you pay with instant fit feedback.',
+      'Slot-based delivery from nearby partner stores.',
+      'Try on at your door before you pay, with instant fit feedback.',
       'Live order tracking updates once the style is on the way.',
     ],
     returns: [
-      'Return instantly at the doorstep if the fit is not right.',
+      'Hand it back to the rider on the spot if the fit is not right.',
       'Refunds are processed quickly for prepaid orders.',
       'Kept items are billed only after your try-on window closes.',
     ],

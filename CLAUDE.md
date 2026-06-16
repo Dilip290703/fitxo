@@ -1,7 +1,9 @@
 # Fitzo — Project Context
 
-Fitzo is a "try-at-home" fashion commerce platform. Customers order clothes, a rider
-delivers, a **24-hour try timer** starts, then the customer keeps (pays) or returns (free pickup).
+Fitzo is a **try-before-you-buy** fashion commerce platform. Customers order clothes and
+**book a delivery slot**; a rider brings the picks to their door and **waits 15–30 minutes**
+while they try on; the customer keeps (pays for) what they love and **hands the rest back to
+the waiting rider on the spot** — no return to schedule.
 
 This file is read at the start of every Claude Code session. Keep it short. Long-lived
 state lives in `docs/PROGRESS.md` — **read that file before starting any task.**
@@ -44,7 +46,7 @@ Commands (from repo root): `pnpm dev` (customer + admin), `pnpm dev:<panel>`,
 - Every Supabase table that holds user data MUST have RLS policies before any UI ships against it.
 - Admin is owner-only and a **separate build** — never expose admin routes/keys to the other three apps. The service-role client lives only in `apps/admin/lib/supabase/admin.ts` and is server-side only.
 - Money flows through Razorpay only — never hand-roll payment or payout logic.
-- The try-window duration (24h) and commission rate are config values (Admin > System Settings), not hardcoded constants.
+- The try-window duration (the rider's wait, ~15–30 min) and commission rate are config values (Admin > System Settings), not hardcoded constants. The window **starts when the rider arrives/delivers**, not at checkout.
 
 ## Workflow (see docs/WORKFLOW.md for the full version)
 - Work on a **feature branch**, never commit to `main` directly.

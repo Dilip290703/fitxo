@@ -22,7 +22,9 @@ export default function OrderActions({ order }: { order: Order }) {
     setLoading(true);
     const patch: Record<string, unknown> = { status };
     if (status === 'try_window_active') {
-      patch.try_deadline = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+      // Rider's try-on wait window (15–30 min). TODO: move to Admin settings.
+      const TRY_WINDOW_MINUTES = 30;
+      patch.try_deadline = new Date(Date.now() + TRY_WINDOW_MINUTES * 60 * 1000).toISOString();
     }
     const { error } = await supabase.from('orders').update(patch).eq('id', order.id);
     if (error) toast('Failed to update order', 'error');

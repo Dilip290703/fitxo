@@ -2,7 +2,7 @@
 -- Fitzo Store panel — dashboard demo data for "Fitzo Test Store"
 -- ============================================================
 -- Gives the seeded test store something to show on the dashboard: one product
--- with two variants (one low-stock), and one order in its 24h try window.
+-- with two variants (one low-stock), and one order in its (15–30 min) try window.
 --
 -- Prerequisites (run once, in order):
 --   1. apps/store/seed/store_seed.sql        (creates the store + manager)
@@ -60,7 +60,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM orders WHERE notes = 'store-dashboard-seed') THEN
     INSERT INTO orders (user_id, status, subtotal, final_amount, payment_status, try_deadline, notes)
     VALUES (v_user_id, 'try_window_active', 999, 999, 'pending',
-            NOW() + INTERVAL '24 hours', 'store-dashboard-seed')
+            NOW() + INTERVAL '30 minutes', 'store-dashboard-seed')
     RETURNING id INTO v_order_id;
 
     INSERT INTO order_items (order_id, product_id, variant_id, product_name, color_name, size, price_at_order)

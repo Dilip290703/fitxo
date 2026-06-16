@@ -11,7 +11,7 @@ Last updated: 2026-06-04
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
 > (Order History, Notifications, Search, Brand pages, How It Works, Size Guide, 404,
-> plus the login + navy-button fixes). The core **order → 24h try → keep/return** loop
+> plus the login + navy-button fixes). The core **order → try (rider waits) → keep/return** loop
 > is wired (checkout creates a real order + try_session; confirmation + tracking +
 > keep/return work). Remaining customer items are flow/Razorpay: **Payment (#13)**,
 > Return Pickup (#14), Time Slot (#8), AI Skin Setup (#18) — owned by partner.
@@ -43,13 +43,13 @@ Last updated: 2026-06-04
 - [~] 5. OTP Verification  *(handled inline in LoginPanel; no standalone screen)*
 - [x] 6. Cart / Bag Page  *(CartProvider; localStorage)*
 - [x] 7. Checkout — Address Page  *(creates a real order + try_session in Supabase — partner)*
-- [ ] 8. Checkout — Time Slot Page  *(partner)*
+- [ ] 8. Checkout — Delivery-Slot Booking  *(now core to the model — customer picks an available slot; partner)*
 - [x] 9. Order Confirmation Page  *(partner)*
-- [x] 10. Order Tracking Page  *(timeline + 24h countdown — partner)*
-- [~] 11. Try Timer  *(the 24h countdown is built into Order Tracking; no standalone screen)*
+- [x] 10. Order Tracking Page  *(timeline + try-window countdown — partner)*
+- [~] 11. Try Timer  *(the try-window countdown is built into Order Tracking; no standalone screen)*
 - [x] 12. Keep or Return  *(keep/return actions live in Order Tracking — partner)*
 - [ ] 13. Payment Page  *(not built — Razorpay, partner)*
-- [ ] 14. Return Pickup Scheduling  *(partner)*
+- [~] 14. Return Pickup Scheduling  *(largely obsolete under the new model — returns are handed back to the waiting rider on the spot, no scheduling. Keep only for post-purchase refund returns; partner)*
 - [x] 15. Profile Page
 - [x] 16. Wishlist Page
 - [x] 17. Order History Page — D
@@ -66,7 +66,7 @@ Last updated: 2026-06-04
 - [ ] 1. Agent Login
 - [ ] 2. Agent Dashboard / Home
 - [ ] 3. Order Detail (Pickup)
-- [ ] 4. Order Detail (Delivery)  *(confirm delivery → starts customer 24h timer)*
+- [ ] 4. Order Detail (Delivery)  *(confirm delivery → starts customer try window; rider waits 15–30 min)*
 - [ ] 5. Return Collection Page
 - [ ] 6. Navigation / Map Screen
 - [ ] 7. Agent Earnings Page
@@ -127,19 +127,21 @@ Last updated: 2026-06-04
 **Partner (close the loop + new panel):**
 1. **Razorpay Payment** for kept items — the money step that closes the customer loop (#13).
 2. Return Pickup scheduling (#14) + Checkout Time Slot (#8).
-3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the 24h try timer).
+3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the try window; rider waits 15–30 min while the customer tries on).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
 - 2026-06-03: Restructured the single Next.js app into a **pnpm monorepo** — one app per panel (`apps/{customer,agent,store,admin}`) + shared `packages/{supabase,ui,config}`. Admin is now a separate build/deploy so admin code & the service-role key never ship in the customer bundle. Kept the `/admin` route prefix inside the admin app to avoid rewriting ~45 links. History preserved via `git mv`. (branch `chore/monorepo-restructure`, PR #1)
 - 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
 - 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.
 - 2026-06-04: **Work split** — D wraps the Customer panel (standalone screens) and moves to the **Store panel**. Partner owns Razorpay/customer-loop finish + the Agent panel.
+- 2026-06-16: **PRODUCT MODEL PIVOT** — dropped the "try-at-home for 24h + free pickup later" model. New model: customer **books a delivery slot**, the rider brings picks to the door and **waits 15–30 min** while they try on, customer keeps (pays) what they love and **hands the rest back to the rider on the spot** (no scheduled return). Swept all customer + store copy + docs (CLAUDE.md, README, `.claude/` commands). Try-window duration is now a `TRY_WINDOW_MINUTES = 30` constant in `checkout/actions.ts` + admin `OrderActions.tsx` (placeholder — should move to Admin settings and **start on rider arrival**, agent panel). "60-min delivery" replaced by slot-booking copy. (branch `feat/doorstep-try-model`)
 
 ## Known issues / TODO
+- **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) `TRY_WINDOW_MINUTES` should live in Admin settings alongside the commission rate (same missing `system_settings` storage).
 - **No commission/system-settings storage exists** — the admin System Settings screen is a mock (toast only, persists nothing), and there is no `system_settings` table. CLAUDE.md requires the commission rate to be config, so the store Earnings screen shows gross kept revenue + the `payouts` ledger (admin-issued amounts) and does **no** commission math. Needs: a settings table + admin UI + payout computation (ties into Razorpay Payouts, partner/admin scope).
 - 🔴 **SECURITY (2026-06-08): RLS was DISABLED on `users`, `orders`, `order_items` in the live DB** — anon key + no session could read all customer PII (names/emails/phones) + all orders. Found while building the Store Dashboard (dashboard showed 6 orders with no session). Policies in schema.sql are intact; RLS had just been turned off. Fix = run **migration 005** (`packages/supabase/migrations/005_reenable_rls.sql`, re-enables RLS on all tables, idempotent). **Affects the customer panel too — apply ASAP.** Verify with `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public';`
 - **Store panel:** migration **004** (`004_store_manager_read.sql`) adds manager SELECT on products/variants/orders/order_items/returns — required for Dashboard + Orders/Returns/Earnings. Apply before testing the store dashboard.
-- **Customer loop:** Payment (Razorpay) not built yet — kept items can't be charged (#13). Return Pickup (#14) + Checkout Time Slot (#8) also pending. (Partner.)
+- **Customer loop:** Payment (Razorpay) not built yet — kept items can't be charged (#13). Delivery-slot booking (#8) is now core and still pending; scheduled Return Pickup (#14) is largely obsolete under the new model. (Partner.)
 - Store-manager RLS for viewing orders that contain their products likely needs a policy (order_items has no store_id → join via products.store_id). Verify during Store build.
 - No automated tests anywhere (0). `/finish-task` should start adding smoke tests per screen.
 - Admin has no 2FA (spec requires it for admin login).

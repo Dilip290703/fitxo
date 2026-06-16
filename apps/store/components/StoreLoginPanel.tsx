@@ -81,7 +81,7 @@ export function StoreLoginPanel() {
               Run your storefront.
             </h1>
             <p className="mt-4 text-[15px] leading-7 text-white/75">
-              Manage your catalogue, track try-at-home orders, handle returns,
+              Manage your catalogue, track try-on orders, handle returns,
               and watch your earnings — all in one place.
             </p>
           </div>

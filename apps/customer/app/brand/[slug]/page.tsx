@@ -79,7 +79,7 @@ export default async function BrandPage({
         {products.length > 0 ? (
           <>
             <p className="mb-6 text-[13px] text-[#8b7058]">
-              {products.length} style{products.length !== 1 ? "s" : ""} available for try-at-home
+              {products.length} style{products.length !== 1 ? "s" : ""} available to try on at your door
             </p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((p) => (

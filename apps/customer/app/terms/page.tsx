@@ -37,7 +37,7 @@ const sections = [
     id: "try-before-you-buy",
     title: "4. Try-Before-You-Buy Service",
     paragraphs: [
-      "FitZo's core offering allows you to order fashion items for doorstep delivery, try them on at home, and pay only for the items you choose to keep. Items you do not wish to purchase are returned to our delivery partner at the same visit or through a scheduled pickup.",
+      "FitZo's core offering allows you to order fashion items, book a delivery slot, and try them on at your door while the rider waits (typically 15–30 minutes), paying only for the items you choose to keep. Items you do not wish to purchase are handed back to the rider at the same visit.",
       "You are expected to handle try-on items with reasonable care. Items must be returned in the same condition as delivered — unworn (beyond trying on), with all tags and packaging intact. Items that are damaged, stained, altered, or returned without original tags may not be eligible for return.",
       "FitZo reserves the right to limit the number of items per try-on order and to restrict the service for accounts with a history of excessive returns or misuse.",
     ],
@@ -46,7 +46,7 @@ const sections = [
     id: "orders-delivery",
     title: "5. Orders & Delivery",
     paragraphs: [
-      "FitZo aims to deliver orders within 60 minutes of confirmation, subject to availability, partner store hours, and delivery zone coverage. Delivery times are estimates and not guaranteed.",
+      "FitZo aims to deliver orders within the delivery slot you select at checkout, subject to availability, partner store hours, and delivery zone coverage. Slot times are estimates and not guaranteed.",
       "You must provide accurate delivery address and contact details. A valid phone number is required for delivery coordination. If delivery cannot be completed due to incorrect information or recipient unavailability, re-delivery charges may apply.",
       "Order confirmation constitutes a binding agreement to receive the items for try-on. Cancellation is free if made within 5 minutes of placing the order. After dispatch, cancellation may not be possible.",
     ],

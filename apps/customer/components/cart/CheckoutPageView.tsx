@@ -56,7 +56,7 @@ export function CheckoutPageView() {
             Checkout
           </p>
           <h1 className="mt-3 font-display text-[42px] leading-none text-[#171717]">
-            Finish your FitZo try-at-home order.
+            Finish your FitZo try-on order.
           </h1>
         </div>
 

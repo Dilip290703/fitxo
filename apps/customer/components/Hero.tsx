@@ -20,11 +20,11 @@ export function Hero() {
                   <span className="block">you buy.</span>
                 </h1>
                 <p className="text-lg font-light text-orange-300">
-                  60-min delivery
+                  Book a delivery slot
                 </p>
                 <p className="max-w-[280px] text-sm leading-8 text-gray-300">
-                  Discover nearby fashion collections, try your picks at home,
-                  and pay only for what you keep.
+                  Discover nearby fashion collections, try your picks on at your
+                  door while the rider waits, and pay only for what you keep.
                 </p>
 
                 <div className="space-y-4 pt-2">

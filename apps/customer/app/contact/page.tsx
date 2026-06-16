@@ -134,14 +134,14 @@ const contactCards = [
 
 const supportTopics = [
   { icon: Truck, title: "Delivery help", text: "Track live orders, change pincode, or update delivery timing." },
-  { icon: RotateCcw, title: "Returns & pickup", text: "Schedule pickup for items you do not want to keep." },
+  { icon: RotateCcw, title: "Returns", text: "Hand back items you don't want to the rider at the door." },
   { icon: ShieldCheck, title: "Payment safety", text: "Resolve failed payments, refunds, wallet, or pay-later issues." },
-  { icon: Sparkles, title: "Style support", text: "Ask about sizing, outfit matching, and try-at-home suggestions." },
+  { icon: Sparkles, title: "Style support", text: "Ask about sizing, outfit matching, and try-on suggestions." },
 ];
 
 const faqs = [
   "How does try-before-you-buy work?",
-  "Can I return items at the doorstep?",
+  "Do I return items to the rider at the door?",
   "How fast can Fitzo deliver near me?",
   "How do I contact partner stores?",
 ];
@@ -208,8 +208,8 @@ export default function ContactPage() {
                 </div>
 
                 <div className="absolute bottom-8 right-8 z-10 rounded-3xl bg-[#ffd037] px-6 py-5 shadow-xl">
-                  <p className="font-display text-[28px] font-medium tracking-[-0.04em]">60 min</p>
-                  <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.28em]">delivery window</p>
+                  <p className="font-display text-[28px] font-medium tracking-[-0.04em]">15–30 min</p>
+                  <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.28em]">try-on at your door</p>
                 </div>
               </div>
             </div>
