@@ -30,7 +30,7 @@ Last updated: 2026-06-04
 - [x] Supabase schema — full loop now present incl. `try_sessions`, `returns`, `payments`, `payouts` (migration 002) + `order_items` update policy (003).
 - [~] RLS policies — enabled across tables; ⚠️ **store-manager visibility of orders containing their products may need a policy** (order_items has no store_id; store sees orders via products.store_id join). Verify/add during Store panel build.
 - [~] Auth — customer email+password & phone OTP work; admin email+password works (no 2FA); **store/agent auth not built yet** (store login is the first Store-panel task).
-- [ ] Razorpay integration (payments) — still not built; no SDK/flow/payment route (partner's task)
+- [~] Razorpay integration (payments) — customer **per-item Keep payment** built & browser-verified in test mode (J, 2026-06-19): `razorpay` SDK + `apps/customer/lib/razorpay.ts` + create/confirm server actions + Razorpay Checkout modal. Settlement goes through a SECURITY DEFINER RPC `confirm_keep_payment` (migration **009**) that re-verifies the HMAC **in-DB** (pgcrypto); secret stored in **Supabase Vault** (`razorpay_key_secret`). Payouts + webhooks still TODO.
 - [ ] Razorpay Payouts integration (store + agent)
 - [ ] AI skin-tone endpoint — only DB columns + hardcoded display; no endpoint
 - [~] Shared UI kit — `packages/ui` exists but thin; admin has its own `components/admin/*`
@@ -48,7 +48,7 @@ Last updated: 2026-06-04
 - [x] 10. Order Tracking Page  *(timeline + 24h countdown — partner)*
 - [~] 11. Try Timer  *(the 24h countdown is built into Order Tracking; no standalone screen)*
 - [x] 12. Keep or Return  *(keep/return actions live in Order Tracking — partner)*
-- [ ] 13. Payment Page  *(not built — Razorpay, partner)*
+- [T] 13. Payment — per-item Razorpay Keep payment — J  *(tap **Keep** on the order-tracking page → Razorpay Checkout → in-DB-verified settle → item flips to "Keeping" + order `payment_status='paid'`. Browser-verified in test mode via UPI `success@razorpay`. Needs migrations 009+010 + the Vault secret. See `docs/HANDOFF-payment.md`.)*
 - [ ] 14. Return Pickup Scheduling  *(partner)*
 - [x] 15. Profile Page
 - [x] 16. Wishlist Page
@@ -134,12 +134,17 @@ Last updated: 2026-06-04
 - 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
 - 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.
 - 2026-06-04: **Work split** — D wraps the Customer panel (standalone screens) and moves to the **Store panel**. Partner owns Razorpay/customer-loop finish + the Agent panel.
+- 2026-06-19: **Razorpay Keep payment (#13)** — customer pays **per item** (one Razorpay Checkout per kept item) at the moment they tap "Keep", chosen over a single pay-at-end. Settlement can't be a direct client write (customer app has only the anon key, no service-role), so a SECURITY DEFINER RPC `confirm_keep_payment` re-verifies the Razorpay HMAC in-DB (pgcrypto `hmac`, `search_path` incl. `extensions`) and is the only writer of `payment='success'`/`order paid`. Razorpay **secret lives in Supabase Vault** (`vault.create_secret('…','razorpay_key_secret')`) — Supabase blocks `ALTER DATABASE/ROLE SET` for the SQL-editor role, so GUCs don't work. Migrations **009** (RPC + `payments.order_item_id`) and **010** (see below).
+- 2026-06-19: **Found migration 002's RLS policies were missing in the live DB** — `try_sessions`/`returns`/`payments`/`payouts` had RLS *enabled* but **zero policies** (deny-all), which broke checkout (`new row violates RLS for try_sessions`). Migration **010** idempotently recreates exactly those policies. (Migration 005 — re-enable RLS — had already been applied; this was a separate gap.)
+- 2026-06-19: **Navbar auth was reading a mock localStorage flag**, not the Supabase session — replaced with `supabase.auth.getUser()` + `onAuthStateChange`. Checkout variant resolver made resilient (falls back to a product's first colour/variant) so an item added without a colour can't abort the order. Added a login-required modal + a checkout confetti celebration.
+- 2026-06-19: **MODEL CHANGE PENDING (not yet implemented):** the try window is moving from **24h at-home** → **~5–7 min on-the-spot while the rider waits**. Only the timer constant + customer copy + `CLAUDE.md` premise need updating; deferred to its own task.
 
 ## Known issues / TODO
 - **No commission/system-settings storage exists** — the admin System Settings screen is a mock (toast only, persists nothing), and there is no `system_settings` table. CLAUDE.md requires the commission rate to be config, so the store Earnings screen shows gross kept revenue + the `payouts` ledger (admin-issued amounts) and does **no** commission math. Needs: a settings table + admin UI + payout computation (ties into Razorpay Payouts, partner/admin scope).
 - 🔴 **SECURITY (2026-06-08): RLS was DISABLED on `users`, `orders`, `order_items` in the live DB** — anon key + no session could read all customer PII (names/emails/phones) + all orders. Found while building the Store Dashboard (dashboard showed 6 orders with no session). Policies in schema.sql are intact; RLS had just been turned off. Fix = run **migration 005** (`packages/supabase/migrations/005_reenable_rls.sql`, re-enables RLS on all tables, idempotent). **Affects the customer panel too — apply ASAP.** Verify with `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public';`
 - **Store panel:** migration **004** (`004_store_manager_read.sql`) adds manager SELECT on products/variants/orders/order_items/returns — required for Dashboard + Orders/Returns/Earnings. Apply before testing the store dashboard.
-- **Customer loop:** Payment (Razorpay) not built yet — kept items can't be charged (#13). Return Pickup (#14) + Checkout Time Slot (#8) also pending. (Partner.)
+- **Customer loop:** Payment #13 **done** for the keep path (per-item Razorpay). Still pending: Return Pickup (#14), Checkout Time Slot (#8), and Razorpay **payouts** + a **webhook** (today the payment is confirmed only client-side via the success handler — if the customer closes the tab right after paying, the order won't be marked paid; a `payment.captured` webhook should be added before production).
+- **Razorpay env:** test keys live in `apps/customer/.env.local` (gitignored — NOT in git). Any teammate must add `NEXT_PUBLIC_RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET` to their own `.env.local`. **Regenerate the test secret before going live** (it was shared in chat). At deploy, swap to live keys + update the Vault secret + add a verified-website + webhook.
 - Store-manager RLS for viewing orders that contain their products likely needs a policy (order_items has no store_id → join via products.store_id). Verify during Store build.
 - No automated tests anywhere (0). `/finish-task` should start adding smoke tests per screen.
 - Admin has no 2FA (spec requires it for admin login).

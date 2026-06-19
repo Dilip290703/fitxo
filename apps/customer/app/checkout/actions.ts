@@ -31,33 +31,43 @@ export async function placeOrder(
 
   const paymentMethod = METHOD_MAP[paymentMethodLabel] ?? 'razorpay';
 
-  // Resolve variant ID for each cart item (product_id + color_name + size → variant UUID)
-  const variantIds: Record<string, string> = {};
+  // Resolve a concrete product_variant for each cart item. Prefer the chosen
+  // colour/size, but gracefully fall back to the product's first available
+  // variant so an item added without an explicit selection doesn't block checkout.
+  const resolved: Record<string, { variantId: string; colorName: string; size: string }> = {};
   for (const item of items) {
-    const { data: color } = await supabase
+    const { data: colors } = await supabase
       .from('product_colors')
-      .select('id')
-      .eq('product_id', item.id)
-      .eq('color_name', item.color)
-      .maybeSingle();
+      .select('id, color_name')
+      .eq('product_id', item.id);
 
-    if (!color) {
-      return { success: false, error: `Colour "${item.color}" not found for ${item.title}.` };
-    }
-
-    const { data: variant } = await supabase
+    const { data: variants } = await supabase
       .from('product_variants')
-      .select('id')
-      .eq('product_id', item.id)
-      .eq('color_id', color.id)
-      .eq('size', item.size)
-      .maybeSingle();
+      .select('id, size, color_id')
+      .eq('product_id', item.id);
 
-    if (!variant) {
-      return { success: false, error: `Variant not found for ${item.title} (${item.color}, ${item.size}).` };
+    if (!colors?.length || !variants?.length) {
+      return { success: false, error: `${item.title} is currently unavailable.` };
     }
 
-    variantIds[item.key] = variant.id;
+    // Chosen colour if it exists, else the product's first colour.
+    const color =
+      (item.color && colors.find((c) => c.color_name === item.color)) || colors[0];
+
+    // Chosen size for that colour, else any variant for that colour, else any variant.
+    const variant =
+      (item.size && variants.find((v) => v.color_id === color.id && v.size === item.size)) ||
+      variants.find((v) => v.color_id === color.id) ||
+      variants[0];
+
+    // Keep the stored colour name consistent with the variant we actually picked.
+    const variantColor = colors.find((c) => c.id === variant.color_id) ?? color;
+
+    resolved[item.key] = {
+      variantId: variant.id,
+      colorName: variantColor.color_name,
+      size: variant.size,
+    };
   }
 
   const subtotal = items.reduce((sum, i) => sum + i.priceValue * i.quantity, 0);
@@ -87,20 +97,21 @@ export async function placeOrder(
   }
 
   // Create one order_items row per unit (schema has no quantity column — each unit is a row)
-  const orderItemRows = items.flatMap((item) =>
-    Array.from({ length: item.quantity }, () => ({
+  const orderItemRows = items.flatMap((item) => {
+    const r = resolved[item.key];
+    return Array.from({ length: item.quantity }, () => ({
       order_id: order.id,
       product_id: item.id,
-      variant_id: variantIds[item.key],
+      variant_id: r.variantId,
       product_name: item.title,
-      color_name: item.color,
-      size: item.size,
+      color_name: r.colorName,
+      size: r.size,
       image_url: item.image || null,
       price_at_order: item.priceValue,
       deposit_at_order: 0,
       decision: 'pending' as const,
-    })),
-  );
+    }));
+  });
 
   const { error: itemsError } = await supabase.from('order_items').insert(orderItemRows);
   if (itemsError) {
