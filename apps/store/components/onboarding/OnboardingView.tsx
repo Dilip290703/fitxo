@@ -23,7 +23,7 @@ const STEPS: { title: string; body: string; href?: string; cta?: string }[] = [
   },
   {
     title: "Understand the try window",
-    body: "Customers get 24 hours to try items at home. They pay for what they keep; the rest comes back to you free of charge via a Fitzo rider.",
+    body: "At delivery, the rider waits 15–30 minutes while the customer tries the items on. They pay for what they keep; the rest is handed straight back to the rider and returns to you — no separate pickup.",
   },
   {
     title: "Handle returns",
@@ -48,8 +48,8 @@ export function OnboardingView() {
           Selling on Fitzo
         </h1>
         <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-[#625b53]">
-          Fitzo brings the fitting room to your customers: they order, try at home for
-          24 hours, and keep only what they love. Here's how to run your store on it.
+          Fitzo brings the fitting room to your customers' doorstep: they order, try on
+          while the rider waits, and keep only what they love. Here's how to run your store on it.
         </p>
       </header>
 

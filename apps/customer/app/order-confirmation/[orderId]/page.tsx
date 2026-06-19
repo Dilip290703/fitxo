@@ -86,7 +86,7 @@ export default async function OrderConfirmationPage({
           Order placed!
         </h1>
         <p className="mt-2 text-[15px] text-[#5f5851]">
-          Your FitZo try-at-home order is confirmed.
+          Your FitZo try-on order is confirmed.
         </p>
 
         {/* Order number */}
@@ -103,12 +103,11 @@ export default async function OrderConfirmationPage({
         {deadline && (
           <div className="mt-4 rounded-[16px] bg-[#f4ede4] px-5 py-4">
             <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8b7058]">
-              24-hour try window
+              Try window at your door
             </p>
             <p className="mt-1 text-[14px] text-[#5f5851]">
-              Your try deadline is{" "}
-              <span className="font-semibold text-[#171717]">{deadline}</span>.
-              Keep what you love — we&apos;ll collect returns for free.
+              When your rider arrives, you&apos;ll have 15–30 minutes to try everything on.
+              Keep what you love and hand the rest straight back — no return to schedule.
             </p>
           </div>
         )}

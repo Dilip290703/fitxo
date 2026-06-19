@@ -7,9 +7,9 @@ const steps = [
   },
   {
     step: "02",
-    title: "Get it in 60 minutes",
+    title: "Pick a delivery slot",
     description:
-      "A FitZo delivery partner brings multiple picks to your doorstep for an at-home try-on.",
+      "A FitZo rider brings your picks to your door at the slot you chose and waits while you try them on.",
   },
   {
     step: "03",

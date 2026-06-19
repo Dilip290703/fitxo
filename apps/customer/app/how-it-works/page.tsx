@@ -5,26 +5,26 @@ import { HowItWorks } from "@/components/HowItWorks";
 
 const FAQS = [
   {
-    q: "How long is the try-at-home window?",
-    a: "Once your order is delivered, a 24-hour try window begins. Keep what you love and we'll arrange a free pickup for the rest.",
+    q: "How long is the try-on window?",
+    a: "When the rider arrives at your delivery slot, they wait 15–30 minutes while you try everything on. Keep what you love and hand the rest straight back to them.",
   },
   {
     q: "When am I charged?",
-    a: "You only pay for the items you keep, after your try window. Nothing is charged upfront for the pieces you return.",
+    a: "You only pay for the items you keep, once you've tried them on. Nothing is charged upfront for the pieces you hand back.",
   },
   {
-    q: "Is return pickup really free?",
-    a: "Yes — a FitZo delivery partner collects your returns from your doorstep at no cost.",
+    q: "Do I have to schedule a return?",
+    a: "No — you return the items you don't want to the rider on the spot, at the door. There's no separate pickup to arrange.",
   },
   {
-    q: "How fast is delivery?",
-    a: "We aim to deliver within 60 minutes from partner stores near you, subject to availability and your delivery zone.",
+    q: "How does delivery work?",
+    a: "You book a delivery slot at checkout, and a rider brings your picks from partner stores near you at that time, subject to availability and your delivery zone.",
   },
 ];
 
 export const metadata = {
   title: "How It Works — FitZo",
-  description: "Try fashion at home in 60 minutes. Keep what you love, return the rest for free.",
+  description: "Book a delivery slot, try fashion on at your door while the rider waits, and keep only what you love.",
 };
 
 export default function HowItWorksPage() {
@@ -41,8 +41,8 @@ export default function HowItWorksPage() {
           Try before you buy, at your doorstep
         </h1>
         <p className="mt-4 text-[15px] leading-7 text-[#6b6258]">
-          Fashion convenience built around your schedule and your fit. Order, try at
-          home, and keep only what feels right.
+          Fashion convenience built around your schedule and your fit. Order, try on
+          at your door while the rider waits, and keep only what feels right.
         </p>
       </section>
 

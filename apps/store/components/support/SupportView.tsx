@@ -2,8 +2,8 @@
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "How does the 24-hour try window work?",
-    a: "When a rider delivers an order, the customer's try window starts. They keep (and pay for) what they like; the rest is picked up free. You see each item's keep/return outcome on the order detail.",
+    q: "How does the try window work?",
+    a: "When the rider delivers, they wait 15–30 minutes while the customer tries the items on. The customer keeps (and pays for) what they like and hands the rest back to the rider on the spot. You see each item's keep/return outcome on the order detail.",
   },
   {
     q: "When do I get paid?",
@@ -15,7 +15,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What happens to returned items?",
-    a: "A rider collects the item from the customer and returns it to your store. The Returns page shows each return's condition (good/damaged) and status.",
+    a: "The customer hands returns back to the rider at the door, and the rider brings them back to your store on the same trip. The Returns page shows each return's condition (good/damaged) and status.",
   },
   {
     q: "How do I change my store name or add a staff member?",

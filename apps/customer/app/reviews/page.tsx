@@ -6,7 +6,7 @@ export default function ReviewsPage() {
     <RoutePlaceholder
       eyebrow="Customer reviews"
       title="What early FitZo shoppers are saying."
-      description="Real reactions from people using same-day delivery, try-at-home convenience, and pay-later checkout."
+      description="Real reactions from people using slot-based delivery, doorstep try-on, and pay-later checkout."
       primaryLabel="Browse products"
       primaryHref="/products"
       secondaryLabel="Back to home"

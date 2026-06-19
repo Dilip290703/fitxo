@@ -4,8 +4,8 @@ const items = [
     text: "Make the decision after the mirror moment, not before it.",
   },
   {
-    title: "60-Minute Delivery",
-    text: "Fashion moves fast, and your order should too.",
+    title: "Delivery on your slot",
+    text: "Book a time that suits you and a rider brings your picks to your door.",
   },
   {
     title: "Instant Returns",

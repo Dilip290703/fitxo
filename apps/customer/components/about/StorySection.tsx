@@ -5,7 +5,7 @@ const storyPoints = [
   },
   {
     title: "The solution",
-    text: "FitZo brings the fitting room home. You order pieces nearby, try them in your own space, and keep only what actually works.",
+    text: "FitZo brings the fitting room to your door. You order pieces nearby, try them on while the rider waits, and keep only what actually works.",
   },
   {
     title: "The vision",

@@ -61,7 +61,7 @@ export function BagPageView() {
               Your Bag
             </p>
             <h1 className="mt-3 font-display text-[44px] leading-none text-[#171717]">
-              Everything you want to try at home.
+              Everything you want to try on at your door.
             </h1>
           </div>
 
@@ -71,7 +71,7 @@ export function BagPageView() {
                 Your bag is empty.
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#5f5851]">
-                Add a few looks and compare them at home before deciding what to keep.
+                Add a few looks and compare them at your door before deciding what to keep.
               </p>
               <CheckoutButton
                 href="/products"
@@ -94,7 +94,7 @@ export function BagPageView() {
                     Keep only what you love.
                   </p>
                   <p className="mt-3 text-[14px] leading-7 text-[#5f5851]">
-                    Instant returns at the doorstep, zero pressure to keep anything that doesn&apos;t fit, and 60-minute availability from nearby stores.
+                    Hand returns straight back to the rider, zero pressure to keep anything that doesn&apos;t fit, and delivery-slot booking from nearby stores.
                   </p>
                 </section>
               </div>

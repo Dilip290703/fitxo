@@ -54,7 +54,7 @@ const TIMELINE = [
   { reachedAt: "confirmed",         label: "Confirmed",          sub: "Store is preparing your items" },
   { reachedAt: "out_for_delivery",  label: "Out for delivery",   sub: "Rider is on the way to you" },
   { reachedAt: "delivered",         label: "Delivered",          sub: "Your order has arrived" },
-  { reachedAt: "try_window_active", label: "Try window open",    sub: "24 hours to decide what to keep" },
+  { reachedAt: "try_window_active", label: "Try window open",    sub: "Try on while the rider waits (15–30 min)" },
   { reachedAt: "completed",         label: "Completed",          sub: "All done!" },
 ] as const;
 
@@ -278,7 +278,7 @@ export function OrderTrackingView({
                   Try window closed
                 </p>
                 <p className="mt-1 text-[14px] text-[#c0392b]">
-                  Your 24-hour window has ended. An agent will reach out for any undecided items.
+                  Your try window has ended. The rider has taken back anything you didn&apos;t keep.
                 </p>
               </>
             ) : (
@@ -320,7 +320,7 @@ export function OrderTrackingView({
         {order.status === "delivered" && (
           <div className="mt-4 rounded-[14px] bg-[#f4ede4] px-5 py-4">
             <p className="text-[13px] font-medium text-[#8b7058]">
-              Your order has been delivered. The 24-hour try window will open shortly.
+              Your order has been delivered. Your try window with the rider will open shortly.
             </p>
           </div>
         )}

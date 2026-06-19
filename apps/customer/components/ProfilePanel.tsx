@@ -77,7 +77,7 @@ function toUIOrder(order: any): Order {
 }
 
 const actionCards = [
-  { label: "My Orders", text: "Track try-at-home and past purchases.", href: "/orders" },
+  { label: "My Orders", text: "Track try-on deliveries and past purchases.", href: "/orders" },
   { label: "Wishlist", text: "Looks saved for your next delivery.", href: "/wishlist" },
   { label: "My Addresses", text: "Manage home and office delivery points.", href: "#addresses" },
   { label: "AI Style Preferences", text: "Tune fit, undertone, brands, and sizes.", href: "/ai-style-setup" },

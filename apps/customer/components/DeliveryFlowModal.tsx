@@ -7,9 +7,9 @@ type DeliveryFlowModalProps = {
 
 const flowSteps = [
   "Pick styles from nearby stores",
-  "Receive delivery in under 60 minutes",
-  "Try everything at home",
-  "Pay only for what you keep",
+  "Book a delivery slot that suits you",
+  "Try everything on while the rider waits",
+  "Keep what you love, hand the rest back on the spot",
 ];
 
 export function DeliveryFlowModal({
@@ -27,7 +27,7 @@ export function DeliveryFlowModal({
               Delivery flow
             </p>
             <h2 className="mt-3 font-display text-[38px] leading-none text-[#171717]">
-              How FitZo gets your fitting room home.
+              How FitZo brings the fitting room to your door.
             </h2>
           </div>
           <button

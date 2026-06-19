@@ -446,7 +446,7 @@ export const testimonials = [
     image:
       "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=900&q=80",
     quote:
-      "The 60-minute delivery promise actually felt real. I could plan an outfit after work and still make my dinner reservation.",
+      "The delivery slot I booked was bang on time. I could plan an outfit after work and still make my dinner reservation.",
   },
 ];
 

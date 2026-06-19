@@ -7,7 +7,7 @@ export function AboutCTA() {
             Ready when you are
           </p>
           <h2 className="fade-up fade-delay-1 mt-5 font-display text-[40px] leading-[0.94] font-medium tracking-[-0.05em] text-[#171717] sm:text-[56px]">
-            Start trying at home today.
+            Start trying on at your door today.
           </h2>
           <a
             href="/#featured-stores"

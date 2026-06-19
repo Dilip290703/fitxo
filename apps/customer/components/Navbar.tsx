@@ -26,7 +26,7 @@ const megaCategories = [
     links: [
       { label: "Dresses", href: "/products?category=women" },
       { label: "Wedding wear", href: "/products?category=women&collection=summer" },
-      { label: "Try-at-home edits", href: "/products?category=women" },
+      { label: "Try-on edits", href: "/products?category=women" },
     ],
   },
   {

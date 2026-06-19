@@ -34,7 +34,7 @@ export default async function BrandsPage() {
           Every nearby brand
         </h1>
         <p className="mt-3 max-w-xl text-[15px] leading-7 text-[#6b6258]">
-          Browse the labels available for same-day discovery, at-home try-on, and pay-later checkout.
+          Browse the labels available for doorstep try-on, slot-based delivery, and pay-later checkout.
         </p>
 
         {brands.length > 0 ? (
