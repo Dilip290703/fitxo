@@ -62,17 +62,21 @@ Last updated: 2026-06-04
 - [x] 24. Size Guide — D
 - [x] 25. 404 Error Page — D
 
-## P2 — Delivery Agent Panel (12) — empty shell, not started
-- [ ] 1. Agent Login
-- [ ] 2. Agent Dashboard / Home
-- [ ] 3. Order Detail (Pickup)
-- [ ] 4. Order Detail (Delivery)  *(confirm delivery → starts customer try window; rider waits 15–30 min)*
-- [ ] 5. Return Collection Page
-- [ ] 6. Navigation / Map Screen
+## P2 — Delivery Agent Panel (12) — CORE LOOP BUILT (J, 2026-06-19, branch feat/agent-panel)
+> Agent app runs on **:3002** (`pnpm dev:agent`). Rider = role `rider` + verified `riders` row
+> (mirrors store-manager gate via `lib/agent-auth.ts`). Rider writes go through guarded
+> SECURITY DEFINER RPCs (migration **011**). Live coordination via **Supabase Realtime** on
+> `orders`/`try_sessions`/`deliveries`. Needs migration 011 + a verified test rider (see Known issues).
+- [~] 1. Agent Login — J  *(email+pw sign-in + sign-up + forgot/reset password; verified-rider gate with pending/not-rider screens. Built, pending browser test.)*
+- [~] 2. Agent Dashboard / Home — J  *(assigned deliveries list + online/offline availability toggle. Built.)*
+- [ ] 3. Order Detail (Pickup)  *(folded into the single Delivery Detail status machine)*
+- [~] 4. Delivery Detail + status machine — J  *(accept → picked_up (order out_for_delivery) → **mark delivered** (order delivered) → customer accepts → live 7-min timer + live keep/return decisions → collect returns & complete. Built; this is the loop. Customer side: realtime "order arrived → start 7-min window" popup added to order-tracking + `start_try_window` RPC.)*
+- [ ] 5. Return Collection Page  *(returns are surfaced in Delivery Detail; standalone screen TBD)*
+- [ ] 6. Navigation / Map Screen  *(currently an "Open in Google Maps" link — no Maps key yet)*
 - [ ] 7. Agent Earnings Page
 - [ ] 8. Agent Profile Page
 - [ ] 9. Agent Notifications
-- [ ] 10. Order History (Agent)
+- [ ] 10. Order History (Agent)  *(completed deliveries show on the dashboard)*
 - [ ] 11. Support Page (Agent)
 - [ ] 12. Onboarding / Training (Agent)
 
