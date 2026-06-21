@@ -116,7 +116,7 @@ Last updated: 2026-06-04
 - [ ] 16. User Role Management
 - [ ] 17. Store Payout Management
 - [ ] 18. Agent Payout Management
-- [x] 19. System Settings
+- [~] 19. System Settings — D  *(making it real: `system_settings` table + RLS, persisting commission rate + try-window; replaces the mock toast. Was a mock — toast only, no storage.)*
 - [ ] 20. Reports & Export Center
 - [ ] 21. Admin Activity Log  *(table exists; no screen)*
 
