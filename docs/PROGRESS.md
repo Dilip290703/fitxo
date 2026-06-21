@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-04
+Last updated: 2026-06-21
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -62,11 +62,14 @@ Last updated: 2026-06-04
 - [x] 24. Size Guide — D
 - [x] 25. 404 Error Page — D
 
-## P2 — Delivery Agent Panel (12) — CORE LOOP BUILT (J, 2026-06-19, branch feat/agent-panel)
+## P2 — Delivery Agent Panel (12) — CORE LOOP BUILT & MERGED TO MAIN (J, 2026-06-21)
 > Agent app runs on **:3002** (`pnpm dev:agent`). Rider = role `rider` + verified `riders` row
 > (mirrors store-manager gate via `lib/agent-auth.ts`). Rider writes go through guarded
 > SECURITY DEFINER RPCs (migration **011**). Live coordination via **Supabase Realtime** on
 > `orders`/`try_sessions`/`deliveries`. Needs migration 011 + a verified test rider (see Known issues).
+> SSR localStorage shim (`instrumentation.ts`) added to both `apps/agent` and `apps/store`
+> (Node 22+ ships a broken `globalThis.localStorage` that crashes @supabase/ssr during render).
+> Merged straight to `main` 2026-06-21 (owner-authorized; logic reviewed, browser test still recommended).
 - [~] 1. Agent Login — J  *(email+pw sign-in + sign-up + forgot/reset password; verified-rider gate with pending/not-rider screens. Built, pending browser test.)*
 - [~] 2. Agent Dashboard / Home — J  *(assigned deliveries list + online/offline availability toggle. Built.)*
 - [ ] 3. Order Detail (Pickup)  *(folded into the single Delivery Detail status machine)*
@@ -143,6 +146,8 @@ Last updated: 2026-06-04
 - 2026-06-19: **Found migration 002's RLS policies were missing in the live DB** — `try_sessions`/`returns`/`payments`/`payouts` had RLS *enabled* but **zero policies** (deny-all), which broke checkout (`new row violates RLS for try_sessions`). Migration **010** idempotently recreates exactly those policies. (Migration 005 — re-enable RLS — had already been applied; this was a separate gap.)
 - 2026-06-19: **Navbar auth was reading a mock localStorage flag**, not the Supabase session — replaced with `supabase.auth.getUser()` + `onAuthStateChange`. Checkout variant resolver made resilient (falls back to a product's first colour/variant) so an item added without a colour can't abort the order. Added a login-required modal + a checkout confetti celebration.
 - 2026-06-19: **Try-window duration — to reconcile:** the doorstep pivot (PR #20) shipped `TRY_WINDOW_MINUTES = 30`; Jay had proposed ~5–7 min on-the-spot. Jay & Dilip to agree on the final value (then move it to Admin settings, see Known issues).
+- 2026-06-21: **Try-window resolved to 7 min** — `TRY_WINDOW_MINUTES = 7` in checkout + admin, and `start_try_window` (migration 011) sets a 7-min deadline. The window now correctly **starts when the customer taps "Start try-on"** after the rider marks delivered (not at checkout). Still should move the duration to Admin `system_settings` eventually.
+- 2026-06-21: **Agent panel (P2 core loop) merged directly to `main`** (owner-authorized, no PR) — `feat/agent-panel` fast-forwarded into main. Includes the `instrumentation.ts` SSR localStorage shim for both `apps/agent` and `apps/store`.
 
 ## Known issues / TODO
 - **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) `TRY_WINDOW_MINUTES` should live in Admin settings alongside the commission rate (same missing `system_settings` storage).
