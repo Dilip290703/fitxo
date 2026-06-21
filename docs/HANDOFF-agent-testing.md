@@ -22,9 +22,28 @@ To check they're applied: in the SQL editor run
 `select proname from pg_proc where proname in ('start_try_window','handle_new_user');`
 — you should see both names.
 
+## ⚠️ Local-testing gotcha: one browser profile = one login
+
+On `localhost`, browser cookies are **shared across ports**, and all three apps use the
+same Supabase project, so they share **one** auth-session cookie. That means in a single
+browser profile you can only be logged into **one** panel at a time — logging into admin
+(:3001) clobbers your customer (:3000) and rider (:3002) sessions, and vice-versa. Symptom
+if you ignore this: `ERR_TOO_MANY_REDIRECTS` on `/admin/login` (a customer/rider session
+leaking into admin). The middleware now renders the login form instead of looping, but the
+sessions still clobber each other.
+
+**To run the full loop you need 3 concurrent logins, so use a separate browser context per
+panel**, e.g.:
+- Customer → normal Chrome profile
+- Admin → a 2nd Chrome profile (or Incognito window)
+- Rider → a 3rd Chrome profile (or a different browser, e.g. Safari)
+
+(Incognito windows share cookies with each other, so two incognito windows ≠ two sessions —
+use distinct profiles/browsers.)
+
 ## Testing the full loop (no SQL after the one-time setup)
 
-Run the apps: `pnpm dev` (customer :3000 + admin), `pnpm dev:agent` (:3002).
+Run the apps: `pnpm dev` (customer :3000 + admin :3001), `pnpm dev:agent` (:3002).
 
 1. **Rider signs up** — agent app (:3002) → Create account. They'll see "an admin will verify
    you." (012 auto-creates their `users` + `riders` rows, so they now appear in Admin.)
