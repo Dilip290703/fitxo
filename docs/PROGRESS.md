@@ -70,6 +70,10 @@ Last updated: 2026-06-21
 > SSR localStorage shim (`instrumentation.ts`) added to both `apps/agent` and `apps/store`
 > (Node 22+ ships a broken `globalThis.localStorage` that crashes @supabase/ssr during render).
 > Merged straight to `main` 2026-06-21 (owner-authorized; logic reviewed, browser test still recommended).
+> **Testing needs ZERO Supabase SQL now** after a one-time setup — see `docs/HANDOFF-agent-testing.md`.
+> Migration **012** auto-provisions `public.users` + a `riders` row on signup (a new rider used to
+> need a manual INSERT to be visible in Admin → that was the "rider can't log in" SQL). Verify +
+> assign already live in Admin (Riders → Verify Rider; Deliveries → Assign).
 - [~] 1. Agent Login — J  *(email+pw sign-in + sign-up + forgot/reset password; verified-rider gate with pending/not-rider screens. Built, pending browser test.)*
 - [~] 2. Agent Dashboard / Home — J  *(assigned deliveries list + online/offline availability toggle. Built.)*
 - [ ] 3. Order Detail (Pickup)  *(folded into the single Delivery Detail status machine)*
@@ -148,6 +152,7 @@ Last updated: 2026-06-21
 - 2026-06-19: **Try-window duration — to reconcile:** the doorstep pivot (PR #20) shipped `TRY_WINDOW_MINUTES = 30`; Jay had proposed ~5–7 min on-the-spot. Jay & Dilip to agree on the final value (then move it to Admin settings, see Known issues).
 - 2026-06-21: **Try-window resolved to 7 min** — `TRY_WINDOW_MINUTES = 7` in checkout + admin, and `start_try_window` (migration 011) sets a 7-min deadline. The window now correctly **starts when the customer taps "Start try-on"** after the rider marks delivered (not at checkout). Still should move the duration to Admin `system_settings` eventually.
 - 2026-06-21: **Agent panel (P2 core loop) merged directly to `main`** (owner-authorized, no PR) — `feat/agent-panel` fast-forwarded into main. Includes the `instrumentation.ts` SSR localStorage shim for both `apps/agent` and `apps/store`.
+- 2026-06-21: **Killed the manual-SQL-per-test problem** — root cause was that agent signup only wrote `auth.users` (no `public.users`/`riders` row, so a new rider was invisible in Admin and couldn't be verified without a hand INSERT), plus migration 011 not always being applied (so the timer/RPCs were missing). Fix: migration **012** adds a `handle_new_user` trigger on `auth.users` that auto-creates the `public.users` row (role from signup metadata) + a `riders` row for riders, with a one-time back-fill. Admin already had the Verify-Rider + Assign-Delivery UI. End-to-end testing is now a click-path (`docs/HANDOFF-agent-testing.md`) with the only SQL being the one-time migration paste.
 
 ## Known issues / TODO
 - **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) `TRY_WINDOW_MINUTES` should live in Admin settings alongside the commission rate (same missing `system_settings` storage).
