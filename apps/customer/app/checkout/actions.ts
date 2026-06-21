@@ -118,11 +118,11 @@ export async function placeOrder(
     return { success: false, error: itemsError.message };
   }
 
-  // Create try_session. The real window is the rider's 15–30 min wait, which
-  // starts when the rider ARRIVES — the agent panel resets started_at/deadline_at
-  // on delivery. This is a placeholder until then. (TODO: move duration to Admin
-  // settings; see docs/PROGRESS.md Known issues.)
-  const TRY_WINDOW_MINUTES = 30;
+  // Create try_session. The real window is the rider's 7-minute wait, which
+  // starts when the customer accepts after the rider marks delivered — the agent
+  // flow resets started_at/deadline_at then. This is a placeholder until then.
+  // (TODO: move duration to Admin settings; see docs/PROGRESS.md Known issues.)
+  const TRY_WINDOW_MINUTES = 7;
   const startedAt = new Date();
   const deadlineAt = new Date(startedAt.getTime() + TRY_WINDOW_MINUTES * 60 * 1000);
 

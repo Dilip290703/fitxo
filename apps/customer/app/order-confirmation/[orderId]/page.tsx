@@ -106,7 +106,7 @@ export default async function OrderConfirmationPage({
               Try window at your door
             </p>
             <p className="mt-1 text-[14px] text-[#5f5851]">
-              When your rider arrives, you&apos;ll have 15–30 minutes to try everything on.
+              When your rider arrives, you&apos;ll have 7 minutes to try everything on.
               Keep what you love and hand the rest straight back — no return to schedule.
             </p>
           </div>

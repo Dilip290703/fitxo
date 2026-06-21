@@ -101,7 +101,7 @@ const TIMELINE = [
   { reachedAt: "confirmed",         label: "Confirmed",          sub: "Store is preparing your items" },
   { reachedAt: "out_for_delivery",  label: "Out for delivery",   sub: "Rider is on the way to you" },
   { reachedAt: "delivered",         label: "Delivered",          sub: "Your order has arrived" },
-  { reachedAt: "try_window_active", label: "Try window open",    sub: "Try on while the rider waits (15–30 min)" },
+  { reachedAt: "try_window_active", label: "Try window open",    sub: "Try on while the rider waits (7 min)" },
   { reachedAt: "completed",         label: "Completed",          sub: "All done!" },
 ] as const;
 

@@ -6,7 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 const FAQS = [
   {
     q: "How long is the try-on window?",
-    a: "When the rider arrives at your delivery slot, they wait 15–30 minutes while you try everything on. Keep what you love and hand the rest straight back to them.",
+    a: "When the rider arrives at your delivery slot, they wait 7 minutes while you try everything on. Keep what you love and hand the rest straight back to them.",
   },
   {
     q: "When am I charged?",
