@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@fitzo/supabase/client";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
 import { CheckoutButton } from "@/components/cart/CheckoutButton";
 import { PriceSummary } from "@/components/cart/PriceSummary";
+import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
+import { CelebrationOverlay } from "@/components/cart/CelebrationOverlay";
 import { useCart } from "@/components/cart/CartProvider";
 import { useLocation } from "@/store/locationStore";
 import { placeOrder } from "@/app/checkout/actions";
@@ -20,6 +23,9 @@ export function CheckoutPageView() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
 
   const discount = items.length > 0 ? 300 : 0;
   const total = Math.max(0, Math.round(subtotal - discount));
@@ -34,6 +40,15 @@ export function CheckoutPageView() {
     setIsProcessing(true);
     setError(null);
 
+    // Gate on auth up front so we can show a friendly modal instead of an error.
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsProcessing(false);
+      setShowLogin(true);
+      return;
+    }
+
     const result = await placeOrder(items, selectedMethod);
 
     if (!result.success) {
@@ -42,8 +57,10 @@ export function CheckoutPageView() {
       return;
     }
 
+    // Celebrate, then redirect (CelebrationOverlay calls onComplete).
     clearCart();
-    router.push(`/order-confirmation/${result.orderId}`);
+    setPlacedOrderId(result.orderId);
+    setCelebrating(true);
   }
 
   return (
@@ -178,6 +195,15 @@ export function CheckoutPageView() {
       </section>
 
       <Footer />
+
+      <LoginRequiredModal open={showLogin} onClose={() => setShowLogin(false)} />
+
+      <CelebrationOverlay
+        show={celebrating}
+        onComplete={() => {
+          if (placedOrderId) router.push(`/order-confirmation/${placedOrderId}`);
+        }}
+      />
     </main>
   );
 }

@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@fitzo/supabase/client";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
-import { AUTH_STORAGE_KEY } from "@/lib/mockData";
-import { getStorageItem } from "@/lib/storage";
 import { useWishlist } from "@/store/wishlistStore";
 import { useLocation } from "@/store/locationStore";
 
@@ -229,9 +228,19 @@ export function Navbar({
   // Display label: show pincode if set, otherwise prompt
   const pincodeLabel = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Enter Pincode";
 
+  // Reflect the real Supabase session and keep it live across login/logout.
   useEffect(() => {
-    const storedAuth = getStorageItem(AUTH_STORAGE_KEY);
-    setIsLoggedIn(storedAuth === "true");
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setIsLoggedIn(!!session?.user),
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {

@@ -3,8 +3,55 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { keepItem, returnItem } from "./actions";
+import { createKeepPayment, confirmKeepPayment, returnItem } from "./actions";
 import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
+
+// ─────────────────────────────────────────────
+// Razorpay Checkout (loaded on demand from their CDN)
+// ─────────────────────────────────────────────
+
+const RAZORPAY_SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
+
+type RazorpaySuccess = {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpaySuccess) => void;
+  modal?: { ondismiss?: () => void };
+  theme?: { color?: string };
+};
+
+type RazorpayInstance = {
+  open: () => void;
+  on: (event: string, cb: (response: { error?: { description?: string } }) => void) => void;
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
+  }
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if (window.Razorpay) return resolve(true);
+    const script = document.createElement("script");
+    script.src = RAZORPAY_SCRIPT_SRC;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
 
 // ─────────────────────────────────────────────
 // Types (serialised from server)
@@ -136,17 +183,66 @@ export function OrderTrackingView({
     if (pendingId) return;
     setPendingId(itemId);
     setActionError(null);
-    setDecisions((prev) => ({ ...prev, [itemId]: "keep" }));
 
-    const result = await keepItem(itemId, order.id);
-    setPendingId(null);
-
-    if (!result.success) {
+    const reset = () => {
+      setPendingId(null);
       setDecisions((prev) => ({ ...prev, [itemId]: "pending" }));
-      setActionError(result.error);
-    } else {
-      router.refresh();
+    };
+
+    // 1. Create the Razorpay order + pending payment row (amount is server-computed).
+    const payment = await createKeepPayment(itemId, order.id);
+    if (!payment.success) {
+      setActionError(payment.error);
+      setPendingId(null);
+      return;
     }
+
+    // 2. Make sure the Checkout script is available.
+    const ready = await loadRazorpayScript();
+    if (!ready || !window.Razorpay) {
+      setActionError("Couldn't load the payment window. Check your connection and try again.");
+      setPendingId(null);
+      return;
+    }
+
+    // 3. Open Checkout. The item only flips to "keep" after the server verifies payment.
+    const rzp = new window.Razorpay({
+      key: payment.keyId,
+      amount: payment.amount,
+      currency: payment.currency,
+      name: "Fitzo",
+      description: `Keep — ${payment.productName}`,
+      order_id: payment.rzpOrderId,
+      theme: { color: "#171d2b" },
+      modal: {
+        ondismiss: () => {
+          setActionError("Payment cancelled — the item is still up for decision.");
+          setPendingId(null);
+        },
+      },
+      handler: async (response) => {
+        const result = await confirmKeepPayment({
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+          orderId: order.id,
+        });
+        setPendingId(null);
+        if (!result.success) {
+          setActionError(result.error);
+          return;
+        }
+        setDecisions((prev) => ({ ...prev, [itemId]: "keep" }));
+        router.refresh();
+      },
+    });
+
+    rzp.on("payment.failed", (resp) => {
+      setActionError(resp.error?.description ?? "Payment failed. Please try again.");
+      reset();
+    });
+
+    rzp.open();
   }
 
   async function handleReturn(itemId: string) {
