@@ -61,6 +61,15 @@ export default function DeliveryDetailPage() {
     return () => { supabase.removeChannel(ch); };
   }, [detail?.order_id, load]);
 
+  // Polling fallback: the rider's order RLS is a join-based policy that Realtime
+  // row-filtering doesn't reliably match, so poll while the delivery is in flight
+  // to guarantee the customer's decisions + the try-window timer show up here.
+  useEffect(() => {
+    if (!detail || detail.status === "completed" || detail.status === "failed") return;
+    const id = setInterval(() => load(), 4000);
+    return () => clearInterval(id);
+  }, [detail, load]);
+
   async function run(fn: () => Promise<{ error: { message: string } | null }>) {
     setBusy(true);
     setError(null);
