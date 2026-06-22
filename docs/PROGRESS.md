@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-04
+Last updated: 2026-06-22
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -87,7 +87,7 @@ Last updated: 2026-06-04
 - [T] 6. Order Management Page — D  *(combined with #7 — /orders list, RLS-scoped, status-bucket filter, per-store subtotal + ready/kept/returned counts; migration 007 applied; verified in browser. Rows are now fully clickable with a › affordance.)*
 - [T] 7. Order Detail (Store) — D  *(combined with #6 — /orders/[id]; store's line items + SKU + keep/return outcome; per-item "Mark ready" + "Mark all ready" via guarded set_order_item_prepared RPC; verified in browser. No customer PII (RLS).)*
 - [T] 8. Returns Management — D  *(combined with #9/#10 — /returns: read-only tracking (lifecycle owned by agent/admin flow), status filter, condition badges; multi-store leak closed client-side; verified in browser with seed)*
-- [T] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger + recent kept items; no commission math — commission config doesn't exist yet, see Known issues; verified in browser)*
+- [T] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger + recent kept items; no commission math — `commission_rate` now exists in `system_settings` (migration 011) but Earnings doesn't read it yet, see Known issues; verified in browser)*
 - [T] 10. Analytics Page (Store) — D  *(/analytics: 30-day CSS bar charts, keep-vs-return rate, top products; verified in browser with seed)*
 - [T] 11. Store Profile Settings — D  *(/settings: contact/description/address editable via guarded update_store_profile RPC (migration 008); name/slug/verified stay admin-owned; verified in browser)*
 - [T] 12. Staff Management — D  *(/staff: read-only roster via get_store_staff RPC (migration 008 — co-managers' names/emails without widening users RLS); add/remove admin-provisioned; verified in browser)*
@@ -116,7 +116,7 @@ Last updated: 2026-06-04
 - [ ] 16. User Role Management
 - [ ] 17. Store Payout Management
 - [ ] 18. Agent Payout Management
-- [~] 19. System Settings — D  *(making it real: `system_settings` table + RLS, persisting commission rate + try-window; replaces the mock toast. Was a mock — toast only, no storage.)*
+- [T] 19. System Settings — D  *(real: `system_settings` singleton table + RLS (authenticated read / admin write, migration 011) + getSettings/updateSettings server actions; persists commission rate + try-window (stored in **minutes**) + general/delivery fields; replaces the mock toast. Migration applied to the shared DB; save verified in a real browser.)*
 - [ ] 20. Reports & Export Center
 - [ ] 21. Admin Activity Log  *(table exists; no screen)*
 
@@ -140,9 +140,11 @@ Last updated: 2026-06-04
 - 2026-06-19: **Navbar auth was reading a mock localStorage flag**, not the Supabase session — replaced with `supabase.auth.getUser()` + `onAuthStateChange`. Checkout variant resolver made resilient (falls back to a product's first colour/variant) so an item added without a colour can't abort the order. Added a login-required modal + a checkout confetti celebration.
 - 2026-06-19: **Try-window duration — to reconcile:** the doorstep pivot (PR #20) shipped `TRY_WINDOW_MINUTES = 30`; Jay had proposed ~5–7 min on-the-spot. Jay & Dilip to agree on the final value (then move it to Admin settings, see Known issues).
 
+- 2026-06-22: **Admin System Settings (#19) made real** — added a `system_settings` **singleton** table (migration 011, `id smallint PRIMARY KEY CHECK (id=1)`) + RLS (`authenticated` SELECT so store Earnings / customer try-timer can read config; `is_admin()` for writes) reusing the shared `trigger_set_updated_at`. Try-window stored in **minutes** (1440 = legacy 24h) — chosen over hours so it survives the pending doorstep pivot to ~5–7 min. Writes go through the service-role admin client (stamping `updated_by`); reads via the SSR client. Screen split into a server `page.tsx` + `SettingsClient.tsx` per the admin convention. Consumers (Earnings commission math, customer countdown) still read hardcoded values — wiring them is follow-up.
+
 ## Known issues / TODO
-- **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) `TRY_WINDOW_MINUTES` should live in Admin settings alongside the commission rate (same missing `system_settings` storage).
-- **No commission/system-settings storage exists** — the admin System Settings screen is a mock (toast only, persists nothing), and there is no `system_settings` table. CLAUDE.md requires the commission rate to be config, so the store Earnings screen shows gross kept revenue + the `payouts` ledger (admin-issued amounts) and does **no** commission math. Needs: a settings table + admin UI + payout computation (ties into Razorpay Payouts, partner/admin scope).
+- **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) the try-window duration now lives in Admin settings (`system_settings.try_window_minutes`, migration 011) — but the customer countdown still uses a hardcoded constant and must be wired to read it.
+- **Commission/system-settings storage now EXISTS (2026-06-22, migration 011)** — the `system_settings` singleton + the real admin System Settings UI persist `commission_rate` + `try_window_minutes` (RLS: authenticated read / admin write). Still TODO — wire the **consumers**: store Earnings should compute commission off `commission_rate` (today shows gross only), and payout computation (ties into Razorpay Payouts, partner/admin scope) is unbuilt.
 - 🔴 **SECURITY (2026-06-08): RLS was DISABLED on `users`, `orders`, `order_items` in the live DB** — anon key + no session could read all customer PII (names/emails/phones) + all orders. Found while building the Store Dashboard (dashboard showed 6 orders with no session). Policies in schema.sql are intact; RLS had just been turned off. Fix = run **migration 005** (`packages/supabase/migrations/005_reenable_rls.sql`, re-enables RLS on all tables, idempotent). **Affects the customer panel too — apply ASAP.** Verify with `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public';`
 - **Store panel:** migration **004** (`004_store_manager_read.sql`) adds manager SELECT on products/variants/orders/order_items/returns — required for Dashboard + Orders/Returns/Earnings. Apply before testing the store dashboard.
 - **Customer loop:** Payment #13 **done** for the keep path (per-item Razorpay). Delivery-slot booking (#8) is now core and still pending; scheduled Return Pickup (#14) is largely obsolete under the new model. Still pending: Razorpay **payouts** + a **webhook** (today the payment is confirmed only client-side via the success handler — if the customer closes the tab right after paying, the order won't be marked paid; a `payment.captured` webhook should be added before production).
