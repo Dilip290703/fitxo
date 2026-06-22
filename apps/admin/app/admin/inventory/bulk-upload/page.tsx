@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { useRouter } from 'next/navigation';
+import { logActivity } from '@/lib/activity';
 
 interface CSVRow {
   name: string;
@@ -142,6 +143,10 @@ export default function BulkUploadPage() {
 
     const errorCount = updated.filter((r) => r._status === 'error').length;
     const successCount = updated.filter((r) => r._status === 'success').length;
+
+    if (successCount > 0) {
+      await logActivity(supabase, { action: `Bulk imported ${successCount} products`, entity_type: 'product', new_value: { succeeded: successCount, failed: errorCount } });
+    }
 
     if (errorCount === 0) {
       toast(`All ${successCount} rows imported successfully!`, 'success');

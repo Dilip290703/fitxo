@@ -6,6 +6,7 @@ import DataTable, { Column } from '@/components/admin/DataTable';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { createClient } from '@fitzo/supabase/client';
+import { logActivity } from '@/lib/activity';
 
 interface Product {
   id: string;
@@ -64,20 +65,29 @@ export default function InventoryClient({ products, stores, brands, categories }
   const toggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase.from('products').update({ is_active: !current }).eq('id', id);
     if (error) toast('Failed to update product', 'error');
-    else { toast(`Product ${!current ? 'activated' : 'deactivated'}`, 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: `${!current ? 'Activated' : 'Deactivated'} product`, entity_type: 'product', entity_id: id, old_value: { is_active: current }, new_value: { is_active: !current } });
+      toast(`Product ${!current ? 'activated' : 'deactivated'}`, 'success'); router.refresh();
+    }
   };
 
   const softDelete = async (id: string) => {
     const { error } = await supabase.from('products').update({ is_deleted: true, is_active: false }).eq('id', id);
     if (error) toast('Failed to delete product', 'error');
-    else { toast('Product deleted', 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Deleted product', entity_type: 'product', entity_id: id, new_value: { is_deleted: true, is_active: false } });
+      toast('Product deleted', 'success'); router.refresh();
+    }
     setConfirmDelete(null);
   };
 
   const bulkDeactivate = async () => {
     const { error } = await supabase.from('products').update({ is_active: false }).in('id', selected);
     if (error) toast('Bulk action failed', 'error');
-    else { toast(`${selected.length} products deactivated`, 'success'); setSelected([]); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: `Bulk deactivated ${selected.length} products`, entity_type: 'product', new_value: { ids: selected } });
+      toast(`${selected.length} products deactivated`, 'success'); setSelected([]); router.refresh();
+    }
   };
 
   const columns: Column<Product>[] = [

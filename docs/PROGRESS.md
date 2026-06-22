@@ -113,12 +113,12 @@ Last updated: 2026-06-22
 - [ ] 13. Complaints & Support Management
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
 - [ ] 15. Content Management (CMS)
-- [ ] 16. User Role Management
+- [~] 16. User Role Management — D  *(/admin/users: list users + role filter + search; change-role modal → guarded `changeUserRole` server action (admin client) that updates `users.role`, provisions `store_managers` (store picker) / `riders`, deactivates store assignments on demotion, blocks self-role-change, warns on granting admin, and audit-logs via `logActivity`. No migration — all roles already in the `user_role` enum. Built + typecheck/route-verified; **role-change flow pending browser test**. Agent-panel-specific provisioning deferred to Jay's agent schema.)*
 - [ ] 17. Store Payout Management
 - [ ] 18. Agent Payout Management
 - [T] 19. System Settings — D  *(real: `system_settings` singleton table + RLS (authenticated read / admin write, migration 011) + getSettings/updateSettings server actions; persists commission rate + try-window (stored in **minutes**) + general/delivery fields; replaces the mock toast. Migration applied to the shared DB; save verified in a real browser.)*
 - [ ] 20. Reports & Export Center
-- [ ] 21. Admin Activity Log  *(table exists; no screen)*
+- [T] 21. Admin Activity Log — D  *(/admin/activity: read-only audit over `activity_logs` (admin join, latest 200) with entity-type filter, search, expandable before/after JSON diff. Plus a reusable `lib/activity.ts` `logActivity()` helper wired into ALL admin mutations (products, orders, customers, riders, stores, brands, categories, coupons, deliveries). No migration. Verified in browser.)*
 
 ---
 
@@ -131,6 +131,8 @@ Last updated: 2026-06-22
 
 ## Decisions log (append-only — record anything non-obvious you decided)
 - 2026-06-22: **Admin Payment Records (#9)** — read-only by design (no refund/edit action here; refunds would be a separate Razorpay flow). Summary totals computed server-side from the fetched rows. Added `success` + `initiated` styles to the shared `StatusBadge` (the `payment_txn_status` enum used them but they fell back to gray). Reused `DataTable`/`StatsCard`; row click routes to the existing `/admin/orders/[id]`.
+- 2026-06-22: **Admin Activity Log (#21)** — introduced `apps/admin/lib/activity.ts` `logActivity(supabase, entry, actorId?)`: best-effort (wrapped in try/catch so a logging failure never breaks the underlying mutation), works with both the browser and SSR clients (admin session satisfies `activity_logs_admin` RLS), and accepts an explicit `actorId` for the service-role path (inventory server actions, which have no session). Wired into every admin mutation. `ip_address` is only captured server-side (null for client-side actions) — minor follow-up if full IP audit is needed.
+- 2026-06-22: **User Role Management (#16)** — built now (not blocked on Jay after all): the `user_role` enum + `store_managers`/`riders` tables already exist, so role management needs no new schema. Role changes go through a guarded `changeUserRole` server action (service-role write + acting-admin id from the SSR session): blocks changing your own role, requires a store when assigning `store_manager` (upserts `store_managers`), auto-creates a `riders` profile, deactivates store assignments on demotion, and audit-logs via `logActivity`. The only deferred part is agent-panel-specific provisioning (assignments/deliveries), which is Jay's agent schema.
 - 2026-06-03: Restructured the single Next.js app into a **pnpm monorepo** — one app per panel (`apps/{customer,agent,store,admin}`) + shared `packages/{supabase,ui,config}`. Admin is now a separate build/deploy so admin code & the service-role key never ship in the customer bundle. Kept the `/admin` route prefix inside the admin app to avoid rewriting ~45 links. History preserved via `git mv`. (branch `chore/monorepo-restructure`, PR #1)
 - 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
 - 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.

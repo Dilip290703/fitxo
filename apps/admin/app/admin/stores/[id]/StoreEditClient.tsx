@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
+import { logActivity } from '@/lib/activity';
 import type { Store } from '@fitzo/supabase/types';
 
 export default function StoreEditClient({ store }: { store: Store }) {
@@ -32,7 +33,10 @@ export default function StoreEditClient({ store }: { store: Store }) {
     const { error } = await supabase.from('stores').update(form).eq('id', store.id);
     setSaving(false);
     if (error) toast(error.message, 'error');
-    else { toast('Store updated!', 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Updated store', entity_type: 'store', entity_id: store.id, new_value: { ...form } });
+      toast('Store updated!', 'success'); router.refresh();
+    }
   };
 
   return (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { logActivity } from '@/lib/activity';
 import type { User } from '@fitzo/supabase/types';
 
 export default function CustomerActions({ customer }: { customer: User }) {
@@ -20,7 +21,17 @@ export default function CustomerActions({ customer }: { customer: User }) {
     setLoading(false);
     setConfirm(false);
     if (error) toast(error.message, 'error');
-    else { toast(customer.is_blocked ? 'Customer unblocked' : 'Customer blocked', 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, {
+        action: customer.is_blocked ? 'Unblocked customer' : 'Blocked customer',
+        entity_type: 'customer',
+        entity_id: customer.id,
+        old_value: { is_blocked: customer.is_blocked },
+        new_value: { is_blocked: !customer.is_blocked },
+      });
+      toast(customer.is_blocked ? 'Customer unblocked' : 'Customer blocked', 'success');
+      router.refresh();
+    }
   };
 
   return (
