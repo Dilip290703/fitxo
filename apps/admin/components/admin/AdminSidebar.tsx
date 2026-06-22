@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/admin/stores', label: 'Stores', icon: '🏪' },
   { href: '/admin/riders', label: 'Riders', icon: '🛵' },
   { href: '/admin/customers', label: 'Customers', icon: '👤' },
+  { href: '/admin/users', label: 'User Roles', icon: '🔑' },
   { href: '/admin/brands', label: 'Brands', icon: '🏷️' },
   { href: '/admin/categories', label: 'Categories', icon: '🗂️' },
   { href: '/admin/coupons', label: 'Coupons', icon: '🎟️' },
