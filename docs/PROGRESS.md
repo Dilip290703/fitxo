@@ -106,7 +106,7 @@ Last updated: 2026-06-22
 - [x] 6. Store / Partner Management
 - [x] 7. Delivery Agent Management  *(Riders)*
 - [x] 8. Revenue & Financial Analytics
-- [ ] 9. Payment Records
+- [T] 9. Payment Records — D  *(/admin/payments: read-only ledger over `payments` joined to orders + users; Total Captured / Successful / Failed summary cards; status tabs (success/initiated/pending/failed/refunded) + search; row → order detail. No migration — `payments_admin_all` RLS already allows admin read. Verified in browser with live data.)*
 - [ ] 10. Try & Return Analytics  *(blocked: no try/return data)*
 - [~] 11. Live Deliveries Map  *(Deliveries page exists; map view TBD)*
 - [ ] 12. Notifications & Alerts Management
@@ -130,6 +130,7 @@ Last updated: 2026-06-22
 3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the try window; rider waits 15–30 min while the customer tries on).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
+- 2026-06-22: **Admin Payment Records (#9)** — read-only by design (no refund/edit action here; refunds would be a separate Razorpay flow). Summary totals computed server-side from the fetched rows. Added `success` + `initiated` styles to the shared `StatusBadge` (the `payment_txn_status` enum used them but they fell back to gray). Reused `DataTable`/`StatsCard`; row click routes to the existing `/admin/orders/[id]`.
 - 2026-06-03: Restructured the single Next.js app into a **pnpm monorepo** — one app per panel (`apps/{customer,agent,store,admin}`) + shared `packages/{supabase,ui,config}`. Admin is now a separate build/deploy so admin code & the service-role key never ship in the customer bundle. Kept the `/admin` route prefix inside the admin app to avoid rewriting ~45 links. History preserved via `git mv`. (branch `chore/monorepo-restructure`, PR #1)
 - 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
 - 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.
