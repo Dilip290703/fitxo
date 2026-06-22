@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-04
+Last updated: 2026-06-22
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -87,7 +87,7 @@ Last updated: 2026-06-04
 - [T] 6. Order Management Page — D  *(combined with #7 — /orders list, RLS-scoped, status-bucket filter, per-store subtotal + ready/kept/returned counts; migration 007 applied; verified in browser. Rows are now fully clickable with a › affordance.)*
 - [T] 7. Order Detail (Store) — D  *(combined with #6 — /orders/[id]; store's line items + SKU + keep/return outcome; per-item "Mark ready" + "Mark all ready" via guarded set_order_item_prepared RPC; verified in browser. No customer PII (RLS).)*
 - [T] 8. Returns Management — D  *(combined with #9/#10 — /returns: read-only tracking (lifecycle owned by agent/admin flow), status filter, condition badges; multi-store leak closed client-side; verified in browser with seed)*
-- [T] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger + recent kept items; no commission math — commission config doesn't exist yet, see Known issues; verified in browser)*
+- [T] 9. Earnings Page (Store) — D  *(/earnings: gross kept revenue + payouts ledger + recent kept items; no commission math — `commission_rate` now exists in `system_settings` (migration 011) but Earnings doesn't read it yet, see Known issues; verified in browser)*
 - [T] 10. Analytics Page (Store) — D  *(/analytics: 30-day CSS bar charts, keep-vs-return rate, top products; verified in browser with seed)*
 - [T] 11. Store Profile Settings — D  *(/settings: contact/description/address editable via guarded update_store_profile RPC (migration 008); name/slug/verified stay admin-owned; verified in browser)*
 - [T] 12. Staff Management — D  *(/staff: read-only roster via get_store_staff RPC (migration 008 — co-managers' names/emails without widening users RLS); add/remove admin-provisioned; verified in browser)*
@@ -106,19 +106,19 @@ Last updated: 2026-06-04
 - [x] 6. Store / Partner Management
 - [x] 7. Delivery Agent Management  *(Riders)*
 - [x] 8. Revenue & Financial Analytics
-- [ ] 9. Payment Records
+- [T] 9. Payment Records — D  *(/admin/payments: read-only ledger over `payments` joined to orders + users; Total Captured / Successful / Failed summary cards; status tabs (success/initiated/pending/failed/refunded) + search; row → order detail. No migration — `payments_admin_all` RLS already allows admin read. Verified in browser with live data.)*
 - [ ] 10. Try & Return Analytics  *(blocked: no try/return data)*
 - [~] 11. Live Deliveries Map  *(Deliveries page exists; map view TBD)*
 - [ ] 12. Notifications & Alerts Management
 - [ ] 13. Complaints & Support Management
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
 - [ ] 15. Content Management (CMS)
-- [ ] 16. User Role Management
+- [T] 16. User Role Management — D  *(/admin/users: list users + role filter + search; change-role modal → guarded `changeUserRole` server action (admin client) that updates `users.role`, provisions `store_managers` (store picker) / `riders`, deactivates store assignments on demotion, blocks self-role-change, warns on granting admin, and audit-logs via `logActivity`. No migration — all roles already in the `user_role` enum. Verified in browser. Agent-panel-specific provisioning deferred to Jay's agent schema.)*
 - [ ] 17. Store Payout Management
 - [ ] 18. Agent Payout Management
-- [~] 19. System Settings — D  *(making it real: `system_settings` table + RLS, persisting commission rate + try-window; replaces the mock toast. Was a mock — toast only, no storage.)*
+- [T] 19. System Settings — D  *(real: `system_settings` singleton table + RLS (authenticated read / admin write, migration 011) + getSettings/updateSettings server actions; persists commission rate + try-window (stored in **minutes**) + general/delivery fields; replaces the mock toast. Migration applied to the shared DB; save verified in a real browser.)*
 - [ ] 20. Reports & Export Center
-- [ ] 21. Admin Activity Log  *(table exists; no screen)*
+- [T] 21. Admin Activity Log — D  *(/admin/activity: read-only audit over `activity_logs` (admin join, latest 200) with entity-type filter, search, expandable before/after JSON diff. Plus a reusable `lib/activity.ts` `logActivity()` helper wired into ALL admin mutations (products, orders, customers, riders, stores, brands, categories, coupons, deliveries). No migration. Verified in browser.)*
 
 ---
 
@@ -130,6 +130,9 @@ Last updated: 2026-06-04
 3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the try window; rider waits 15–30 min while the customer tries on).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
+- 2026-06-22: **Admin Payment Records (#9)** — read-only by design (no refund/edit action here; refunds would be a separate Razorpay flow). Summary totals computed server-side from the fetched rows. Added `success` + `initiated` styles to the shared `StatusBadge` (the `payment_txn_status` enum used them but they fell back to gray). Reused `DataTable`/`StatsCard`; row click routes to the existing `/admin/orders/[id]`.
+- 2026-06-22: **Admin Activity Log (#21)** — introduced `apps/admin/lib/activity.ts` `logActivity(supabase, entry, actorId?)`: best-effort (wrapped in try/catch so a logging failure never breaks the underlying mutation), works with both the browser and SSR clients (admin session satisfies `activity_logs_admin` RLS), and accepts an explicit `actorId` for the service-role path (inventory server actions, which have no session). Wired into every admin mutation. `ip_address` is only captured server-side (null for client-side actions) — minor follow-up if full IP audit is needed.
+- 2026-06-22: **User Role Management (#16)** — built now (not blocked on Jay after all): the `user_role` enum + `store_managers`/`riders` tables already exist, so role management needs no new schema. Role changes go through a guarded `changeUserRole` server action (service-role write + acting-admin id from the SSR session): blocks changing your own role, requires a store when assigning `store_manager` (upserts `store_managers`), auto-creates a `riders` profile, deactivates store assignments on demotion, and audit-logs via `logActivity`. The only deferred part is agent-panel-specific provisioning (assignments/deliveries), which is Jay's agent schema.
 - 2026-06-03: Restructured the single Next.js app into a **pnpm monorepo** — one app per panel (`apps/{customer,agent,store,admin}`) + shared `packages/{supabase,ui,config}`. Admin is now a separate build/deploy so admin code & the service-role key never ship in the customer bundle. Kept the `/admin` route prefix inside the admin app to avoid rewriting ~45 links. History preserved via `git mv`. (branch `chore/monorepo-restructure`, PR #1)
 - 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
 - 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.
@@ -140,9 +143,11 @@ Last updated: 2026-06-04
 - 2026-06-19: **Navbar auth was reading a mock localStorage flag**, not the Supabase session — replaced with `supabase.auth.getUser()` + `onAuthStateChange`. Checkout variant resolver made resilient (falls back to a product's first colour/variant) so an item added without a colour can't abort the order. Added a login-required modal + a checkout confetti celebration.
 - 2026-06-19: **Try-window duration — to reconcile:** the doorstep pivot (PR #20) shipped `TRY_WINDOW_MINUTES = 30`; Jay had proposed ~5–7 min on-the-spot. Jay & Dilip to agree on the final value (then move it to Admin settings, see Known issues).
 
+- 2026-06-22: **Admin System Settings (#19) made real** — added a `system_settings` **singleton** table (migration 011, `id smallint PRIMARY KEY CHECK (id=1)`) + RLS (`authenticated` SELECT so store Earnings / customer try-timer can read config; `is_admin()` for writes) reusing the shared `trigger_set_updated_at`. Try-window stored in **minutes** (1440 = legacy 24h) — chosen over hours so it survives the pending doorstep pivot to ~5–7 min. Writes go through the service-role admin client (stamping `updated_by`); reads via the SSR client. Screen split into a server `page.tsx` + `SettingsClient.tsx` per the admin convention. Consumers (Earnings commission math, customer countdown) still read hardcoded values — wiring them is follow-up.
+
 ## Known issues / TODO
-- **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) `TRY_WINDOW_MINUTES` should live in Admin settings alongside the commission rate (same missing `system_settings` storage).
-- **No commission/system-settings storage exists** — the admin System Settings screen is a mock (toast only, persists nothing), and there is no `system_settings` table. CLAUDE.md requires the commission rate to be config, so the store Earnings screen shows gross kept revenue + the `payouts` ledger (admin-issued amounts) and does **no** commission math. Needs: a settings table + admin UI + payout computation (ties into Razorpay Payouts, partner/admin scope).
+- **Model pivot follow-ups (2026-06-16):** (1) the functional **delivery-slot picker** isn't built — copy now promises slot booking but Checkout still has no slot UI (maps to customer #8). (2) The **try window still gets its deadline at checkout** (30-min placeholder); it must start when the **rider confirms delivery** (agent panel) — until then the tracking countdown is a placeholder. (3) the try-window duration now lives in Admin settings (`system_settings.try_window_minutes`, migration 011) — but the customer countdown still uses a hardcoded constant and must be wired to read it.
+- **Commission/system-settings storage now EXISTS (2026-06-22, migration 011)** — the `system_settings` singleton + the real admin System Settings UI persist `commission_rate` + `try_window_minutes` (RLS: authenticated read / admin write). Still TODO — wire the **consumers**: store Earnings should compute commission off `commission_rate` (today shows gross only), and payout computation (ties into Razorpay Payouts, partner/admin scope) is unbuilt.
 - 🔴 **SECURITY (2026-06-08): RLS was DISABLED on `users`, `orders`, `order_items` in the live DB** — anon key + no session could read all customer PII (names/emails/phones) + all orders. Found while building the Store Dashboard (dashboard showed 6 orders with no session). Policies in schema.sql are intact; RLS had just been turned off. Fix = run **migration 005** (`packages/supabase/migrations/005_reenable_rls.sql`, re-enables RLS on all tables, idempotent). **Affects the customer panel too — apply ASAP.** Verify with `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public';`
 - **Store panel:** migration **004** (`004_store_manager_read.sql`) adds manager SELECT on products/variants/orders/order_items/returns — required for Dashboard + Orders/Returns/Earnings. Apply before testing the store dashboard.
 - **Customer loop:** Payment #13 **done** for the keep path (per-item Razorpay). Delivery-slot booking (#8) is now core and still pending; scheduled Return Pickup (#14) is largely obsolete under the new model. Still pending: Razorpay **payouts** + a **webhook** (today the payment is confirmed only client-side via the success handler — if the customer closes the tab right after paying, the order won't be marked paid; a `payment.captured` webhook should be added before production).

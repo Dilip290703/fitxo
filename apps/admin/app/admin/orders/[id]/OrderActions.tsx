@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
+import { logActivity } from '@/lib/activity';
 import type { OrderStatus } from '@fitzo/supabase/types';
 
 interface Order {
@@ -28,7 +29,17 @@ export default function OrderActions({ order }: { order: Order }) {
     }
     const { error } = await supabase.from('orders').update(patch).eq('id', order.id);
     if (error) toast('Failed to update order', 'error');
-    else { toast(`Order updated to ${status.replace(/_/g, ' ')}`, 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, {
+        action: `Order status → ${status.replace(/_/g, ' ')}`,
+        entity_type: 'order',
+        entity_id: order.id,
+        old_value: { status: order.status },
+        new_value: patch,
+      });
+      toast(`Order updated to ${status.replace(/_/g, ' ')}`, 'success');
+      router.refresh();
+    }
     setLoading(false);
   };
 

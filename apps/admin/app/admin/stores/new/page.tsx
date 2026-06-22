@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import ImageUploader from '@/components/admin/ImageUploader';
+import { logActivity } from '@/lib/activity';
 
 export default function NewStorePage() {
   const router = useRouter();
@@ -41,7 +42,10 @@ export default function NewStorePage() {
     });
     setSaving(false);
     if (error) toast(error.message, 'error');
-    else { toast('Store created!', 'success'); router.push('/admin/stores'); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Created store', entity_type: 'store', new_value: { name: form.name, city: form.city } });
+      toast('Store created!', 'success'); router.push('/admin/stores'); router.refresh();
+    }
   };
 
   return (

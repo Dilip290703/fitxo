@@ -7,14 +7,17 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: '▦' },
   { href: '/admin/inventory', label: 'Inventory', icon: '📦' },
   { href: '/admin/orders', label: 'Orders', icon: '🛒' },
+  { href: '/admin/payments', label: 'Payments', icon: '💳' },
   { href: '/admin/stores', label: 'Stores', icon: '🏪' },
   { href: '/admin/riders', label: 'Riders', icon: '🛵' },
   { href: '/admin/customers', label: 'Customers', icon: '👤' },
+  { href: '/admin/users', label: 'User Roles', icon: '🔑' },
   { href: '/admin/brands', label: 'Brands', icon: '🏷️' },
   { href: '/admin/categories', label: 'Categories', icon: '🗂️' },
   { href: '/admin/coupons', label: 'Coupons', icon: '🎟️' },
   { href: '/admin/deliveries', label: 'Deliveries', icon: '🚚' },
   { href: '/admin/analytics', label: 'Analytics', icon: '📊' },
+  { href: '/admin/activity', label: 'Activity Log', icon: '📝' },
   { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ];
 

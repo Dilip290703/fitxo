@@ -6,6 +6,7 @@ import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import ImageUploader from '@/components/admin/ImageUploader';
+import { logActivity } from '@/lib/activity';
 
 interface Brand {
   id: string;
@@ -39,15 +40,19 @@ export default function BrandsClient({ brands }: { brands: Brand[] }) {
     });
     setSaving(false);
     if (error) toast(error.message, 'error');
-    else { toast('Brand created!', 'success'); setShowForm(false); setForm({ name: '', slug: '', website_url: '', description: '' }); setLogoUrl(''); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Created brand', entity_type: 'brand', new_value: { name: form.name } });
+      toast('Brand created!', 'success'); setShowForm(false); setForm({ name: '', slug: '', website_url: '', description: '' }); setLogoUrl(''); router.refresh();
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from('brands').delete().eq('id', deleteId);
+    if (error) { setDeleteId(null); toast(error.message, 'error'); return; }
+    await logActivity(supabase, { action: 'Deleted brand', entity_type: 'brand', entity_id: deleteId });
     setDeleteId(null);
-    if (error) toast(error.message, 'error');
-    else { toast('Brand deleted', 'success'); router.refresh(); }
+    toast('Brand deleted', 'success'); router.refresh();
   };
 
   const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500';

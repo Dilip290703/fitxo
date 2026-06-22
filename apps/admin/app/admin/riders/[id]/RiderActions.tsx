@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
+import { logActivity } from '@/lib/activity';
 import type { Rider } from '@fitzo/supabase/types';
 
 export default function RiderActions({ rider }: { rider: Rider }) {
@@ -17,7 +18,16 @@ export default function RiderActions({ rider }: { rider: Rider }) {
     const { error } = await supabase.from('riders').update(patch).eq('id', rider.id);
     setLoading(false);
     if (error) toast(error.message, 'error');
-    else { toast('Rider updated', 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, {
+        action: 'Updated rider',
+        entity_type: 'rider',
+        entity_id: rider.id,
+        new_value: patch as Record<string, unknown>,
+      });
+      toast('Rider updated', 'success');
+      router.refresh();
+    }
   };
 
   return (

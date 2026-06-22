@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { logActivity } from '@/lib/activity';
 import type { Coupon } from '@fitzo/supabase/types';
 
 export default function CouponsClient({ coupons }: { coupons: Coupon[] }) {
@@ -41,13 +42,19 @@ export default function CouponsClient({ coupons }: { coupons: Coupon[] }) {
     });
     setSaving(false);
     if (error) toast(error.message, 'error');
-    else { toast('Coupon created!', 'success'); setShowForm(false); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Created coupon', entity_type: 'coupon', new_value: { code: form.code.toUpperCase(), discount_type: form.discount_type, discount_value: form.discount_value } });
+      toast('Coupon created!', 'success'); setShowForm(false); router.refresh();
+    }
   };
 
   const toggleActive = async (coupon: Coupon) => {
     const { error } = await supabase.from('coupons').update({ is_active: !coupon.is_active }).eq('id', coupon.id);
     if (error) toast(error.message, 'error');
-    else { toast(`Coupon ${!coupon.is_active ? 'activated' : 'deactivated'}`, 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: `${!coupon.is_active ? 'Activated' : 'Deactivated'} coupon`, entity_type: 'coupon', entity_id: coupon.id, old_value: { is_active: coupon.is_active }, new_value: { is_active: !coupon.is_active } });
+      toast(`Coupon ${!coupon.is_active ? 'activated' : 'deactivated'}`, 'success'); router.refresh();
+    }
   };
 
   const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500';
