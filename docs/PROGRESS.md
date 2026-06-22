@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-04
+Last updated: 2026-06-22
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -118,7 +118,7 @@ Last updated: 2026-06-04
 - [ ] 18. Agent Payout Management
 - [x] 19. System Settings
 - [ ] 20. Reports & Export Center
-- [ ] 21. Admin Activity Log  *(table exists; no screen)*
+- [T] 21. Admin Activity Log — D  *(/admin/activity: read-only audit over `activity_logs` (admin join, latest 200) with entity-type filter, search, expandable before/after JSON diff. Plus a reusable `lib/activity.ts` `logActivity()` helper wired into ALL admin mutations (products, orders, customers, riders, stores, brands, categories, coupons, deliveries). No migration. Verified in browser.)*
 
 ---
 
@@ -130,6 +130,7 @@ Last updated: 2026-06-04
 3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the try window; rider waits 15–30 min while the customer tries on).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
+- 2026-06-22: **Admin Activity Log (#21)** — introduced `apps/admin/lib/activity.ts` `logActivity(supabase, entry, actorId?)`: best-effort (wrapped in try/catch so a logging failure never breaks the underlying mutation), works with both the browser and SSR clients (admin session satisfies `activity_logs_admin` RLS), and accepts an explicit `actorId` for the service-role path (inventory server actions, which have no session). Wired into every admin mutation. `ip_address` is only captured server-side (null for client-side actions) — minor follow-up if full IP audit is needed.
 - 2026-06-03: Restructured the single Next.js app into a **pnpm monorepo** — one app per panel (`apps/{customer,agent,store,admin}`) + shared `packages/{supabase,ui,config}`. Admin is now a separate build/deploy so admin code & the service-role key never ship in the customer bundle. Kept the `/admin` route prefix inside the admin app to avoid rewriting ~45 links. History preserved via `git mv`. (branch `chore/monorepo-restructure`, PR #1)
 - 2026-06-04: Fixed Tailwind v4 CSS-layering bug in customer `globals.css` — unlayered base resets (`a { color: inherit }`) were beating `text-white` on navy `<Link>` buttons; wrapped base resets in `@layer base`.
 - 2026-06-04: Extracted size-chart data to `apps/customer/lib/sizeData.ts`, shared by the product SizeChartModal and the new `/size-guide` page.

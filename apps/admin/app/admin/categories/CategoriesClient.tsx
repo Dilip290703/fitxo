@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
+import { logActivity } from '@/lib/activity';
 import type { Category } from '@fitzo/supabase/types';
 
 interface Props {
@@ -54,7 +55,10 @@ export default function CategoriesClient({ categories, tree }: Props) {
     });
     setSaving(false);
     if (error) toast(error.message, 'error');
-    else { toast('Category created!', 'success'); setShowForm(false); setForm({ name: '', slug: '', parent_id: '', gender: 'unisex', sort_order: '0' }); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Created category', entity_type: 'category', new_value: { name: form.name, gender: form.gender } });
+      toast('Category created!', 'success'); setShowForm(false); setForm({ name: '', slug: '', parent_id: '', gender: 'unisex', sort_order: '0' }); router.refresh();
+    }
   };
 
   const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500';

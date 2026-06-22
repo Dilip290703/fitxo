@@ -1,6 +1,8 @@
 'use server';
 
+import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logActivity } from '@/lib/activity';
 
 interface VariantInput {
   size: string;
@@ -83,6 +85,9 @@ export async function createProduct(
     if (imgErr) throw new Error(imgErr.message);
   }
 
+  const ssr = await createClient();
+  await logActivity(ssr, { action: 'Created product', entity_type: 'product', entity_id: productId, new_value: { name: payload.name } });
+
   return productId;
 }
 
@@ -140,4 +145,7 @@ export async function updateProduct(
       if (imgErr) throw new Error(imgErr.message);
     }
   }
+
+  const ssr = await createClient();
+  await logActivity(ssr, { action: 'Updated product', entity_type: 'product', entity_id: productId, new_value: { name: payload.name } });
 }
