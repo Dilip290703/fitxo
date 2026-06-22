@@ -113,7 +113,7 @@ Last updated: 2026-06-22
 - [ ] 13. Complaints & Support Management
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
 - [ ] 15. Content Management (CMS)
-- [~] 16. User Role Management — D  *(/admin/users: list users + role filter + search; change-role modal → guarded `changeUserRole` server action (admin client) that updates `users.role`, provisions `store_managers` (store picker) / `riders`, deactivates store assignments on demotion, blocks self-role-change, warns on granting admin, and audit-logs via `logActivity`. No migration — all roles already in the `user_role` enum. Built + typecheck/route-verified; **role-change flow pending browser test**. Agent-panel-specific provisioning deferred to Jay's agent schema.)*
+- [T] 16. User Role Management — D  *(/admin/users: list users + role filter + search; change-role modal → guarded `changeUserRole` server action (admin client) that updates `users.role`, provisions `store_managers` (store picker) / `riders`, deactivates store assignments on demotion, blocks self-role-change, warns on granting admin, and audit-logs via `logActivity`. No migration — all roles already in the `user_role` enum. Verified in browser. Agent-panel-specific provisioning deferred to Jay's agent schema.)*
 - [ ] 17. Store Payout Management
 - [ ] 18. Agent Payout Management
 - [T] 19. System Settings — D  *(real: `system_settings` singleton table + RLS (authenticated read / admin write, migration 011) + getSettings/updateSettings server actions; persists commission rate + try-window (stored in **minutes**) + general/delivery fields; replaces the mock toast. Migration applied to the shared DB; save verified in a real browser.)*
