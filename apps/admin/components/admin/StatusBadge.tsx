@@ -22,6 +22,8 @@ const statusStyles: Record<string, string> = {
   failed: 'bg-red-500/10 text-red-400 border-red-500/20',
   // Payment
   paid: 'bg-green-500/10 text-green-400 border-green-500/20',
+  success: 'bg-green-500/10 text-green-400 border-green-500/20',
+  initiated: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   partially_paid: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   refunded: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   // Generic
