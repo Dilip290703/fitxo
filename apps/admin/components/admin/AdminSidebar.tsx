@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: '/admin/categories', label: 'Categories', icon: '🗂️' },
   { href: '/admin/coupons', label: 'Coupons', icon: '🎟️' },
   { href: '/admin/deliveries', label: 'Deliveries', icon: '🚚' },
+  { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
   { href: '/admin/analytics', label: 'Analytics', icon: '📊' },
   { href: '/admin/activity', label: 'Activity Log', icon: '📝' },
   { href: '/admin/settings', label: 'Settings', icon: '⚙️' },

@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-22
+Last updated: 2026-06-26
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -109,7 +109,7 @@ Last updated: 2026-06-22
 - [T] 9. Payment Records — D  *(/admin/payments: read-only ledger over `payments` joined to orders + users; Total Captured / Successful / Failed summary cards; status tabs (success/initiated/pending/failed/refunded) + search; row → order detail. No migration — `payments_admin_all` RLS already allows admin read. Verified in browser with live data.)*
 - [ ] 10. Try & Return Analytics  *(blocked: no try/return data)*
 - [~] 11. Live Deliveries Map  *(Deliveries page exists; map view TBD)*
-- [ ] 12. Notifications & Alerts Management
+- [~] 12. Notifications & Alerts Management — D  *(/admin/notifications: compose + send a notification to all users / by role / a single user (email lookup) via guarded `sendNotification` server action (bulk insert + audit-log); history list with type filter + search + read status. No migration — `notifications` table + RLS already exist. Built + typecheck/route-verified; **send flow pending browser test**.)*
 - [ ] 13. Complaints & Support Management
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
 - [ ] 15. Content Management (CMS)
@@ -130,6 +130,7 @@ Last updated: 2026-06-22
 3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the try window; rider waits 15–30 min while the customer tries on).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
+- 2026-06-26: **Notifications & Alerts (#12)** — admin compose/send over the existing `notifications` table (no migration). `sendNotification` server action resolves recipients (all / by role / single user by email) and bulk-inserts one row per recipient via the service-role client, audit-logged via `logActivity`. Built on top of the Core 4 branch (PR #22) so it can reuse `logActivity`. First of the agent-independent "batch 2"; #17/#20/#13/#15 to follow.
 - 2026-06-22: **Admin Payment Records (#9)** — read-only by design (no refund/edit action here; refunds would be a separate Razorpay flow). Summary totals computed server-side from the fetched rows. Added `success` + `initiated` styles to the shared `StatusBadge` (the `payment_txn_status` enum used them but they fell back to gray). Reused `DataTable`/`StatsCard`; row click routes to the existing `/admin/orders/[id]`.
 - 2026-06-22: **Admin Activity Log (#21)** — introduced `apps/admin/lib/activity.ts` `logActivity(supabase, entry, actorId?)`: best-effort (wrapped in try/catch so a logging failure never breaks the underlying mutation), works with both the browser and SSR clients (admin session satisfies `activity_logs_admin` RLS), and accepts an explicit `actorId` for the service-role path (inventory server actions, which have no session). Wired into every admin mutation. `ip_address` is only captured server-side (null for client-side actions) — minor follow-up if full IP audit is needed.
 - 2026-06-22: **User Role Management (#16)** — built now (not blocked on Jay after all): the `user_role` enum + `store_managers`/`riders` tables already exist, so role management needs no new schema. Role changes go through a guarded `changeUserRole` server action (service-role write + acting-admin id from the SSR session): blocks changing your own role, requires a store when assigning `store_manager` (upserts `store_managers`), auto-creates a `riders` profile, deactivates store assignments on demotion, and audit-logs via `logActivity`. The only deferred part is agent-panel-specific provisioning (assignments/deliveries), which is Jay's agent schema.
