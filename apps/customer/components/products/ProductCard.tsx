@@ -73,6 +73,10 @@ export function ProductCard({ product }: { product: FrontendProduct }) {
           {product.title}
         </Link>
 
+        {product.storeName ? (
+          <p className="mt-1 truncate text-[11px] text-[#8b8178]">🏪 {product.storeName}</p>
+        ) : null}
+
         <div className="mt-3 flex items-end justify-between gap-4">
           <div>
             <p className="text-[14px] font-semibold text-[#202020]">

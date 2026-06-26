@@ -33,6 +33,8 @@ export type FrontendProduct = {
   badge: string;
   orders: number;
   sizeLabel: string;
+  /** Owning store — the store panel that will see an order for this product. */
+  storeName: string;
 };
 
 export type FilterOption = {
@@ -91,6 +93,7 @@ export async function queryProducts(
     .select(
       `id, name, slug, base_price, discounted_price, tags, created_at,
        brands(id, name, slug),
+       stores(id, name),
        product_images(image_url, is_primary, sort_order),
        product_variants(id, size, available_qty, is_available)`,
       { count: 'exact' },
@@ -146,6 +149,7 @@ export async function queryProducts(
       badge: row.tags?.[0] ?? 'New Arrivals',
       orders: 0,
       sizeLabel: firstAvailableSize,
+      storeName: row.stores?.name ?? '',
     };
   });
 
@@ -217,6 +221,7 @@ export async function queryProductDetail(
         `id, name, slug, description, short_description, material, care_instructions,
          base_price, discounted_price, tags,
          brands(id, name, slug),
+         stores(id, name),
          categories(id, name, slug, gender),
          product_images(id, image_url, angle, is_primary, sort_order, alt_text, color_id),
          product_colors(id, color_name, color_hex, is_available, sort_order),
@@ -312,6 +317,7 @@ export async function queryProductDetail(
     slug: row.slug,
     title: row.name,
     brand: row.brands?.name ?? '',
+    storeName: row.stores?.name ?? '',
     priceValue: price,
     price: `₹${price}`,
     oldPriceValue: oldPrice ?? undefined,
@@ -358,6 +364,7 @@ export async function queryFeaturedProducts(
     .select(
       `id, name, slug, base_price, discounted_price, tags, created_at,
        brands(id, name, slug),
+       stores(id, name),
        product_images(image_url, is_primary, sort_order),
        product_variants(id, size, available_qty, is_available)`,
     )
@@ -390,6 +397,7 @@ export async function queryFeaturedProducts(
       badge: row.tags?.[0] ?? 'Featured',
       orders: 0,
       sizeLabel: firstAvailableSize,
+      storeName: row.stores?.name ?? '',
     };
   });
 }

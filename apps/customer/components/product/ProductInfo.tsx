@@ -43,6 +43,11 @@ export function ProductInfo({ product }: { product: ProductDetailData }) {
             <h1 className="mt-2 text-[28px] font-medium leading-tight text-[#171717]">
               {product.title}
             </h1>
+            {product.storeName ? (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#f3efe8] px-3 py-1 text-[12px] font-medium text-[#5c5650]">
+                <span aria-hidden>🏪</span> Sold by {product.storeName}
+              </p>
+            ) : null}
             <p className="mt-3 text-[14px] leading-7 text-[#5c5650]">
               {product.subtitle}
             </p>
