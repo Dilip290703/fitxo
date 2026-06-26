@@ -109,7 +109,7 @@ Last updated: 2026-06-26
 - [T] 9. Payment Records — D  *(/admin/payments: read-only ledger over `payments` joined to orders + users; Total Captured / Successful / Failed summary cards; status tabs (success/initiated/pending/failed/refunded) + search; row → order detail. No migration — `payments_admin_all` RLS already allows admin read. Verified in browser with live data.)*
 - [ ] 10. Try & Return Analytics  *(blocked: no try/return data)*
 - [~] 11. Live Deliveries Map  *(Deliveries page exists; map view TBD)*
-- [~] 12. Notifications & Alerts Management — D  *(/admin/notifications: compose + send a notification to all users / by role / a single user (email lookup) via guarded `sendNotification` server action (bulk insert + audit-log); history list with type filter + search + read status. No migration — `notifications` table + RLS already exist. Built + typecheck/route-verified; **send flow pending browser test**.)*
+- [T] 12. Notifications & Alerts Management — D  *(/admin/notifications: compose + send a notification to all users / by role / a single user (email lookup) via guarded `sendNotification` server action (bulk insert + audit-log); history list with type filter + search + read status. No migration — `notifications` table + RLS already exist. Send flow + audit-log entry verified in browser.)*
 - [ ] 13. Complaints & Support Management
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
 - [ ] 15. Content Management (CMS)
