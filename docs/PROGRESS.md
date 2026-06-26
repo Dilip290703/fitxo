@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-21
+Last updated: 2026-06-26
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -74,18 +74,28 @@ Last updated: 2026-06-21
 > Migration **012** auto-provisions `public.users` + a `riders` row on signup (a new rider used to
 > need a manual INSERT to be visible in Admin → that was the "rider can't log in" SQL). Verify +
 > assign already live in Admin (Riders → Verify Rider; Deliveries → Assign).
-- [~] 1. Agent Login — J  *(email+pw sign-in + sign-up + forgot/reset password; verified-rider gate with pending/not-rider screens. Built, pending browser test.)*
-- [~] 2. Agent Dashboard / Home — J  *(assigned deliveries list + online/offline availability toggle. Built.)*
+>
+> **Full panel rebuild (J, 2026-06-26):** the agent app is no longer a 2-screen shell.
+> A responsive `AgentShell` (desktop sidebar + mobile bottom-nav + slide-over "More")
+> now wraps **9 navigable screens** matching the store/admin quality bar, all wired to
+> Supabase via `lib/useAgentGuard.ts` (shared gate hook) + `lib/agent-data.ts` (earnings,
+> history, notifications). The global online/offline toggle lives in the shell. Earnings =
+> the order's `delivery_fee` per completed delivery (no rider-commission config exists yet).
+> New migration **014** adds a guarded `rider_update_profile` RPC for vehicle edits and
+> drops the over-broad `riders_update_own` policy (it allowed a client to self-set
+> `is_verified`). `pnpm --filter @fitzo/agent build` passes (14 routes). Browser test still recommended.
+- [x] 1. Agent Login — J  *(email+pw sign-in + sign-up + forgot/reset password; verified-rider gate with pending/not-rider screens.)*
+- [x] 2. Agent Dashboard / Home — J  *(rebuilt: greeting, online toggle, today's stats (active/done/earned/rating), new-jobs-to-accept + active deliveries + this-week earnings teaser.)*
 - [ ] 3. Order Detail (Pickup)  *(folded into the single Delivery Detail status machine)*
-- [~] 4. Delivery Detail + status machine — J  *(accept → picked_up (order out_for_delivery) → **mark delivered** (order delivered) → customer accepts → live 7-min timer + live keep/return decisions → collect returns & complete. Built; this is the loop. Customer side: realtime "order arrived → start 7-min window" popup added to order-tracking + `start_try_window` RPC.)*
-- [ ] 5. Return Collection Page  *(returns are surfaced in Delivery Detail; standalone screen TBD)*
-- [ ] 6. Navigation / Map Screen  *(currently an "Open in Google Maps" link — no Maps key yet)*
-- [ ] 7. Agent Earnings Page
-- [ ] 8. Agent Profile Page
-- [ ] 9. Agent Notifications
-- [ ] 10. Order History (Agent)  *(completed deliveries show on the dashboard)*
-- [ ] 11. Support Page (Agent)
-- [ ] 12. Onboarding / Training (Agent)
+- [x] 4. Delivery Detail + status machine — J  *(accept → picked_up (order out_for_delivery) → **mark delivered** (order delivered) → customer accepts → live 7-min timer + live keep/return decisions → collect returns & complete. This is the loop. Customer side: realtime "order arrived → start 7-min window" popup + `start_try_window` RPC.)*
+- [~] 5. Return Collection — J  *(returns are surfaced + counted inside Delivery Detail's try-window panel; no separate screen)*
+- [ ] 6. Navigation / Map Screen  *(currently an "Open in Maps" link on Delivery Detail — no Maps key yet)*
+- [x] 7. Agent Earnings — J  *(/earnings: this-week hero + 7-day CSS bar chart, today/month/all-time/avg rollups, recent-payouts ledger; pay = order delivery_fee per completed job.)*
+- [x] 8. Agent Profile — J  *(/profile: avatar, verified badge, rating/deliveries/status stats, vehicle card, account rows.)*
+- [x] 9. Agent Notifications — J  *(/notifications: reads `notifications` table, unread count, tap-to-read + mark-all-read.)*
+- [x] 10. Order History — J  *(/history: completed/failed deliveries grouped by day with per-job fee + all/completed/failed filter.)*
+- [x] 11. Support — J  *(/support: helpline + email cards + rider FAQ accordion.)*
+- [x] 12. Onboarding / Guide — J  *(/guide: 6-step try-at-home walkthrough; + /settings for availability, vehicle edit via rider_update_profile RPC, and password change.)*
 
 ## P3 — Store Panel (14) — ✅ COMPLETE, owned by D (built week of 2026-06-04..10; all 14 merged + browser-verified)
 > Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.

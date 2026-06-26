@@ -1,0 +1,114 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAgent } from "@/components/AgentShell";
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type RiderNotification,
+} from "@/lib/agent-data";
+import { ContentWrap, PageHeader, Empty } from "@/components/ui";
+
+const ICONS: Record<string, string> = {
+  order: "📦",
+  delivery: "🛵",
+  payment: "💰",
+  promo: "🎁",
+  system: "🔔",
+};
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+export function NotificationsView() {
+  const { rider } = useAgent();
+  const [rows, setRows] = useState<RiderNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let on = true;
+    fetchNotifications(rider.userId).then((r) => {
+      if (!on) return;
+      setRows(r);
+      setLoading(false);
+    });
+    return () => {
+      on = false;
+    };
+  }, [rider.userId]);
+
+  const unread = rows.filter((r) => !r.isRead).length;
+
+  async function open(n: RiderNotification) {
+    if (n.isRead) return;
+    setRows((prev) => prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)));
+    await markNotificationRead(n.id);
+  }
+
+  async function readAll() {
+    setRows((prev) => prev.map((x) => ({ ...x, isRead: true })));
+    await markAllNotificationsRead(rider.userId);
+  }
+
+  return (
+    <ContentWrap>
+      <PageHeader
+        title="Notifications"
+        subtitle={unread > 0 ? `${unread} unread` : "You're all caught up"}
+        action={
+          unread > 0 ? (
+            <button
+              onClick={readAll}
+              className="rounded-full border border-[#243049] px-4 py-1.5 text-[12px] font-semibold text-[#9fc0ff] transition hover:bg-[#1e2a45]"
+            >
+              Mark all read
+            </button>
+          ) : undefined
+        }
+      />
+
+      {loading ? (
+        <p className="text-[13px] text-[#7c8aa5]">Loading…</p>
+      ) : rows.length === 0 ? (
+        <Empty icon="🔔" title="No notifications" text="Job assignments and updates will show up here." />
+      ) : (
+        <div className="space-y-2">
+          {rows.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => open(n)}
+              className={[
+                "flex w-full items-start gap-3 rounded-[14px] border p-3.5 text-left transition",
+                n.isRead
+                  ? "border-[#22304a] bg-[#161e2e]"
+                  : "border-[#3b82f6]/40 bg-[#10203f]",
+              ].join(" ")}
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#0f1522] text-[16px]">
+                {ICONS[n.type] ?? "🔔"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-[13px] font-semibold">{n.title}</p>
+                  <span className="shrink-0 text-[11px] text-[#7c8aa5]">{timeAgo(n.createdAt)}</span>
+                </div>
+                <p className="mt-0.5 text-[12px] leading-5 text-[#9fb0cc]">{n.body}</p>
+              </div>
+              {!n.isRead && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#3b82f6]" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </ContentWrap>
+  );
+}
