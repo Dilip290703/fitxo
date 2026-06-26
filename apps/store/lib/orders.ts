@@ -110,3 +110,16 @@ export async function setItemPrepared(itemId: string, ready: boolean): Promise<v
   });
   if (error) throw error;
 }
+
+/**
+ * Confirm the store has the items: flips the order pending -> confirmed and
+ * creates the delivery so admin can assign a rider. Guarded by store ownership
+ * in the store_confirm_order() RPC (migration 013).
+ */
+export async function confirmOrder(orderId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("store_confirm_order", {
+    p_order_id: orderId,
+  });
+  if (error) throw error;
+}
