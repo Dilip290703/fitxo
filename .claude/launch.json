@@ -6,6 +6,13 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev:agent"],
       "port": 3002
+    },
+    {
+      "name": "customer",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:customer"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

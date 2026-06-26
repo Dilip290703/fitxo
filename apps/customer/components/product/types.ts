@@ -42,6 +42,8 @@ export type ProductDetailData = {
   slug: string;
   title: string;
   brand: string;
+  /** Owning store — the store panel that will see an order for this product. */
+  storeName: string;
   priceValue: number;
   price: string;
   oldPriceValue?: number;
