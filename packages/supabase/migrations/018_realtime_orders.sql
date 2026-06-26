@@ -1,7 +1,7 @@
--- Migration 014: enable Supabase Realtime on orders + order_items
--- Run in Supabase SQL Editor after migration 013.
--- (Already applied as the earlier "009_realtime_orders" — renamed to 014 to
---  avoid the filename clash with 009_keep_payment; re-running is idempotent.)
+-- Migration 018: enable Supabase Realtime on orders + order_items
+-- Run in Supabase SQL Editor after migration 017.
+-- (Already applied earlier as "009_realtime_orders" — renumbered to 018 to avoid
+--  filename clashes with the agent-panel migrations; re-running is idempotent.)
 --
 -- Powers the live "new order" pop-up alerts in the Admin and Store panels.
 -- Realtime delivers INSERT events only to clients that can SELECT the row, so

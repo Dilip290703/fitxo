@@ -1,5 +1,7 @@
--- Migration 015: complete an order once every item has been decided
--- Run in Supabase SQL Editor after migration 014.
+-- Migration 019: complete an order once every item has been decided
+-- Run in Supabase SQL Editor after migration 018.
+-- (Already applied earlier as "015_finalize_order" — renumbered to 019 to avoid
+--  the clash with 015_auto_provision_users; re-running is idempotent.)
 --
 -- The keep flow (confirm_keep_payment) and the return flow (returnItem) each set
 -- a single item's decision, but nothing closed the loop: the try_session stayed
