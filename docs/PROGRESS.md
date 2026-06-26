@@ -6,7 +6,7 @@ starting work and updates it when finishing a task (via `/finish-task`).
 Status legend: `[ ]` not started · `[~]` in progress / partial · `[x]` built & merged · `[T]` tested
 Owner: put initials (e.g. `J` Jay / `A` Amit) next to in-progress items.
 
-Last updated: 2026-06-22
+Last updated: 2026-06-26
 
 > **Status (2026-06-04):** Everything below is merged to `main` (no open PRs).
 > **Customer panel: standalone screens complete** — Dilip wrapped his customer work
@@ -109,15 +109,15 @@ Last updated: 2026-06-22
 - [T] 9. Payment Records — D  *(/admin/payments: read-only ledger over `payments` joined to orders + users; Total Captured / Successful / Failed summary cards; status tabs (success/initiated/pending/failed/refunded) + search; row → order detail. No migration — `payments_admin_all` RLS already allows admin read. Verified in browser with live data.)*
 - [ ] 10. Try & Return Analytics  *(blocked: no try/return data)*
 - [~] 11. Live Deliveries Map  *(Deliveries page exists; map view TBD)*
-- [ ] 12. Notifications & Alerts Management
-- [ ] 13. Complaints & Support Management
+- [T] 12. Notifications & Alerts Management — D  *(/admin/notifications: compose + send a notification to all users / by role / a single user (email lookup) via guarded `sendNotification` server action (bulk insert + audit-log); history list with type filter + search + read status. No migration — `notifications` table + RLS already exist. Send flow + audit-log entry verified in browser.)*
+- [T] 13. Complaints & Support Management — D  *(/admin/complaints: list + status filter + search, manage modal (status + response) via guarded `updateComplaint` (audit-logged). **Migration 012** (complaints table + RLS). Verified in browser. Customer-side submission UI separate.)*
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
-- [ ] 15. Content Management (CMS)
+- [T] 15. Content Management (CMS) — D  *(/admin/content: list + create/edit/publish/delete content blocks (key/title/body/type/published) via guarded `saveContentBlock`/`deleteContentBlock` (audit-logged). **Migration 013** (content_blocks table + RLS — published rows world-readable for the customer site). Verified in browser.)*
 - [T] 16. User Role Management — D  *(/admin/users: list users + role filter + search; change-role modal → guarded `changeUserRole` server action (admin client) that updates `users.role`, provisions `store_managers` (store picker) / `riders`, deactivates store assignments on demotion, blocks self-role-change, warns on granting admin, and audit-logs via `logActivity`. No migration — all roles already in the `user_role` enum. Verified in browser. Agent-panel-specific provisioning deferred to Jay's agent schema.)*
-- [ ] 17. Store Payout Management
+- [T] 17. Store Payout Management — D  *(/admin/payouts: per-store kept revenue (order_items decision=keep via products.store_id) − commission (`system_settings.commission_rate`) = net owed, minus paid `payouts` = outstanding; "Record payout" inserts per-order `payouts` rows (status=paid), audit-logged. No migration. **Actual Razorpay disbursement stubbed** (shared infra, partner). Verified in browser.)*
 - [ ] 18. Agent Payout Management
 - [T] 19. System Settings — D  *(real: `system_settings` singleton table + RLS (authenticated read / admin write, migration 011) + getSettings/updateSettings server actions; persists commission rate + try-window (stored in **minutes**) + general/delivery fields; replaces the mock toast. Migration applied to the shared DB; save verified in a real browser.)*
-- [ ] 20. Reports & Export Center
+- [T] 20. Reports & Export Center — D  *(/admin/reports: client-side CSV export of orders, payments, customers, products, payouts (Blob download); each export audit-logged. No migration. Verified in browser.)*
 - [T] 21. Admin Activity Log — D  *(/admin/activity: read-only audit over `activity_logs` (admin join, latest 200) with entity-type filter, search, expandable before/after JSON diff. Plus a reusable `lib/activity.ts` `logActivity()` helper wired into ALL admin mutations (products, orders, customers, riders, stores, brands, categories, coupons, deliveries). No migration. Verified in browser.)*
 
 ---
@@ -130,6 +130,8 @@ Last updated: 2026-06-22
 3. **Agent panel** — rider accepts + confirms delivery (delivery confirmation starts the try window; rider waits 15–30 min while the customer tries on).
 
 ## Decisions log (append-only — record anything non-obvious you decided)
+- 2026-06-26: **Admin batch 2** (#20 Reports, #17 Store Payouts, #13 Complaints, #15 CMS) on branch `feat/admin-batch2` (stacked on `feat/admin-core4` + `feat/admin-notifications`). Migrations **012** (complaints) + **013** (content_blocks) — both idempotent, use `DO $$…duplicate_object` guards for enums and reuse `trigger_set_updated_at`. Store payout = Σ kept-item price × (1−commission), settled per-order into the existing `payouts` table; **real Razorpay disbursement is stubbed** (shared infra). Reports export client-side CSV via Blob. All audit-logged via `logActivity`.
+- 2026-06-26: **Notifications & Alerts (#12)** — admin compose/send over the existing `notifications` table (no migration). `sendNotification` server action resolves recipients (all / by role / single user by email) and bulk-inserts one row per recipient via the service-role client, audit-logged via `logActivity`. Built on top of the Core 4 branch (PR #22) so it can reuse `logActivity`. First of the agent-independent "batch 2"; #17/#20/#13/#15 to follow.
 - 2026-06-22: **Admin Payment Records (#9)** — read-only by design (no refund/edit action here; refunds would be a separate Razorpay flow). Summary totals computed server-side from the fetched rows. Added `success` + `initiated` styles to the shared `StatusBadge` (the `payment_txn_status` enum used them but they fell back to gray). Reused `DataTable`/`StatsCard`; row click routes to the existing `/admin/orders/[id]`.
 - 2026-06-22: **Admin Activity Log (#21)** — introduced `apps/admin/lib/activity.ts` `logActivity(supabase, entry, actorId?)`: best-effort (wrapped in try/catch so a logging failure never breaks the underlying mutation), works with both the browser and SSR clients (admin session satisfies `activity_logs_admin` RLS), and accepts an explicit `actorId` for the service-role path (inventory server actions, which have no session). Wired into every admin mutation. `ip_address` is only captured server-side (null for client-side actions) — minor follow-up if full IP audit is needed.
 - 2026-06-22: **User Role Management (#16)** — built now (not blocked on Jay after all): the `user_role` enum + `store_managers`/`riders` tables already exist, so role management needs no new schema. Role changes go through a guarded `changeUserRole` server action (service-role write + acting-admin id from the SSR session): blocks changing your own role, requires a store when assigning `store_manager` (upserts `store_managers`), auto-creates a `riders` profile, deactivates store assignments on demotion, and audit-logs via `logActivity`. The only deferred part is agent-panel-specific provisioning (assignments/deliveries), which is Jay's agent schema.
