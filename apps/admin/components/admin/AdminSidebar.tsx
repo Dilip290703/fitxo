@@ -15,9 +15,13 @@ const NAV_ITEMS = [
   { href: '/admin/brands', label: 'Brands', icon: '🏷️' },
   { href: '/admin/categories', label: 'Categories', icon: '🗂️' },
   { href: '/admin/coupons', label: 'Coupons', icon: '🎟️' },
+  { href: '/admin/content', label: 'Content', icon: '📄' },
   { href: '/admin/deliveries', label: 'Deliveries', icon: '🚚' },
   { href: '/admin/notifications', label: 'Notifications', icon: '🔔' },
+  { href: '/admin/payouts', label: 'Payouts', icon: '💰' },
+  { href: '/admin/complaints', label: 'Complaints', icon: '🎧' },
   { href: '/admin/analytics', label: 'Analytics', icon: '📊' },
+  { href: '/admin/reports', label: 'Reports', icon: '📤' },
   { href: '/admin/activity', label: 'Activity Log', icon: '📝' },
   { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ];
