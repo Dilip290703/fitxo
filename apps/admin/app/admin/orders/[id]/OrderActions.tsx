@@ -13,11 +13,21 @@ interface Order {
   user_id: string;
 }
 
-export default function OrderActions({ order }: { order: Order }) {
+interface ActionItem {
+  prepared_at: string | null;
+}
+
+export default function OrderActions({ order, items }: { order: Order; items: ActionItem[] }) {
   const router = useRouter();
   const { toast } = useToast();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+
+  // Store fulfillment — the rider can't be dispatched until the store has
+  // marked every line item ready for pickup (set on the Store panel).
+  const totalItems = items.length;
+  const readyItems = items.filter((i) => i.prepared_at).length;
+  const allReady = totalItems > 0 && readyItems === totalItems;
 
   const updateStatus = async (status: OrderStatus) => {
     setLoading(true);
@@ -43,10 +53,22 @@ export default function OrderActions({ order }: { order: Order }) {
     setLoading(false);
   };
 
-  const actions: { label: string; status: OrderStatus; color: string }[] = [];
+  const actions: {
+    label: string;
+    status: OrderStatus;
+    color: string;
+    disabled?: boolean;
+    blockedReason?: string;
+  }[] = [];
 
   if (order.status === 'pending') actions.push({ label: 'Confirm Order', status: 'confirmed', color: 'bg-blue-600 hover:bg-blue-500' });
-  if (order.status === 'confirmed') actions.push({ label: 'Mark Out for Delivery', status: 'out_for_delivery', color: 'bg-purple-600 hover:bg-purple-500' });
+  if (order.status === 'confirmed') actions.push({
+    label: 'Mark Out for Delivery',
+    status: 'out_for_delivery',
+    color: 'bg-purple-600 hover:bg-purple-500',
+    disabled: !allReady,
+    blockedReason: !allReady ? `Waiting for the store to mark all items ready (${readyItems}/${totalItems}).` : undefined,
+  });
   if (order.status === 'out_for_delivery') actions.push({ label: 'Mark Delivered + Start Try Window', status: 'try_window_active', color: 'bg-teal-600 hover:bg-teal-500' });
   if (order.status === 'try_window_active') actions.push({ label: 'Request Return Pickup', status: 'return_requested', color: 'bg-amber-600 hover:bg-amber-500' });
   if (order.status === 'return_requested') actions.push({ label: 'Mark Return Picked', status: 'return_picked', color: 'bg-cyan-600 hover:bg-cyan-500' });
@@ -58,6 +80,8 @@ export default function OrderActions({ order }: { order: Order }) {
 
   if (actions.length === 0) return null;
 
+  const blockedReason = actions.find((a) => a.blockedReason)?.blockedReason;
+
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
       <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Actions</h3>
@@ -66,13 +90,17 @@ export default function OrderActions({ order }: { order: Order }) {
           <button
             key={a.status}
             onClick={() => updateStatus(a.status)}
-            disabled={loading}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-60 text-white ${a.color}`}
+            disabled={loading || a.disabled}
+            title={a.blockedReason}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40 text-white ${a.color}`}
           >
             {a.label}
           </button>
         ))}
       </div>
+      {blockedReason ? (
+        <p className="mt-3 text-xs text-amber-400">⏳ {blockedReason}</p>
+      ) : null}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
+import OrderAlerts from '@/components/admin/OrderAlerts';
 import type { User } from '@fitzo/supabase/types';
 
 interface AdminHeaderProps {
@@ -24,6 +25,8 @@ export default function AdminHeader({ user, title }: AdminHeaderProps) {
       <h1 className="text-sm font-semibold text-white">{title ?? 'Admin Panel'}</h1>
 
       <div className="flex items-center gap-4">
+        <OrderAlerts />
+
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
             {user.name?.charAt(0).toUpperCase() ?? 'A'}

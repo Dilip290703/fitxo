@@ -144,8 +144,8 @@ export default function OrderAlerts() {
 
   return (
     <>
-      {/* Bell */}
-      <div className="fixed right-4 top-4 z-[60]">
+      {/* Bell (inline — lives in the header row next to name/logout) */}
+      <div className="relative">
         <button
           type="button"
           onClick={() => {
@@ -153,18 +153,18 @@ export default function OrderAlerts() {
             setUnread(0);
           }}
           aria-label="Order alerts"
-          className="relative grid h-10 w-10 place-items-center rounded-full border border-gray-700 bg-gray-800 text-[17px] shadow-lg"
+          className="relative grid h-9 w-9 place-items-center rounded-lg border border-gray-700 bg-gray-800 text-[16px] hover:border-gray-500"
         >
           🔔
           {unread > 0 ? (
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
               {unread > 9 ? '9+' : unread}
             </span>
           ) : null}
         </button>
 
         {bellOpen ? (
-          <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-2xl">
+          <div className="absolute right-0 mt-2 z-[60] w-[300px] overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-2xl">
             <div className="flex items-center justify-between border-b border-gray-700 px-4 py-3">
               <p className="text-[13px] font-semibold text-white">Order alerts</p>
               <button
