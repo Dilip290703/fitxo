@@ -31,10 +31,16 @@ function timeAgo(at: number) {
 }
 
 /**
- * Live new-order alerts for the store. Subscribes to order_items INSERTs —
- * RLS (migration 004) delivers only this store's line items — and dedupes by
- * order_id so a multi-item order pops once. Renders a pop-up stack + a bell
- * with the session history; plays a chime unless muted.
+ * Live new-order alerts for the store. Subscribes to the manager's own
+ * `notifications` INSERTs (kind='new_store_order', created by the trigger in
+ * migration 022) and dedupes by order_id so a multi-item order pops once.
+ *
+ * We deliberately do NOT subscribe to `order_items` directly: its RLS policy is a
+ * join through `products` (is_store_manager_of), which Supabase Realtime can't
+ * reliably evaluate to route a postgres_changes event — so that approach silently
+ * stopped delivering. notifications has the plain `user_id = auth.uid()` policy
+ * Realtime routes for free. Renders a pop-up stack + a bell with the session
+ * history; plays a chime unless muted.
  */
 export function OrderAlertsProvider() {
   const router = useRouter();
@@ -100,40 +106,58 @@ export function OrderAlertsProvider() {
     window.addEventListener("pointerdown", unlock, { once: true });
 
     const supabase = createClient();
-    const channel = supabase
-      .channel("store-new-orders")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "order_items" },
-        (payload) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const orderId = (payload.new as any)?.order_id as string | undefined;
-          if (!orderId || handledRef.current.has(orderId)) return;
-          handledRef.current.add(orderId);
-          // Let sibling items land, then fetch the order summary once.
-          setTimeout(async () => {
-            try {
-              const order = await loadStoreOrder(orderId);
-              if (order) {
-                pushAlert({
-                  orderId: order.id,
-                  orderNumber: order.orderNumber,
-                  itemCount: order.itemCount,
-                  subtotal: order.subtotal,
-                  at: Date.now(),
-                });
-              }
-            } catch {
-              /* ignore */
-            }
-          }, 900);
-        },
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const handleNewOrder = (orderId: string) => {
+      if (handledRef.current.has(orderId)) return;
+      handledRef.current.add(orderId);
+      setTimeout(async () => {
+        try {
+          const order = await loadStoreOrder(orderId);
+          if (order) {
+            pushAlert({
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              itemCount: order.itemCount,
+              subtotal: order.subtotal,
+              at: Date.now(),
+            });
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 400);
+    };
+
+    // Subscribe to THIS manager's own notifications (born-visible → Realtime
+    // routes them reliably, unlike the join-based order_items policy).
+    supabase.auth.getUser().then(({ data }) => {
+      const userId = data.user?.id;
+      if (!userId) return;
+      channel = supabase
+        .channel("store-new-orders")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const row = payload.new as any;
+            const data = (row?.data ?? {}) as { kind?: string; order_id?: string };
+            if (data.kind !== "new_store_order" || !data.order_id) return;
+            handleNewOrder(data.order_id);
+          },
+        )
+        .subscribe();
+    });
 
     return () => {
       window.removeEventListener("pointerdown", unlock);
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [pushAlert]);
 

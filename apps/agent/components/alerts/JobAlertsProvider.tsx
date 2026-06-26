@@ -31,14 +31,16 @@ function timeAgo(at: number) {
 }
 
 /**
- * Live rider alerts. Supabase Realtime routes events by RLS, so we only ever
- * receive rows for this rider:
- *   • notifications INSERT → admin assigned me a job (data.kind='new_job').
- *     Routed through a born-visible notification (migration 021) because an
- *     assign-UPDATE on `deliveries` moves the row *into* RLS visibility, which
- *     postgres_changes does not reliably deliver.
- *   • try_sessions        → the customer started their try-on (status='active')
- *   • order_items UPDATE  → the customer decided an item (keep / return)
+ * Live rider alerts. Every event arrives as a born-visible `notifications` row
+ * owned by this rider (migrations 021 + 023), so Supabase Realtime routes them
+ * reliably via the simple `user_id = auth.uid()` policy. We deliberately do NOT
+ * subscribe to `deliveries`/`try_sessions`/`order_items` directly — their RLS is
+ * join-based, which Realtime can't reliably evaluate to route postgres_changes.
+ * data.kind discriminates the event:
+ *   • new_job       → admin assigned me a delivery
+ *   • try_started   → the customer started their try-on
+ *   • item_kept     → the customer is keeping an item
+ *   • item_returned → the customer is returning an item (collect it)
  * Mirrors the Store/Admin new-order pop-up: pop-up stack + bell history + chime.
  */
 export function JobAlertsProvider({ userId }: { userId: string }) {
@@ -117,9 +119,11 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
       return { deliveryId: data.id as string, orderNumber: order?.order_number ?? "Order" };
     };
 
+    // All rider alerts arrive as born-visible `notifications` rows (migrations
+    // 021 + 023), so Realtime routes them reliably via the simple
+    // `user_id = auth.uid()` policy — no join-based RLS to mis-route.
     const channel = supabase
       .channel("agent-job-alerts")
-      // New job assigned to me — a born-visible notification (migration 021).
       .on(
         "postgres_changes",
         {
@@ -131,77 +135,41 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
         (payload) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const row = payload.new as any;
-          const data = (row?.data ?? {}) as { kind?: string; delivery_id?: string; order_id?: string };
-          if (data.kind !== "new_job") return;
-          const key = `job-${data.delivery_id ?? row?.id}`;
+          const data = (row?.data ?? {}) as {
+            kind?: string;
+            delivery_id?: string;
+            order_id?: string;
+            order_item_id?: string;
+            product_name?: string;
+          };
+
+          const meta: Record<string, { kind: AlertKind; detail: string }> = {
+            new_job: { kind: "job", detail: "Tap to accept this delivery" },
+            try_started: { kind: "try", detail: "Customer is trying items on — please wait" },
+            item_returned: {
+              kind: "return",
+              detail: `${data.product_name ?? "An item"} — collect it back`,
+            },
+            item_kept: {
+              kind: "keep",
+              detail: `${data.product_name ?? "An item"} — customer is keeping it`,
+            },
+          };
+          const m = data.kind ? meta[data.kind] : undefined;
+          if (!m) return;
+
+          const key = `${data.kind}-${data.order_item_id ?? data.delivery_id ?? row?.id}`;
           if (handledRef.current.has(key)) return;
           handledRef.current.add(key);
+
           setTimeout(async () => {
             const order = data.order_id ? await lookupOrder(data.order_id) : null;
             pushAlert({
               id: key,
-              kind: "job",
+              kind: m.kind,
               deliveryId: data.delivery_id ?? order?.deliveryId ?? null,
-              orderNumber: order?.orderNumber ?? "New order",
-              detail: "Tap to accept this delivery",
-              at: Date.now(),
-            });
-          }, 300);
-        },
-      )
-      // Customer started their try-on
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "try_sessions" },
-        (payload) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const row = payload.new as any;
-          const key = `try-${row?.order_id}`;
-          if (!row?.order_id || row.status !== "active" || handledRef.current.has(key)) return;
-          handledRef.current.add(key);
-          setTimeout(async () => {
-            const order = await lookupOrder(row.order_id);
-            if (!order) return;
-            pushAlert({
-              id: key,
-              kind: "try",
-              deliveryId: order.deliveryId,
-              orderNumber: order.orderNumber,
-              detail: "Customer is trying items on — please wait",
-              at: Date.now(),
-            });
-          }, 300);
-        },
-      )
-      // Customer decided an item (keep / return)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "order_items" },
-        (payload) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const row = payload.new as any;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const old = payload.old as any;
-          const decision = row?.decision as string | undefined;
-          if (!row?.id || (decision !== "keep" && decision !== "return")) return;
-          // Only fire on the transition into a decision (old image may be partial).
-          if (old?.decision === decision) return;
-          const key = `dec-${row.id}-${decision}`;
-          if (handledRef.current.has(key)) return;
-          handledRef.current.add(key);
-          setTimeout(async () => {
-            const order = await lookupOrder(row.order_id);
-            if (!order) return;
-            const name = row.product_name ?? "An item";
-            pushAlert({
-              id: key,
-              kind: decision === "return" ? "return" : "keep",
-              deliveryId: order.deliveryId,
-              orderNumber: order.orderNumber,
-              detail:
-                decision === "return"
-                  ? `${name} — collect it back`
-                  : `${name} — customer is keeping it`,
+              orderNumber: order?.orderNumber ?? "Order",
+              detail: m.detail,
               at: Date.now(),
             });
           }, 300);
