@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
+import { logActivity } from '@/lib/activity';
 
 interface Rider {
   id: string;
@@ -44,7 +45,10 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
     const { error } = await supabase.from('deliveries').update({ rider_id: riderId }).eq('id', deliveryId);
     setAssigning(null);
     if (error) toast(error.message, 'error');
-    else { toast('Rider assigned!', 'success'); router.refresh(); }
+    else {
+      await logActivity(supabase, { action: 'Assigned rider to delivery', entity_type: 'delivery', entity_id: deliveryId, new_value: { rider_id: riderId } });
+      toast('Rider assigned!', 'success'); router.refresh();
+    }
   };
 
   const availableRiders = riders.filter((r) => r.is_available);
