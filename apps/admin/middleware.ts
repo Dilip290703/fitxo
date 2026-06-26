@@ -4,10 +4,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const cookieName = process.env.NEXT_PUBLIC_SUPABASE_COOKIE_NAME;
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      ...(cookieName ? { cookieOptions: { name: cookieName } } : {}),
       cookies: {
         getAll() {
           return request.cookies.getAll();
