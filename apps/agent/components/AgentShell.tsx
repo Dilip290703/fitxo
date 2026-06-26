@@ -139,7 +139,7 @@ export function AgentShell({ active, children }: { active: NavKey; children: Rea
   return (
     <Ctx.Provider value={{ rider, available, setAvailable, signOut }}>
       {/* Live new-job + try-window pop-up alerts (verified riders only) */}
-      <JobAlertsProvider />
+      <JobAlertsProvider userId={rider.userId} />
       <div className="min-h-screen bg-[#0f1522] text-white lg:grid lg:grid-cols-[256px_1fr]">
         {/* Desktop sidebar */}
         <aside className="sticky top-0 hidden h-screen border-r border-[#1e293b] lg:block">{sidebar}</aside>

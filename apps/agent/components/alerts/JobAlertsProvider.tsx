@@ -31,14 +31,17 @@ function timeAgo(at: number) {
 }
 
 /**
- * Live rider alerts. Supabase Realtime routes events by RLS (migration 014), so we
- * only ever receive rows for this rider's own deliveries:
- *   • deliveries  UPDATE → admin assigned me a job (status='assigned')
- *   • try_sessions       → the customer started their try-on (status='active')
- *   • order_items UPDATE → the customer decided an item (keep / return)
+ * Live rider alerts. Supabase Realtime routes events by RLS, so we only ever
+ * receive rows for this rider:
+ *   • notifications INSERT → admin assigned me a job (data.kind='new_job').
+ *     Routed through a born-visible notification (migration 021) because an
+ *     assign-UPDATE on `deliveries` moves the row *into* RLS visibility, which
+ *     postgres_changes does not reliably deliver.
+ *   • try_sessions        → the customer started their try-on (status='active')
+ *   • order_items UPDATE  → the customer decided an item (keep / return)
  * Mirrors the Store/Admin new-order pop-up: pop-up stack + bell history + chime.
  */
-export function JobAlertsProvider() {
+export function JobAlertsProvider({ userId }: { userId: string }) {
   const router = useRouter();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [activeIds, setActiveIds] = useState<string[]>([]);
@@ -116,26 +119,30 @@ export function JobAlertsProvider() {
 
     const channel = supabase
       .channel("agent-job-alerts")
-      // New job assigned to me
+      // New job assigned to me — a born-visible notification (migration 021).
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "deliveries" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
         (payload) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const row = payload.new as any;
-          const key = `job-${row?.id}`;
-          if (!row?.id || row.status !== "assigned" || handledRef.current.has(key)) return;
+          const data = (row?.data ?? {}) as { kind?: string; delivery_id?: string; order_id?: string };
+          if (data.kind !== "new_job") return;
+          const key = `job-${data.delivery_id ?? row?.id}`;
+          if (handledRef.current.has(key)) return;
           handledRef.current.add(key);
           setTimeout(async () => {
-            const order = (await lookupOrder(row.order_id)) ?? {
-              deliveryId: row.id as string,
-              orderNumber: "New order",
-            };
+            const order = data.order_id ? await lookupOrder(data.order_id) : null;
             pushAlert({
               id: key,
               kind: "job",
-              deliveryId: order.deliveryId,
-              orderNumber: order.orderNumber,
+              deliveryId: data.delivery_id ?? order?.deliveryId ?? null,
+              orderNumber: order?.orderNumber ?? "New order",
               detail: "Tap to accept this delivery",
               at: Date.now(),
             });
@@ -206,7 +213,7 @@ export function JobAlertsProvider() {
       window.removeEventListener("pointerdown", unlock);
       supabase.removeChannel(channel);
     };
-  }, [pushAlert]);
+  }, [pushAlert, userId]);
 
   const toggleMute = () => {
     setMuted((m) => {
