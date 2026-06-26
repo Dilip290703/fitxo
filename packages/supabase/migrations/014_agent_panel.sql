@@ -1,4 +1,4 @@
--- Migration 011: Delivery Agent panel — rider auth gate, delivery lifecycle,
+-- Migration 014: Delivery Agent panel — rider auth gate, delivery lifecycle,
 -- the doorstep "rider delivered → customer starts 7-min try window" flow, and Realtime.
 -- Run in the Supabase SQL Editor.
 --

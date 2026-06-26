@@ -1,8 +1,8 @@
--- Migration 013: gate the delivery (and the rider hand-off) on the STORE
+-- Migration 016: gate the delivery (and the rider hand-off) on the STORE
 -- confirming the order, instead of auto-creating a delivery at checkout.
--- Run once in the Supabase SQL Editor after migration 012.
+-- Run once in the Supabase SQL Editor after migration 015 (auto-provision).
 --
--- WHY: migration 011 created the delivery row in an AFTER INSERT trigger on
+-- WHY: migration 014 (agent panel) created the delivery row in an AFTER INSERT trigger on
 -- orders, so a delivery existed the instant a customer checked out — before any
 -- store had confirmed it actually has the items. That skipped the store step:
 --   place order (pending) -> STORE confirms stock (confirmed) -> rider hand-off.

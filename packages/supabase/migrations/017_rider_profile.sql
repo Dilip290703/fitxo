@@ -1,5 +1,5 @@
--- Migration 014: Agent panel — rider self-service profile edits.
--- Run in the Supabase SQL Editor (after 011..013).
+-- Migration 017: Agent panel — rider self-service profile edits.
+-- Run in the Supabase SQL Editor (after 014..016).
 --
 -- The agent panel lets a rider edit their own vehicle type/number from Settings.
 -- We route this through a guarded SECURITY DEFINER RPC (same pattern as every
@@ -26,7 +26,7 @@ REVOKE ALL ON FUNCTION rider_update_profile(text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION rider_update_profile(text, text) TO authenticated;
 
 -- ============================================================
--- Security fix: migration 011 added `riders_update_own` as a broad
+-- Security fix: migration 014 (agent panel) added `riders_update_own` as a broad
 -- FOR UPDATE policy with no WITH CHECK, which would let a rider flip their own
 -- is_verified flag straight from the client. All legitimate rider writes now go
 -- through SECURITY DEFINER RPCs (set_availability, update_profile), so the broad

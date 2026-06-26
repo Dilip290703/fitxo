@@ -1,4 +1,4 @@
--- Migration 012: auto-provision public.users (+ a riders row for riders) on signup.
+-- Migration 015: auto-provision public.users (+ a riders row for riders) on signup.
 -- Run once in the Supabase SQL Editor.
 --
 -- WHY: signup only writes to auth.users. The customer app back-fills its public.users
