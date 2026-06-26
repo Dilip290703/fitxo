@@ -4,6 +4,7 @@ import { createClient } from '@fitzo/supabase/server';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { ToastProvider } from '@/components/admin/Toast';
+import OrderAlerts from '@/components/admin/OrderAlerts';
 import type { User } from '@fitzo/supabase/types';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </main>
         </div>
       </div>
+      {/* Live new-order pop-ups + bell */}
+      <OrderAlerts />
     </ToastProvider>
   );
 }
