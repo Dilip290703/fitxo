@@ -6,6 +6,23 @@ import { razorpay, RAZORPAY_KEY_ID, verifyPaymentSignature } from '@/lib/razorpa
 
 type ActionResult = { success: true } | { success: false; error: string };
 
+/**
+ * Customer accepts the doorstep prompt → start the 7-minute try-on window.
+ * Calls the guarded RPC (migration 011) which flips the order to
+ * try_window_active and sets the try_session deadline to now + 7 min.
+ */
+export async function startTryWindow(orderId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated.' };
+
+  const { error } = await supabase.rpc('start_try_window', { p_order_id: orderId });
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath(`/order-tracking/${orderId}`);
+  return { success: true };
+}
+
 export type CreateKeepPaymentResult =
   | {
       success: true;

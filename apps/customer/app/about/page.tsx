@@ -14,7 +14,7 @@ const proofItems = [
     text: "Fast fittings, easier decisions, and zero pressure at checkout.",
   },
   {
-    rating: "15–30 min",
+    rating: "7 min",
     label: "Try-on window at your door",
     text: "The rider waits while you try on, so you decide with the clothes on.",
   },

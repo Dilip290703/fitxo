@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createKeepPayment, confirmKeepPayment, returnItem } from "./actions";
+import { createClient } from "@fitzo/supabase/client";
+import { createKeepPayment, confirmKeepPayment, returnItem, startTryWindow } from "./actions";
 import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
 
 // ─────────────────────────────────────────────
@@ -101,7 +102,7 @@ const TIMELINE = [
   { reachedAt: "confirmed",         label: "Confirmed",          sub: "Store is preparing your items" },
   { reachedAt: "out_for_delivery",  label: "Out for delivery",   sub: "Rider is on the way to you" },
   { reachedAt: "delivered",         label: "Delivered",          sub: "Your order has arrived" },
-  { reachedAt: "try_window_active", label: "Try window open",    sub: "Try on while the rider waits (15–30 min)" },
+  { reachedAt: "try_window_active", label: "Try window open",    sub: "Try on while the rider waits (7 min)" },
   { reachedAt: "completed",         label: "Completed",          sub: "All done!" },
 ] as const;
 
@@ -175,6 +176,35 @@ export function OrderTrackingView({
   );
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [startingWindow, setStartingWindow] = useState(false);
+  const [windowDismissed, setWindowDismissed] = useState(false);
+
+  // Live updates: when the rider marks the order delivered, or the window
+  // starts, refresh the server data so the prompt / countdown appears instantly.
+  useEffect(() => {
+    const supabase = createClient();
+    const ch = supabase
+      .channel(`order-${order.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `id=eq.${order.id}` }, () => router.refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "try_sessions", filter: `order_id=eq.${order.id}` }, () => router.refresh())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [order.id, router]);
+
+  // The rider has delivered; the customer hasn't started the window yet.
+  const awaitingTryStart = order.status === "delivered" && !windowDismissed;
+
+  async function handleStartWindow() {
+    setStartingWindow(true);
+    setActionError(null);
+    const result = await startTryWindow(order.id);
+    setStartingWindow(false);
+    if (!result.success) {
+      setActionError(result.error);
+      return;
+    }
+    router.refresh();
+  }
 
   const tryWindowLive =
     order.status === "try_window_active" && !!timeLeft && !timeLeft.expired;
@@ -270,6 +300,53 @@ export function OrderTrackingView({
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
+      {/* ── Doorstep prompt: rider delivered → start the 7-min window ── */}
+      {awaitingTryStart && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitzo-fade-in 180ms ease-out both" }}>
+          <div className="absolute inset-0 bg-[#171d2b]/50 backdrop-blur-[3px]" />
+          <div
+            className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.5)]"
+            style={{ animation: "fitzo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
+          >
+            <div className="h-2 w-full bg-gradient-to-r from-[#171d2b] via-[#8b7058] to-[#c89b3c]" />
+            <div className="px-7 pb-7 pt-6 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#171d2b]">
+                <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2M5 8l2-4h10l2 4" />
+                </svg>
+              </div>
+              <h2 className="mt-5 font-display text-[26px] leading-tight text-[#171717]">Your order has arrived!</h2>
+              <p className="mx-auto mt-2 max-w-[330px] text-[14px] leading-6 text-[#5f5851]">
+                Your rider is at the door and waiting. Start your <strong>7-minute try-on window</strong> —
+                try everything on, keep &amp; pay for what you love, and hand the rest back right away.
+              </p>
+              {actionError && (
+                <p className="mt-3 rounded-[10px] bg-[#fdecea] px-3 py-2 text-[12px] text-[#c0392b]">{actionError}</p>
+              )}
+              <button
+                type="button"
+                onClick={handleStartWindow}
+                disabled={startingWindow}
+                className="mt-6 w-full rounded-[14px] bg-[#171d2b] px-5 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#2a3345] disabled:opacity-60"
+              >
+                {startingWindow ? "Starting…" : "Accept & start 7-min try-on"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setWindowDismissed(true)}
+                className="mt-2 w-full rounded-[14px] px-5 py-3 text-[13px] font-medium text-[#8b7058] transition hover:text-[#171717]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes fitzo-fade-in { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes fitzo-pop-in { 0% { opacity: 0; transform: translateY(12px) scale(0.96) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
+          `}</style>
+        </div>
+      )}
+
       <div className="mx-auto w-full max-w-[720px] px-4 py-10 sm:px-6">
 
         {/* ── Header ── */}

@@ -208,7 +208,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="absolute bottom-8 right-8 z-10 rounded-3xl bg-[#ffd037] px-6 py-5 shadow-xl">
-                  <p className="font-display text-[28px] font-medium tracking-[-0.04em]">15–30 min</p>
+                  <p className="font-display text-[28px] font-medium tracking-[-0.04em]">7 min</p>
                   <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.28em]">try-on at your door</p>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  confirmOrder,
   loadStoreOrder,
   setItemPrepared,
   type StoreOrderDetail,
@@ -47,6 +48,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState("");
   const [busyItem, setBusyItem] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -106,6 +108,20 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
     }
   };
 
+  const confirm = async () => {
+    if (!order) return;
+    setConfirming(true);
+    setError("");
+    try {
+      await confirmOrder(order.id);
+      setOrder((o) => (o ? { ...o, status: "confirmed" } : o));
+    } catch {
+      setError("Couldn't confirm this order. Please try again.");
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   if (notFound) {
     return (
       <div className="px-6 py-10">
@@ -153,6 +169,33 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
           {error}
         </p>
       ) : null}
+
+      {order.status === "pending" ? (
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ded3c6] bg-[#faf6f0] p-5">
+          <div>
+            <h2 className="text-[14px] font-semibold text-[#171d2b]">Confirm this order</h2>
+            <p className="mt-1 text-[12px] text-[#7f7469]">
+              {allReady
+                ? "All your items are ready. Confirm to send it to a Fitzo rider."
+                : "Mark every item ready, then confirm to send it to a Fitzo rider."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={confirm}
+            disabled={!allReady || confirming}
+            className="rounded-full bg-[#171d2b] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {confirming ? "Confirming…" : "Confirm order"}
+          </button>
+        </section>
+      ) : (
+        <section className="mt-6 rounded-2xl border border-[#cfe3d4] bg-[#eef6f0] px-5 py-3.5">
+          <p className="text-[13px] font-medium text-[#2f7d46]">
+            Order confirmed — a Fitzo rider will be assigned for pickup.
+          </p>
+        </section>
+      )}
 
       <section className="mt-6 rounded-2xl border border-[#ece5da] bg-white p-5 sm:p-6">
         <div className="flex items-center justify-between">

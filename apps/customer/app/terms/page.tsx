@@ -37,7 +37,7 @@ const sections = [
     id: "try-before-you-buy",
     title: "4. Try-Before-You-Buy Service",
     paragraphs: [
-      "FitZo's core offering allows you to order fashion items, book a delivery slot, and try them on at your door while the rider waits (typically 15–30 minutes), paying only for the items you choose to keep. Items you do not wish to purchase are handed back to the rider at the same visit.",
+      "FitZo's core offering allows you to order fashion items, book a delivery slot, and try them on at your door while the rider waits (typically 7 minutes), paying only for the items you choose to keep. Items you do not wish to purchase are handed back to the rider at the same visit.",
       "You are expected to handle try-on items with reasonable care. Items must be returned in the same condition as delivered — unworn (beyond trying on), with all tags and packaging intact. Items that are damaged, stained, altered, or returned without original tags may not be eligible for return.",
       "FitZo reserves the right to limit the number of items per try-on order and to restrict the service for accounts with a history of excessive returns or misuse.",
     ],

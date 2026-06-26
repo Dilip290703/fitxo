@@ -62,19 +62,40 @@ Last updated: 2026-06-26
 - [x] 24. Size Guide — D
 - [x] 25. 404 Error Page — D
 
-## P2 — Delivery Agent Panel (12) — empty shell, not started
-- [ ] 1. Agent Login
-- [ ] 2. Agent Dashboard / Home
-- [ ] 3. Order Detail (Pickup)
-- [ ] 4. Order Detail (Delivery)  *(confirm delivery → starts customer try window; rider waits 15–30 min)*
-- [ ] 5. Return Collection Page
-- [ ] 6. Navigation / Map Screen
-- [ ] 7. Agent Earnings Page
-- [ ] 8. Agent Profile Page
-- [ ] 9. Agent Notifications
-- [ ] 10. Order History (Agent)
-- [ ] 11. Support Page (Agent)
-- [ ] 12. Onboarding / Training (Agent)
+## P2 — Delivery Agent Panel (12) — CORE LOOP BUILT & MERGED TO MAIN (J, 2026-06-21)
+> Agent app runs on **:3002** (`pnpm dev:agent`). Rider = role `rider` + verified `riders` row
+> (mirrors store-manager gate via `lib/agent-auth.ts`). Rider writes go through guarded
+> SECURITY DEFINER RPCs (migration **014**). Live coordination via **Supabase Realtime** on
+> `orders`/`try_sessions`/`deliveries`. Needs migration 014 + a verified test rider (see Known issues).
+> SSR localStorage shim (`instrumentation.ts`) added to both `apps/agent` and `apps/store`
+> (Node 22+ ships a broken `globalThis.localStorage` that crashes @supabase/ssr during render).
+> Merged straight to `main` 2026-06-21 (owner-authorized; logic reviewed, browser test still recommended).
+> **Testing needs ZERO Supabase SQL now** after a one-time setup — see `docs/HANDOFF-agent-testing.md`.
+> Migration **015** auto-provisions `public.users` + a `riders` row on signup (a new rider used to
+> need a manual INSERT to be visible in Admin → that was the "rider can't log in" SQL). Verify +
+> assign already live in Admin (Riders → Verify Rider; Deliveries → Assign).
+>
+> **Full panel rebuild (J, 2026-06-26):** the agent app is no longer a 2-screen shell.
+> A responsive `AgentShell` (desktop sidebar + mobile bottom-nav + slide-over "More")
+> now wraps **9 navigable screens** matching the store/admin quality bar, all wired to
+> Supabase via `lib/useAgentGuard.ts` (shared gate hook) + `lib/agent-data.ts` (earnings,
+> history, notifications). The global online/offline toggle lives in the shell. Earnings =
+> the order's `delivery_fee` per completed delivery (no rider-commission config exists yet).
+> New migration **017** adds a guarded `rider_update_profile` RPC for vehicle edits and
+> drops the over-broad `riders_update_own` policy (it allowed a client to self-set
+> `is_verified`). `pnpm --filter @fitzo/agent build` passes (14 routes). Browser test still recommended.
+- [x] 1. Agent Login — J  *(email+pw sign-in + sign-up + forgot/reset password; verified-rider gate with pending/not-rider screens.)*
+- [x] 2. Agent Dashboard / Home — J  *(rebuilt: greeting, online toggle, today's stats (active/done/earned/rating), new-jobs-to-accept + active deliveries + this-week earnings teaser.)*
+- [ ] 3. Order Detail (Pickup)  *(folded into the single Delivery Detail status machine)*
+- [x] 4. Delivery Detail + status machine — J  *(accept → picked_up (order out_for_delivery) → **mark delivered** (order delivered) → customer accepts → live 7-min timer + live keep/return decisions → collect returns & complete. This is the loop. Customer side: realtime "order arrived → start 7-min window" popup + `start_try_window` RPC.)*
+- [~] 5. Return Collection — J  *(returns are surfaced + counted inside Delivery Detail's try-window panel; no separate screen)*
+- [ ] 6. Navigation / Map Screen  *(currently an "Open in Maps" link on Delivery Detail — no Maps key yet)*
+- [x] 7. Agent Earnings — J  *(/earnings: this-week hero + 7-day CSS bar chart, today/month/all-time/avg rollups, recent-payouts ledger; pay = order delivery_fee per completed job.)*
+- [x] 8. Agent Profile — J  *(/profile: avatar, verified badge, rating/deliveries/status stats, vehicle card, account rows.)*
+- [x] 9. Agent Notifications — J  *(/notifications: reads `notifications` table, unread count, tap-to-read + mark-all-read.)*
+- [x] 10. Order History — J  *(/history: completed/failed deliveries grouped by day with per-job fee + all/completed/failed filter.)*
+- [x] 11. Support — J  *(/support: helpline + email cards + rider FAQ accordion.)*
+- [x] 12. Onboarding / Guide — J  *(/guide: 6-step try-at-home walkthrough; + /settings for availability, vehicle edit via rider_update_profile RPC, and password change.)*
 
 ## P3 — Store Panel (14) — ✅ COMPLETE, owned by D (built week of 2026-06-04..10; all 14 merged + browser-verified)
 > Build order: Login → Dashboard → Catalog → Add/Edit Product → Order Management → Order Detail → rest.
@@ -144,6 +165,9 @@ Last updated: 2026-06-26
 - 2026-06-19: **Found migration 002's RLS policies were missing in the live DB** — `try_sessions`/`returns`/`payments`/`payouts` had RLS *enabled* but **zero policies** (deny-all), which broke checkout (`new row violates RLS for try_sessions`). Migration **010** idempotently recreates exactly those policies. (Migration 005 — re-enable RLS — had already been applied; this was a separate gap.)
 - 2026-06-19: **Navbar auth was reading a mock localStorage flag**, not the Supabase session — replaced with `supabase.auth.getUser()` + `onAuthStateChange`. Checkout variant resolver made resilient (falls back to a product's first colour/variant) so an item added without a colour can't abort the order. Added a login-required modal + a checkout confetti celebration.
 - 2026-06-19: **Try-window duration — to reconcile:** the doorstep pivot (PR #20) shipped `TRY_WINDOW_MINUTES = 30`; Jay had proposed ~5–7 min on-the-spot. Jay & Dilip to agree on the final value (then move it to Admin settings, see Known issues).
+- 2026-06-21: **Try-window resolved to 7 min** — `TRY_WINDOW_MINUTES = 7` in checkout + admin, and `start_try_window` (migration 014) sets a 7-min deadline. The window now correctly **starts when the customer taps "Start try-on"** after the rider marks delivered (not at checkout). Still should move the duration to Admin `system_settings` eventually.
+- 2026-06-21: **Agent panel (P2 core loop) merged directly to `main`** (owner-authorized, no PR) — `feat/agent-panel` fast-forwarded into main. Includes the `instrumentation.ts` SSR localStorage shim for both `apps/agent` and `apps/store`.
+- 2026-06-21: **Killed the manual-SQL-per-test problem** — root cause was that agent signup only wrote `auth.users` (no `public.users`/`riders` row, so a new rider was invisible in Admin and couldn't be verified without a hand INSERT), plus migration 014 not always being applied (so the timer/RPCs were missing). Fix: migration **015** adds a `handle_new_user` trigger on `auth.users` that auto-creates the `public.users` row (role from signup metadata) + a `riders` row for riders, with a one-time back-fill. Admin already had the Verify-Rider + Assign-Delivery UI. End-to-end testing is now a click-path (`docs/HANDOFF-agent-testing.md`) with the only SQL being the one-time migration paste.
 
 - 2026-06-22: **Admin System Settings (#19) made real** — added a `system_settings` **singleton** table (migration 011, `id smallint PRIMARY KEY CHECK (id=1)`) + RLS (`authenticated` SELECT so store Earnings / customer try-timer can read config; `is_admin()` for writes) reusing the shared `trigger_set_updated_at`. Try-window stored in **minutes** (1440 = legacy 24h) — chosen over hours so it survives the pending doorstep pivot to ~5–7 min. Writes go through the service-role admin client (stamping `updated_by`); reads via the SSR client. Screen split into a server `page.tsx` + `SettingsClient.tsx` per the admin convention. Consumers (Earnings commission math, customer countdown) still read hardcoded values — wiring them is follow-up.
 
