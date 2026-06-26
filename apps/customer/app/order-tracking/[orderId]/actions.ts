@@ -81,7 +81,7 @@ export async function createKeepPayment(
     .eq('order_id', orderId)
     .maybeSingle();
   if (!session || session.status !== 'active' || new Date(session.deadline_at) <= new Date()) {
-    return { success: false, error: 'The 24-hour try window has closed.' };
+    return { success: false, error: 'The try window has closed.' };
   }
 
   const amountPaise = Math.round(Number(item.price_at_order) * 100);
@@ -169,6 +169,10 @@ export async function confirmKeepPayment(args: {
 
   if (error) return { success: false, error: error.message };
 
+  // Close the loop: if this was the last undecided item, complete the order
+  // and stop the try-window clock.
+  await supabase.rpc('finalize_order_if_decided', { p_order_id: args.orderId });
+
   revalidatePath(`/order-tracking/${args.orderId}`);
   return { success: true };
 }
@@ -196,6 +200,10 @@ export async function returnItem(orderItemId: string, orderId: string): Promise<
     });
 
   if (returnError) return { success: false, error: returnError.message };
+
+  // Close the loop: if this was the last undecided item, complete the order
+  // and stop the try-window clock.
+  await supabase.rpc('finalize_order_if_decided', { p_order_id: orderId });
 
   revalidatePath(`/order-tracking/${orderId}`);
   return { success: true };

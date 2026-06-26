@@ -28,7 +28,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const tryDeadline = order.try_deadline ? new Date(order.try_deadline) : null;
   const now = new Date();
-  const hoursLeft = tryDeadline ? Math.round((tryDeadline.getTime() - now.getTime()) / 3600000) : null;
+  // Try window is the rider's 15–30 min wait — measured in minutes, not hours.
+  const minutesLeft = tryDeadline ? Math.round((tryDeadline.getTime() - now.getTime()) / 60000) : null;
+
+  // Store fulfillment: how many line items the store has marked ready for pickup.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items: any[] = order.order_items ?? [];
+  const readyCount = items.filter((i) => i.prepared_at).length;
+  const allReady = items.length > 0 && readyCount === items.length;
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -120,16 +127,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <div className="lg:col-span-2 space-y-4">
           {/* Try window */}
           {tryDeadline && (
-            <div className={`rounded-xl px-5 py-4 border ${hoursLeft !== null && hoursLeft < 4 ? 'bg-red-900/20 border-red-700' : 'bg-amber-900/20 border-amber-700'}`}>
+            <div className={`rounded-xl px-5 py-4 border ${minutesLeft !== null && minutesLeft < 5 ? 'bg-red-900/20 border-red-700' : 'bg-amber-900/20 border-amber-700'}`}>
               <div className="flex items-center gap-2">
                 <span className="text-lg">⏱</span>
                 <div>
                   <p className="text-sm font-semibold text-white">Try Window</p>
                   <p className="text-xs text-gray-400">
                     Deadline: {tryDeadline.toLocaleString('en-IN')}
-                    {hoursLeft !== null && (
-                      <span className={`ml-2 font-medium ${hoursLeft < 4 ? 'text-red-400' : 'text-amber-400'}`}>
-                        ({hoursLeft > 0 ? `${hoursLeft}h remaining` : 'EXPIRED'})
+                    {minutesLeft !== null && (
+                      <span className={`ml-2 font-medium ${minutesLeft < 5 ? 'text-red-400' : 'text-amber-400'}`}>
+                        ({minutesLeft > 0 ? `${minutesLeft}m remaining` : 'EXPIRED'})
                       </span>
                     )}
                   </p>
@@ -140,7 +147,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
           {/* Order items */}
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Order Items</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Order Items</h3>
+              {items.length > 0 && (
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                    allReady ? 'bg-green-900/40 text-green-300' : 'bg-amber-900/40 text-amber-300'
+                  }`}
+                  title="Items the store has packed and marked ready for pickup"
+                >
+                  {allReady ? '✓ Store ready' : `Store prep: ${readyCount}/${items.length} ready`}
+                </span>
+              )}
+            </div>
             <div className="space-y-3">
               {order.order_items?.map((item: {
                 id: string;
@@ -152,6 +171,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 deposit_at_order: number;
                 decision: string;
                 return_reason: string | null;
+                prepared_at: string | null;
               }) => (
                 <div key={item.id} className="flex items-start gap-3 pb-3 border-b border-gray-700/50 last:border-0">
                   <div className="w-14 h-14 bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
@@ -181,6 +201,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                       size="sm"
                     />
                     <p className="text-xs text-gray-600 mt-1 capitalize">{item.decision}</p>
+                    <p className={`text-[11px] mt-1 ${item.prepared_at ? 'text-green-400' : 'text-gray-500'}`}>
+                      {item.prepared_at ? '✓ Ready' : 'Not ready'}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -188,7 +211,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
 
           {/* Actions */}
-          <OrderActions order={order} />
+          <OrderActions order={order} items={items} />
 
           {/* Delivery info */}
           {order.deliveries && order.deliveries.length > 0 && (

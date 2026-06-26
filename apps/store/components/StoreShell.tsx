@@ -4,6 +4,7 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@fitzo/supabase/client";
+import { OrderAlertsProvider } from "@/components/alerts/OrderAlertsProvider";
 
 type NavItem = {
   key: string;
@@ -141,6 +142,9 @@ export function StoreShell({
       ) : null}
 
       <main className="min-w-0">{children}</main>
+
+      {/* Live new-order pop-ups + bell */}
+      <OrderAlertsProvider />
     </div>
   );
 }

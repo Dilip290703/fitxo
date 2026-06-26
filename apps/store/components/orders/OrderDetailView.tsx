@@ -88,8 +88,11 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             }
           : o,
       );
-    } catch {
-      setError("Couldn't update that item. Please try again.");
+    } catch (e) {
+      // Surface the real reason (e.g. a Postgres/RLS message) instead of a
+      // generic string, so failures are diagnosable.
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg ? `Couldn't update that item: ${msg}` : "Couldn't update that item. Please try again.");
     } finally {
       setBusyItem(null);
     }
