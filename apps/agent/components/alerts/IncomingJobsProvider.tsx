@@ -92,9 +92,9 @@ export function IncomingJobsProvider() {
     let active = true;
     const poll = async () => {
       try {
-        const jobs = await fetchAvailableJobs();
+        const { jobs, error: fetchError } = await fetchAvailableJobs();
         if (!active) return;
-        setError(null);
+        setError(fetchError);
         setOffers(jobs.filter((j) => !dismissedRef.current.has(j.deliveryId)));
       } catch {
         /* keep last offers on a transient failure */
@@ -159,7 +159,12 @@ export function IncomingJobsProvider() {
     <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[70] flex flex-col items-center gap-3 px-4 lg:bottom-6">
       {error ? (
         <div className="pointer-events-auto rounded-full bg-[#3a2020] px-4 py-2 text-[12px] font-medium text-[#ffb4a2] shadow-lg">
-          {error}
+          ⚠️ {error}
+        </div>
+      ) : offers.length === 0 ? (
+        <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[#131a28] px-4 py-2 text-[12px] font-medium text-[#7fe0b0] shadow-lg">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[#34d399]" />
+          Online · waiting for orders…
         </div>
       ) : null}
 

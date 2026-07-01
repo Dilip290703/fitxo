@@ -107,11 +107,16 @@ export type AvailableJob = {
 };
 
 /** The live offer feed: unclaimed deliveries for store-confirmed orders. */
-export async function fetchAvailableJobs(): Promise<AvailableJob[]> {
+export async function fetchAvailableJobs(): Promise<{ jobs: AvailableJob[]; error: string | null }> {
   const { data, error } = await createClient().rpc("available_deliveries");
-  if (error || !data) return [];
+  if (error) {
+    // Surface it (e.g. missing RPC = migration 024 not applied) instead of silently
+    // showing "no offers".
+    console.error("available_deliveries failed:", error.message);
+    return { jobs: [], error: error.message };
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data as any[]).map((d) => ({
+  const jobs = ((data as any[]) ?? []).map((d) => ({
     deliveryId: d.delivery_id,
     orderId: d.order_id,
     orderNumber: d.order_number ?? "Order",
@@ -121,6 +126,7 @@ export async function fetchAvailableJobs(): Promise<AvailableJob[]> {
     deliveryFee: Number(d.delivery_fee ?? 0),
     createdAt: d.created_at,
   }));
+  return { jobs, error: null };
 }
 
 /** Atomically claim an offered delivery. Resolves to the order id on success. */
