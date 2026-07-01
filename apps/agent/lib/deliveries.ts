@@ -94,6 +94,61 @@ export async function fetchDeliveryDetail(deliveryId: string): Promise<DeliveryD
   };
 }
 
+// ── Self-serve offers (migration 024) ─────────────────────────────────────
+export type AvailableJob = {
+  deliveryId: string;
+  orderId: string;
+  orderNumber: string;
+  dropAddress: DropAddress;
+  itemCount: number;
+  finalAmount: number;
+  deliveryFee: number;
+  createdAt: string;
+};
+
+/** The live offer feed: unclaimed deliveries for store-confirmed orders. */
+export async function fetchAvailableJobs(): Promise<{ jobs: AvailableJob[]; error: string | null }> {
+  const { data, error } = await createClient().rpc("available_deliveries");
+  if (error) {
+    // Surface it (e.g. missing RPC = migration 024 not applied) instead of silently
+    // showing "no offers".
+    console.error("available_deliveries failed:", error.message);
+    return { jobs: [], error: error.message };
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jobs = ((data as any[]) ?? []).map((d) => ({
+    deliveryId: d.delivery_id,
+    orderId: d.order_id,
+    orderNumber: d.order_number ?? "Order",
+    dropAddress: (d.drop_address ?? {}) as DropAddress,
+    itemCount: Number(d.item_count ?? 0),
+    finalAmount: Number(d.final_amount ?? 0),
+    deliveryFee: Number(d.delivery_fee ?? 0),
+    createdAt: d.created_at,
+  }));
+  return { jobs, error: null };
+}
+
+/** Atomically claim an offered delivery. Resolves to the order id on success. */
+export async function riderClaim(deliveryId: string) {
+  return createClient().rpc("rider_claim_delivery", { p_delivery_id: deliveryId });
+}
+
+/** Record a decline so this job stops re-offering to this rider (10-min cooldown). */
+export async function riderDecline(deliveryId: string) {
+  return createClient().rpc("rider_decline_delivery", { p_delivery_id: deliveryId });
+}
+
+/** Hand an accepted (not-yet-picked-up) job back to the pool for other riders. */
+export async function riderRelease(deliveryId: string) {
+  return createClient().rpc("rider_release_delivery", { p_delivery_id: deliveryId });
+}
+
+/** Self-heal an order whose try window has expired (auto-return + complete). */
+export async function expireOrderIfDue(orderId: string) {
+  return createClient().rpc("expire_order_if_due", { p_order_id: orderId });
+}
+
 // ── Guarded rider actions (SECURITY DEFINER RPCs, migration 011) ──
 export async function riderAccept(id: string) {
   return createClient().rpc("rider_accept_delivery", { p_delivery_id: id });

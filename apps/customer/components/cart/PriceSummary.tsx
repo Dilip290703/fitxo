@@ -1,14 +1,14 @@
 type PriceSummaryProps = {
   subtotal: number;
   discount: number;
+  delivery?: number;
 };
 
 function formatPrice(value: number) {
   return `₹${Math.round(value)}`;
 }
 
-export function PriceSummary({ subtotal, discount }: PriceSummaryProps) {
-  const delivery = 0;
+export function PriceSummary({ subtotal, discount, delivery = 0 }: PriceSummaryProps) {
   const finalTotal = Math.max(0, subtotal - discount + delivery);
 
   return (

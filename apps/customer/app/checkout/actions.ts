@@ -71,7 +71,18 @@ export async function placeOrder(
   }
 
   const subtotal = items.reduce((sum, i) => sum + i.priceValue * i.quantity, 0);
-  const finalAmount = subtotal; // no delivery fee at MVP
+
+  // Delivery fee from Admin → System Settings (free above the configured threshold).
+  // This is the rider's pay per completed delivery (agent payouts read delivery_fee).
+  const { data: settings } = await supabase
+    .from('system_settings')
+    .select('delivery_fee, free_delivery_above')
+    .eq('id', 1)
+    .maybeSingle();
+  const feeConfig = Number(settings?.delivery_fee ?? 0);
+  const freeAbove = Number(settings?.free_delivery_above ?? 0);
+  const deliveryFee = freeAbove > 0 && subtotal >= freeAbove ? 0 : feeConfig;
+  const finalAmount = subtotal + deliveryFee;
 
   // Create order (order_number set by DB trigger when passed as empty string)
   const { data: order, error: orderError } = await supabase
@@ -82,7 +93,7 @@ export async function placeOrder(
       status: 'pending',
       subtotal,
       deposit_total: 0,
-      delivery_fee: 0,
+      delivery_fee: deliveryFee,
       discount_amount: 0,
       final_amount: finalAmount,
       coupon_discount: 0,

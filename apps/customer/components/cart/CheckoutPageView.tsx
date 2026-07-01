@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@fitzo/supabase/client";
 import { Footer } from "@/components/Footer";
@@ -27,8 +27,26 @@ export function CheckoutPageView() {
   const [celebrating, setCelebrating] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
 
+  // Delivery fee from Admin → System Settings (free above the threshold). Mirrors
+  // the server-side calc in placeOrder so what the customer sees matches the order.
+  const [feeCfg, setFeeCfg] = useState<{ fee: number; freeAbove: number }>({ fee: 0, freeAbove: 0 });
+  useEffect(() => {
+    createClient()
+      .from("system_settings")
+      .select("delivery_fee, free_delivery_above")
+      .eq("id", 1)
+      .maybeSingle()
+      .then(({ data }) =>
+        setFeeCfg({
+          fee: Number(data?.delivery_fee ?? 0),
+          freeAbove: Number(data?.free_delivery_above ?? 0),
+        }),
+      );
+  }, []);
+
   const discount = items.length > 0 ? 300 : 0;
-  const total = Math.max(0, Math.round(subtotal - discount));
+  const deliveryFee = feeCfg.freeAbove > 0 && subtotal >= feeCfg.freeAbove ? 0 : feeCfg.fee;
+  const total = Math.max(0, Math.round(subtotal - discount + deliveryFee));
 
   const deliveryBlocked = hasChecked && !deliveryStatus.available;
   const canPay = !deliveryBlocked && items.length > 0 && selectedMethod !== null && !isProcessing;
@@ -175,7 +193,7 @@ export function CheckoutPageView() {
               </div>
             </div>
 
-            <PriceSummary subtotal={subtotal} discount={discount} />
+            <PriceSummary subtotal={subtotal} discount={discount} delivery={deliveryFee} />
 
             <CheckoutButton
               label={

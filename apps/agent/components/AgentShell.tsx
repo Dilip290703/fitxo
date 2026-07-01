@@ -7,6 +7,7 @@ import { createClient } from "@fitzo/supabase/client";
 import { useAgentGuard } from "@/lib/useAgentGuard";
 import { riderSetAvailability } from "@/lib/deliveries";
 import { JobAlertsProvider } from "@/components/alerts/JobAlertsProvider";
+import { IncomingJobsProvider } from "@/components/alerts/IncomingJobsProvider";
 import type { AgentContext } from "@/lib/agent-auth";
 
 // ── Context: rider info + live availability, shared by every screen ───────
@@ -140,6 +141,8 @@ export function AgentShell({ active, children }: { active: NavKey; children: Rea
     <Ctx.Provider value={{ rider, available, setAvailable, signOut }}>
       {/* Live new-job + try-window pop-up alerts (verified riders only) */}
       <JobAlertsProvider userId={rider.userId} />
+      {/* Driver-app incoming-order offers with repeating alert (while online) */}
+      <IncomingJobsProvider />
       <div className="min-h-screen bg-[#0f1522] text-white lg:grid lg:grid-cols-[256px_1fr]">
         {/* Desktop sidebar */}
         <aside className="sticky top-0 hidden h-screen border-r border-[#1e293b] lg:block">{sidebar}</aside>

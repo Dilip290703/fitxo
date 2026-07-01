@@ -10,6 +10,7 @@ import {
   riderPickedUp,
   riderDelivered,
   riderComplete,
+  riderRelease,
   type DeliveryDetail,
 } from "@/lib/deliveries";
 
@@ -197,7 +198,23 @@ export default function DeliveryDetailPage() {
             <ActionButton busy={busy} onClick={() => run(() => riderAccept(id))}>Accept delivery</ActionButton>
           )}
           {detail.status === "accepted" && (
-            <ActionButton busy={busy} onClick={() => run(() => riderPickedUp(id))}>Picked up from store</ActionButton>
+            <div className="space-y-2">
+              <ActionButton busy={busy} onClick={() => run(() => riderPickedUp(id))}>Picked up from store</ActionButton>
+              <button
+                onClick={async () => {
+                  setBusy(true);
+                  setError(null);
+                  const { error } = await riderRelease(id);
+                  setBusy(false);
+                  if (error) { setError(error.message); return; }
+                  router.push("/"); // it's back in the pool; we no longer own it
+                }}
+                disabled={busy}
+                className="w-full rounded-[12px] border border-[#3a2530] px-4 py-3 text-[13px] font-semibold text-[#e0a87f] transition hover:bg-[#2a2030] disabled:opacity-50"
+              >
+                Can't take it — return to pool
+              </button>
+            </div>
           )}
           {(detail.status === "picked_up" || detail.status === "en_route") && (
             <ActionButton busy={busy} onClick={() => run(() => riderDelivered(id))}>Mark delivered (at door)</ActionButton>

@@ -32,6 +32,7 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
   const { toast } = useToast();
   const supabase = createClient();
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [releasing, setReleasing] = useState<string | null>(null);
   const [selectedRiders, setSelectedRiders] = useState<Record<string, string>>({});
 
   const activeDeliveries = deliveries.filter((d) => !['completed', 'failed'].includes(d.status));
@@ -48,6 +49,20 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
     else {
       await logActivity(supabase, { action: 'Assigned rider to delivery', entity_type: 'delivery', entity_id: deliveryId, new_value: { rider_id: riderId } });
       toast('Rider assigned!', 'success'); router.refresh();
+    }
+  };
+
+  const releaseDelivery = async (deliveryId: string) => {
+    setReleasing(deliveryId);
+    const { error } = await supabase
+      .from('deliveries')
+      .update({ rider_id: null, status: 'assigned', accepted_at: null })
+      .eq('id', deliveryId);
+    setReleasing(null);
+    if (error) toast(error.message, 'error');
+    else {
+      await logActivity(supabase, { action: 'Released delivery back to pool', entity_type: 'delivery', entity_id: deliveryId });
+      toast('Delivery released back to the pool', 'success'); router.refresh();
     }
   };
 
@@ -115,6 +130,7 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                 <th className="px-4 py-3 text-left font-medium">Rider</th>
                 <th className="px-4 py-3 text-left font-medium">Status</th>
                 <th className="px-4 py-3 text-left font-medium">Distance</th>
+                <th className="px-4 py-3 text-right font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -133,10 +149,20 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                     {d.distance_km ? `${d.distance_km} km` : '—'}
                     {d.estimated_minutes ? ` · ~${d.estimated_minutes}m` : ''}
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => releaseDelivery(d.id)}
+                      disabled={releasing === d.id}
+                      title="Return this delivery to the rider pool"
+                      className="px-2.5 py-1 text-xs border border-gray-600 text-gray-300 rounded-lg hover:border-amber-500 hover:text-amber-400 disabled:opacity-50"
+                    >
+                      {releasing === d.id ? '…' : 'Release'}
+                    </button>
+                  </td>
                 </tr>
               ))}
               {assigned.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No active deliveries</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">No active deliveries</td></tr>
               )}
             </tbody>
           </table>
