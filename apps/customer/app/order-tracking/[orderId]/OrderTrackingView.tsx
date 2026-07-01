@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@fitzo/supabase/client";
@@ -190,6 +190,26 @@ export function OrderTrackingView({
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [order.id, router]);
+
+  // When the try window runs out with items still undecided, self-heal: the RPC
+  // auto-returns the undecided items and completes the order (safe — it only acts
+  // if the window is genuinely expired). Covers the case where the rider left
+  // without tapping "complete" and no scheduled sweep is running.
+  const expiredHandled = useRef(false);
+  useEffect(() => {
+    if (
+      order.status === "try_window_active" &&
+      timeLeft?.expired &&
+      !expiredHandled.current
+    ) {
+      expiredHandled.current = true;
+      createClient()
+        .rpc("expire_order_if_due", { p_order_id: order.id })
+        .then(({ data }) => {
+          if (data) router.refresh();
+        });
+    }
+  }, [order.status, timeLeft?.expired, order.id, router]);
 
   // The rider has delivered; the customer hasn't started the window yet.
   const awaitingTryStart = order.status === "delivered" && !windowDismissed;

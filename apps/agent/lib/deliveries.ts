@@ -139,6 +139,16 @@ export async function riderDecline(deliveryId: string) {
   return createClient().rpc("rider_decline_delivery", { p_delivery_id: deliveryId });
 }
 
+/** Hand an accepted (not-yet-picked-up) job back to the pool for other riders. */
+export async function riderRelease(deliveryId: string) {
+  return createClient().rpc("rider_release_delivery", { p_delivery_id: deliveryId });
+}
+
+/** Self-heal an order whose try window has expired (auto-return + complete). */
+export async function expireOrderIfDue(orderId: string) {
+  return createClient().rpc("expire_order_if_due", { p_order_id: orderId });
+}
+
 // ── Guarded rider actions (SECURITY DEFINER RPCs, migration 011) ──
 export async function riderAccept(id: string) {
   return createClient().rpc("rider_accept_delivery", { p_delivery_id: id });
