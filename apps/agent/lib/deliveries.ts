@@ -94,6 +94,40 @@ export async function fetchDeliveryDetail(deliveryId: string): Promise<DeliveryD
   };
 }
 
+// ── Self-serve offers (migration 024) ─────────────────────────────────────
+export type AvailableJob = {
+  deliveryId: string;
+  orderId: string;
+  orderNumber: string;
+  dropAddress: DropAddress;
+  itemCount: number;
+  finalAmount: number;
+  deliveryFee: number;
+  createdAt: string;
+};
+
+/** The live offer feed: unclaimed deliveries for store-confirmed orders. */
+export async function fetchAvailableJobs(): Promise<AvailableJob[]> {
+  const { data, error } = await createClient().rpc("available_deliveries");
+  if (error || !data) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map((d) => ({
+    deliveryId: d.delivery_id,
+    orderId: d.order_id,
+    orderNumber: d.order_number ?? "Order",
+    dropAddress: (d.drop_address ?? {}) as DropAddress,
+    itemCount: Number(d.item_count ?? 0),
+    finalAmount: Number(d.final_amount ?? 0),
+    deliveryFee: Number(d.delivery_fee ?? 0),
+    createdAt: d.created_at,
+  }));
+}
+
+/** Atomically claim an offered delivery. Resolves to the order id on success. */
+export async function riderClaim(deliveryId: string) {
+  return createClient().rpc("rider_claim_delivery", { p_delivery_id: deliveryId });
+}
+
 // ── Guarded rider actions (SECURITY DEFINER RPCs, migration 011) ──
 export async function riderAccept(id: string) {
   return createClient().rpc("rider_accept_delivery", { p_delivery_id: id });

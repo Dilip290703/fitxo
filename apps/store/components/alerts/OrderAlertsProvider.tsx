@@ -107,6 +107,8 @@ export function OrderAlertsProvider() {
 
     const supabase = createClient();
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
+    let stopped = false;
 
     const handleNewOrder = (orderId: string) => {
       if (handledRef.current.has(orderId)) return;
@@ -129,11 +131,38 @@ export function OrderAlertsProvider() {
       }, 400);
     };
 
-    // Subscribe to THIS manager's own notifications (born-visible → Realtime
-    // routes them reliably, unlike the join-based order_items policy).
     supabase.auth.getUser().then(({ data }) => {
       const userId = data.user?.id;
-      if (!userId) return;
+      if (!userId || stopped) return;
+
+      // PRIMARY: poll this manager's own notifications. Reliable regardless of
+      // whether Realtime routes the event (it often doesn't for store sessions).
+      const seededRef = { current: false };
+      const poll = async () => {
+        const { data: rows } = await supabase
+          .from("notifications")
+          .select("id, data, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(15);
+        if (!rows) return;
+        // On the first poll, just mark existing new-order notifications as seen
+        // so we don't pop a backlog on page load — only pop ones that arrive after.
+        for (const r of rows) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const d = ((r as any).data ?? {}) as { kind?: string; order_id?: string };
+          if (d.kind !== "new_store_order" || !d.order_id) continue;
+          const key = `notif-${(r as { id: string }).id}`;
+          if (handledRef.current.has(key)) continue;
+          handledRef.current.add(key);
+          if (seededRef.current) handleNewOrder(d.order_id);
+        }
+        seededRef.current = true;
+      };
+      poll();
+      pollId = setInterval(poll, 8000);
+
+      // SECONDARY: Realtime for instant delivery when it does route.
       channel = supabase
         .channel("store-new-orders")
         .on(
@@ -149,6 +178,7 @@ export function OrderAlertsProvider() {
             const row = payload.new as any;
             const data = (row?.data ?? {}) as { kind?: string; order_id?: string };
             if (data.kind !== "new_store_order" || !data.order_id) return;
+            handledRef.current.add(`notif-${row.id}`);
             handleNewOrder(data.order_id);
           },
         )
@@ -156,7 +186,9 @@ export function OrderAlertsProvider() {
     });
 
     return () => {
+      stopped = true;
       window.removeEventListener("pointerdown", unlock);
+      if (pollId) clearInterval(pollId);
       if (channel) supabase.removeChannel(channel);
     };
   }, [pushAlert]);
