@@ -115,8 +115,10 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
     try {
       await confirmOrder(order.id);
       setOrder((o) => (o ? { ...o, status: "confirmed" } : o));
-    } catch {
-      setError("Couldn't confirm this order. Please try again.");
+    } catch (e) {
+      // Surface the real Postgres/RPC error so failures are diagnosable.
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(`Couldn't confirm: ${msg || "unknown error"}`);
     } finally {
       setConfirming(false);
     }
