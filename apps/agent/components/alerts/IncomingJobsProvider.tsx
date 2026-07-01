@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAvailableJobs, riderClaim, type AvailableJob } from "@/lib/deliveries";
+import { fetchAvailableJobs, riderClaim, riderDecline, type AvailableJob } from "@/lib/deliveries";
 import { useAgent } from "@/components/AgentShell";
 
 const POLL_MS = 7000; // how often we refresh the offer feed while online
@@ -131,6 +131,9 @@ export function IncomingJobsProvider() {
   const decline = (deliveryId: string) => {
     dismissedRef.current.add(deliveryId);
     setOffers((prev) => prev.filter((o) => o.deliveryId !== deliveryId));
+    // Persist the decline so it won't re-offer to this rider for the cooldown
+    // window (survives refresh / re-poll). Fire-and-forget.
+    void riderDecline(deliveryId);
   };
 
   const accept = async (job: AvailableJob) => {

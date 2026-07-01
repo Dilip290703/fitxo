@@ -128,6 +128,11 @@ export async function riderClaim(deliveryId: string) {
   return createClient().rpc("rider_claim_delivery", { p_delivery_id: deliveryId });
 }
 
+/** Record a decline so this job stops re-offering to this rider (10-min cooldown). */
+export async function riderDecline(deliveryId: string) {
+  return createClient().rpc("rider_decline_delivery", { p_delivery_id: deliveryId });
+}
+
 // ── Guarded rider actions (SECURITY DEFINER RPCs, migration 011) ──
 export async function riderAccept(id: string) {
   return createClient().rpc("rider_accept_delivery", { p_delivery_id: id });
