@@ -43,13 +43,13 @@ BEGIN
          (SELECT count(*) FROM order_items oi WHERE oi.order_id = o.id),
          o.final_amount,
          o.delivery_fee,
-         d.created_at
+         o.created_at            -- deliveries has no created_at; use the order's
   FROM deliveries d
   JOIN orders o ON o.id = d.order_id
   WHERE d.rider_id IS NULL
     AND d.status = 'assigned'          -- created-but-unclaimed
     AND o.status = 'confirmed'         -- store has confirmed it
-  ORDER BY d.created_at ASC;
+  ORDER BY o.created_at ASC;
 END;
 $$;
 

@@ -85,7 +85,7 @@ BEGIN
          (SELECT count(*) FROM order_items oi WHERE oi.order_id = o.id),
          o.final_amount,
          o.delivery_fee,
-         d.created_at
+         o.created_at            -- deliveries has no created_at; use the order's
   FROM deliveries d
   JOIN orders o ON o.id = d.order_id
   WHERE d.rider_id IS NULL
@@ -97,7 +97,7 @@ BEGIN
         AND dd.rider_id = v_rider
         AND dd.declined_at > now() - interval '10 minutes'
     )
-  ORDER BY d.created_at ASC;
+  ORDER BY o.created_at ASC;
 END;
 $$;
 
