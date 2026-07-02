@@ -16,6 +16,13 @@ import {
   type ColorDraft,
   type ProductDraft,
 } from "@/lib/productForm";
+import {
+  MAX_IMAGES,
+  loadProductImages,
+  syncProductImages,
+  validateImageFile,
+  type ImageDraft,
+} from "@/lib/productImages";
 
 type Mode = "create" | "edit";
 
@@ -32,6 +39,8 @@ export function ProductForm({
   const [draft, setDraft] = useState<ProductDraft>(emptyProductDraft());
   const [colors, setColors] = useState<ColorDraft[]>([emptyColor()]);
   const [original, setOriginal] = useState<ColorDraft[]>([]);
+  const [images, setImages] = useState<ImageDraft[]>([]);
+  const [removedImages, setRemovedImages] = useState<ImageDraft[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -46,7 +55,10 @@ export function ProductForm({
       setCategories(ref.categories);
 
       if (mode === "edit" && productId) {
-        const loaded = await loadProductForEdit(productId, storeId);
+        const [loaded, imgs] = await Promise.all([
+          loadProductForEdit(productId, storeId),
+          loadProductImages(productId),
+        ]);
         if (!active) return;
         if (!loaded) {
           setNotFound(true);
@@ -56,6 +68,7 @@ export function ProductForm({
         setDraft(loaded.draft);
         setColors(loaded.colors);
         setOriginal(loaded.colors);
+        setImages(imgs);
       }
       setLoadingInitial(false);
     })();
@@ -89,6 +102,54 @@ export function ProductForm({
           : colors[ci].variants.filter((_, i) => i !== vi),
     });
 
+  // ---- image editing (pending files upload on save) ----
+  const addImageFiles = (files: FileList | null) => {
+    if (!files) return;
+    setError("");
+    const next: ImageDraft[] = [];
+    for (const file of Array.from(files)) {
+      if (images.length + next.length >= MAX_IMAGES) {
+        setError(`Up to ${MAX_IMAGES} images per product.`);
+        break;
+      }
+      const problem = validateImageFile(file);
+      if (problem) {
+        setError(problem);
+        continue;
+      }
+      next.push({ url: URL.createObjectURL(file), file, isPrimary: false });
+    }
+    if (next.length === 0) return;
+    setImages((imgs) => {
+      const merged = [...imgs, ...next];
+      // Ensure exactly one primary (default: the first image).
+      if (!merged.some((i) => i.isPrimary) && merged.length > 0) merged[0] = { ...merged[0], isPrimary: true };
+      return merged;
+    });
+  };
+
+  const removeImage = (idx: number) =>
+    setImages((imgs) => {
+      const target = imgs[idx];
+      if (target.id) setRemovedImages((r) => [...r, target]);
+      if (target.file) URL.revokeObjectURL(target.url);
+      const rest = imgs.filter((_, i) => i !== idx);
+      if (target.isPrimary && rest.length > 0) rest[0] = { ...rest[0], isPrimary: true };
+      return rest;
+    });
+
+  const setPrimaryImage = (idx: number) =>
+    setImages((imgs) => imgs.map((img, i) => ({ ...img, isPrimary: i === idx })));
+
+  const moveImage = (idx: number, dir: -1 | 1) =>
+    setImages((imgs) => {
+      const j = idx + dir;
+      if (j < 0 || j >= imgs.length) return imgs;
+      const next = [...imgs];
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return next;
+    });
+
   const handleSave = async () => {
     const validationError = validate(draft, colors);
     if (validationError) {
@@ -98,10 +159,14 @@ export function ProductForm({
     setSaving(true);
     setError("");
     try {
+      let savedId = productId;
       if (mode === "create") {
-        await createProductFull(storeId, draft, colors);
+        savedId = await createProductFull(storeId, draft, colors);
       } else if (productId) {
         await updateProductFull(productId, storeId, draft, colors, original);
+      }
+      if (savedId) {
+        await syncProductImages(savedId, storeId, images, removedImages);
       }
       router.push("/catalogue");
       router.refresh();
@@ -240,6 +305,93 @@ export function ProductForm({
             <Toggle label="Active" checked={draft.isActive} onChange={(v) => setField("isActive", v)} />
             <Toggle label="Featured" checked={draft.isFeatured} onChange={(v) => setField("isFeatured", v)} />
           </div>
+        </div>
+      </Card>
+
+      {/* Images */}
+      <Card title="Images">
+        <p className="-mt-1 mb-4 text-[12px] leading-5 text-[#7c7268]">
+          Up to {MAX_IMAGES} photos. The ★ image is the cover customers see first.
+          {mode === "create" ? " Images upload when you create the product." : ""}
+        </p>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {images.map((img, i) => (
+            <div
+              key={img.id ?? img.url}
+              className={`group relative aspect-square overflow-hidden rounded-xl border ${
+                img.isPrimary ? "border-[#ffd233] ring-2 ring-[#ffd233]/40" : "border-[#ece5da]"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="h-full w-full object-cover" />
+              {img.file ? (
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-[#171d2b]/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-white">
+                  New
+                </span>
+              ) : null}
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/60 to-transparent p-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPrimaryImage(i)}
+                  title={img.isPrimary ? "Cover image" : "Make cover"}
+                  className={`grid h-7 w-7 place-items-center rounded-full text-[13px] ${
+                    img.isPrimary ? "bg-[#ffd233] text-[#171d2b]" : "bg-white/25 text-white hover:bg-white/40"
+                  }`}
+                >
+                  ★
+                </button>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveImage(i, -1)}
+                    disabled={i === 0}
+                    title="Move earlier"
+                    className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-[12px] text-white hover:bg-white/40 disabled:opacity-30"
+                  >
+                    ◀
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveImage(i, 1)}
+                    disabled={i === images.length - 1}
+                    title="Move later"
+                    className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-[12px] text-white hover:bg-white/40 disabled:opacity-30"
+                  >
+                    ▶
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    title="Remove image"
+                    className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-[14px] text-white hover:bg-[#b83c24]"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {images.length < MAX_IMAGES ? (
+            <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border border-dashed border-[#ded3c6] text-center transition hover:border-[#171d2b]">
+              <span>
+                <span className="block text-[22px] text-[#a99e8f]">＋</span>
+                <span className="mt-1 block px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7f7469]">
+                  Add photos
+                </span>
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  addImageFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          ) : null}
         </div>
       </Card>
 
