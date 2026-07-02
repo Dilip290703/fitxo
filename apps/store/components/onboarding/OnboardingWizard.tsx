@@ -81,6 +81,7 @@ const STEPS: StepDef[] = [
 export function OnboardingWizard({ storeId, email }: { storeId: string; email: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [status, setStatus] = useState<StoreOnboardingStatus>("draft");
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData | null>(null);
@@ -90,17 +91,24 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
 
   useEffect(() => {
     let active = true;
-    loadOnboarding(storeId).then((state) => {
-      if (!active) return;
-      if (state.status === "approved") {
-        router.replace("/");
-        return;
-      }
-      setStatus(state.status);
-      setRejectionReason(state.rejectionReason);
-      setData(state.data);
-      setLoading(false);
-    });
+    setLoadFailed(false);
+    loadOnboarding(storeId)
+      .then((state) => {
+        if (!active) return;
+        if (state.status === "approved") {
+          router.replace("/");
+          return;
+        }
+        setStatus(state.status);
+        setRejectionReason(state.rejectionReason);
+        setData(state.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Network failure — this is the one screen a pending store is forced
+        // onto, so never leave it stuck on "Loading…".
+        if (active) setLoadFailed(true);
+      });
     return () => {
       active = false;
     };
@@ -149,6 +157,25 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
       setBusy(false);
     }
   };
+
+  if (loadFailed) {
+    return (
+      <Frame email={email} onLogout={handleLogout}>
+        <div className="rounded-2xl border border-[#e6c4bb] bg-[#fbeeea] p-6 text-center">
+          <p className="text-[14px] font-medium text-[#b83c24]">
+            We couldn&apos;t load your application — check your connection.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 h-11 rounded-full border border-[#b83c24]/40 px-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#b83c24] transition hover:bg-white"
+          >
+            Retry
+          </button>
+        </div>
+      </Frame>
+    );
+  }
 
   if (loading || !data) {
     return (
