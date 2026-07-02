@@ -8,9 +8,9 @@ import { getStoreContext } from "@/lib/store-auth";
 type Mode = "signin" | "signup" | "forgot";
 
 const inputClass =
-  "h-12 w-full rounded-xl border border-[#ded3c6] bg-white px-4 text-[15px] text-[#171d2b] outline-none transition focus:border-[#171d2b] focus:ring-4 focus:ring-[#ffd233]/25";
+  "h-12 w-full rounded-xl border border-line-strong bg-white px-4 text-[15px] text-ink outline-none transition focus:border-ink focus:ring-4 focus:ring-accent/25";
 const labelClass =
-  "mb-2 block text-[11px] font-semibold uppercase tracking-[0.13em] text-[#7f7469]";
+  "mb-2 block text-[11px] font-semibold uppercase tracking-[0.13em] text-soft";
 
 export function StoreLoginPanel() {
   const router = useRouter();
@@ -137,12 +137,12 @@ export function StoreLoginPanel() {
         : "We'll email you a link to set a new password.";
 
   return (
-    <main className="min-h-screen w-full bg-[#fbfaf7]">
+    <main className="min-h-screen w-full bg-paper">
       <div className="mx-auto grid min-h-screen w-full max-w-[1200px] lg:grid-cols-[1.05fr_1fr]">
         {/* Brand panel */}
-        <section className="relative hidden flex-col justify-between overflow-hidden bg-[#171d2b] p-12 text-white lg:flex">
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#ffd233]/10 blur-2xl" />
-          <div className="absolute -bottom-28 -left-16 h-72 w-72 rounded-full bg-[#ffd233]/10 blur-2xl" />
+        <section className="relative hidden flex-col justify-between overflow-hidden bg-ink p-12 text-white lg:flex">
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/10 blur-2xl" />
+          <div className="absolute -bottom-28 -left-16 h-72 w-72 rounded-full bg-accent/10 blur-2xl" />
 
           <div className="relative flex items-center gap-3">
             <span className="font-serif text-[22px] font-semibold tracking-[0.18em]">FITZO</span>
@@ -152,7 +152,7 @@ export function StoreLoginPanel() {
           </div>
 
           <div className="relative max-w-md">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ffd233]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
               Store manager panel
             </p>
             <h1 className="mt-4 text-[40px] font-semibold leading-[1.05] tracking-[-0.02em]">
@@ -182,19 +182,19 @@ export function StoreLoginPanel() {
         <section className="flex items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[420px]">
             <div className="flex items-center gap-3 lg:hidden">
-              <span className="font-serif text-[20px] font-semibold tracking-[0.18em] text-[#171d2b]">FITZO</span>
-              <span className="rounded-full border border-[#171d2b]/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#171d2b]/70">
+              <span className="font-serif text-[20px] font-semibold tracking-[0.18em] text-ink">FITZO</span>
+              <span className="rounded-full border border-ink/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/70">
                 Store
               </span>
             </div>
 
-            <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#958675] lg:mt-0">
+            <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted lg:mt-0">
               {mode === "signup" ? "New seller" : "Store access"}
             </p>
-            <h2 className="mt-3 text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#171d2b]">
+            <h2 className="mt-3 text-[32px] font-semibold leading-tight tracking-[-0.02em] text-ink">
               {heading}
             </h2>
-            <p className="mt-3 text-[14px] leading-6 text-[#625b53]">{sub}</p>
+            <p className="mt-3 text-[14px] leading-6 text-body">{sub}</p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
               {mode === "signup" && (
@@ -262,7 +262,7 @@ export function StoreLoginPanel() {
                   <button
                     type="button"
                     onClick={() => switchMode("forgot")}
-                    className="text-[12px] font-semibold text-[#806f5c] underline-offset-4 hover:text-[#171d2b] hover:underline"
+                    className="text-[12px] font-semibold text-soft underline-offset-4 hover:text-ink hover:underline"
                   >
                     Forgot password?
                   </button>
@@ -272,13 +272,13 @@ export function StoreLoginPanel() {
               {error ? (
                 <p
                   role="alert"
-                  className="rounded-xl border border-[#e6c4bb] bg-[#fbeeea] px-4 py-3 text-[13px] font-medium text-[#b83c24]"
+                  className="rounded-xl border border-danger-line bg-danger-bg px-4 py-3 text-[13px] font-medium text-danger"
                 >
                   {error}
                 </p>
               ) : null}
               {notice ? (
-                <p className="rounded-xl border border-[#bfe0c9] bg-[#eef7f0] px-4 py-3 text-[13px] font-medium text-[#2f7a4d]">
+                <p className="rounded-xl border border-success-line bg-success-bg px-4 py-3 text-[13px] font-medium text-success">
                   {notice}
                 </p>
               ) : null}
@@ -286,7 +286,7 @@ export function StoreLoginPanel() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-12 w-full rounded-full bg-[#171d2b] text-[12px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-70"
+                className="h-12 w-full rounded-full bg-ink text-[12px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting
                   ? "Please wait…"
@@ -298,14 +298,14 @@ export function StoreLoginPanel() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-[13px] text-[#6a6259]">
+            <p className="mt-6 text-center text-[13px] text-body">
               {mode === "signin" ? (
                 <>
                   New to Fitzo?{" "}
                   <button
                     type="button"
                     onClick={() => switchMode("signup")}
-                    className="font-semibold text-[#171d2b] underline underline-offset-4"
+                    className="font-semibold text-ink underline underline-offset-4"
                   >
                     Create a store account
                   </button>
@@ -316,7 +316,7 @@ export function StoreLoginPanel() {
                   <button
                     type="button"
                     onClick={() => switchMode("signin")}
-                    className="font-semibold text-[#171d2b] underline underline-offset-4"
+                    className="font-semibold text-ink underline underline-offset-4"
                   >
                     Sign in
                   </button>

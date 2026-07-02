@@ -23,6 +23,10 @@ export type StoreContext = {
  * or the user is not an active store manager (e.g. a customer/rider account
  * authenticating against the same Supabase project).
  *
+ * THROWS on a transport/query failure — callers must distinguish "not a
+ * manager" (null) from "couldn't check right now" (throw), so a flaky
+ * connection doesn't masquerade as a failed login.
+ *
  * Relies on RLS policy `store_managers_select`, which lets a user read their
  * own `store_managers` rows under the anon client — no service-role needed.
  */
@@ -44,7 +48,8 @@ export async function getStoreContext(): Promise<StoreContext | null> {
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) throw error;
+  if (!data) return null;
 
   // A to-one embed comes back as an object, but normalize defensively.
   const store = Array.isArray(data.store) ? data.store[0] : data.store;

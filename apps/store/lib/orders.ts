@@ -30,11 +30,16 @@ export type StoreOrderDetail = StoreOrderSummary & {
   items: StoreOrderItem[];
 };
 
-// RLS (migration 004) restricts both the orders and the embedded order_items to
-// the manager's own store, so a multi-store order only ever exposes this store's
-// lines. We never read users/addresses (admin-only) — no customer PII here.
+// RLS (migration 004) lets a manager read orders containing their products —
+// but the base `orders_select` policy ALSO exposes the manager's own personal
+// customer orders (user_id = auth.uid()). Every query here therefore filters
+// explicitly by products.store_id (same guard earnings/analytics use), so
+// personal shopping never shows up in the store panel. We never read
+// users/addresses (admin-only) — no customer PII here.
 const ITEM_SELECT =
   "id, product_name, color_name, size, price_at_order, decision, return_reason, prepared_at, product_variants(sku)";
+
+const SCOPED_ITEMS = `order_items!inner(${ITEM_SELECT}, products!inner(store_id))`;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapItem(i: any): StoreOrderItem {
@@ -68,11 +73,12 @@ function summarize(o: any, items: StoreOrderItem[]): StoreOrderSummary {
   };
 }
 
-export async function loadStoreOrders(): Promise<StoreOrderSummary[]> {
+export async function loadStoreOrders(storeId: string): Promise<StoreOrderSummary[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("orders")
-    .select(`id, order_number, status, created_at, try_deadline, order_items(${ITEM_SELECT})`)
+    .select(`id, order_number, status, created_at, try_deadline, ${SCOPED_ITEMS}`)
+    .eq("order_items.products.store_id", storeId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -80,13 +86,26 @@ export async function loadStoreOrders(): Promise<StoreOrderSummary[]> {
   return (data ?? []).map((o: any) => summarize(o, (o.order_items ?? []).map(mapItem)));
 }
 
-export async function loadStoreOrder(orderId: string): Promise<StoreOrderDetail | null> {
+/** Orders still waiting for this store to confirm — the sidebar badge count. */
+export async function countPendingStoreOrders(storeId: string): Promise<number> {
+  const supabase = createClient();
+  const { count, error } = await supabase
+    .from("orders")
+    .select("id, order_items!inner(products!inner(store_id))", { count: "exact", head: true })
+    .eq("order_items.products.store_id", storeId)
+    .eq("status", "pending");
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function loadStoreOrder(orderId: string, storeId: string): Promise<StoreOrderDetail | null> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("orders")
     .select(
-      `id, order_number, status, created_at, try_deadline, payment_status, order_items(${ITEM_SELECT})`,
+      `id, order_number, status, created_at, try_deadline, payment_status, ${SCOPED_ITEMS}`,
     )
+    .eq("order_items.products.store_id", storeId)
     .eq("id", orderId)
     .maybeSingle();
 

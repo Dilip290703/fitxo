@@ -1,51 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoreContext, type StoreContext } from "@/lib/store-auth";
 
-type StoreGuard =
-  | { loading: true; context: null }
-  | { loading: false; context: StoreContext };
+export type StoreGuard =
+  | { status: "loading"; context: null; retry: () => void }
+  | { status: "error"; context: null; retry: () => void }
+  | { status: "ready"; context: StoreContext; retry: () => void };
 
 /**
- * Auth-gate every store screen reuses: resolves the store-manager context and
+ * Auth gate for the store panel. Resolves the store-manager context and
  * redirects to /login when there is no session or the user is not a store
- * manager. While resolving, `loading` is true and `context` is null; once
- * resolved with a valid manager, `loading` is false and `context` is set.
- * (On redirect the component unmounts, so consumers only ever see those states.)
+ * manager. A transient failure (network, Supabase hiccup) is NOT treated as
+ * "not a manager" — it surfaces as `status: "error"` with a `retry`, so a bad
+ * connection never bounces a signed-in owner to the login screen.
  *
- * By default a screen also requires an APPROVED store — a draft/submitted/rejected
- * store is redirected to `/onboarding`, so the whole live panel is locked until the
- * Fitzo team approves the application. The onboarding flow itself opts out with
- * `{ requireApproved: false }`.
+ * By default a screen also requires an APPROVED store — a draft/submitted/
+ * rejected store is redirected to `/onboarding`. The onboarding flow itself
+ * opts out with `{ requireApproved: false }`.
+ *
+ * Mounted ONCE in the panel layout (not per page), so navigating between
+ * screens never re-runs the gate or unmounts the shell.
  */
 export function useStoreGuard(
   { requireApproved = true }: { requireApproved?: boolean } = {},
 ): StoreGuard {
   const router = useRouter();
-  const [context, setContext] = useState<StoreContext | null>(null);
+  const [state, setState] = useState<{ status: "loading" | "error" | "ready"; context: StoreContext | null }>({
+    status: "loading",
+    context: null,
+  });
+  const [attempt, setAttempt] = useState(0);
+
+  const retry = useCallback(() => {
+    setState({ status: "loading", context: null });
+    setAttempt((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     let active = true;
-    getStoreContext().then((ctx) => {
-      if (!active) return;
-      if (!ctx) {
-        router.replace("/login");
-        return;
-      }
-      if (requireApproved && ctx.onboardingStatus !== "approved") {
-        router.replace("/onboarding");
-        return;
-      }
-      setContext(ctx);
-    });
+    getStoreContext()
+      .then((ctx) => {
+        if (!active) return;
+        if (!ctx) {
+          router.replace("/login");
+          return;
+        }
+        if (requireApproved && ctx.onboardingStatus !== "approved") {
+          router.replace("/onboarding");
+          return;
+        }
+        setState({ status: "ready", context: ctx });
+      })
+      .catch(() => {
+        if (active) setState({ status: "error", context: null });
+      });
     return () => {
       active = false;
     };
-  }, [router, requireApproved]);
+  }, [router, requireApproved, attempt]);
 
-  return context
-    ? { loading: false, context }
-    : { loading: true, context: null };
+  return { ...state, retry } as StoreGuard;
 }

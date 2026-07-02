@@ -1,5 +1,56 @@
 @import "tailwindcss";
 
+/*
+ * Store-panel design tokens. Every color in the app must reference one of
+ * these semantic names (text-ink, bg-paper, border-line, …) — never a raw hex.
+ *
+ * Non-color conventions (enforced by review, not the compiler):
+ *  - radius: rounded-lg (small controls) / rounded-xl (inputs) / rounded-2xl (cards) / rounded-full (pills, buttons)
+ *  - shadows: borders first; shadow-float for floating chrome, shadow-pop for overlays. Nothing else.
+ *  - type: 11px uppercase-tracked labels · 13px body · 14px emphasis · 28–32px page titles
+ */
+@theme {
+  /* brand */
+  --color-ink: #171d2b;
+  --color-ink-soft: #1f2a3c;
+  --color-accent: #ffd233;
+  --color-accent-soft: #f2e2a8;
+  --color-accent-pale: #fff4cc;
+
+  /* surfaces & lines */
+  --color-paper: #fbfaf7;
+  --color-cream: #f6f1e8;
+  --color-sand: #f4efe7;
+  --color-hairline: #f0ebe3;
+  --color-line: #ece5da;
+  --color-line-strong: #ded3c6;
+  --color-knob: #d8d0c4;
+
+  /* text */
+  --color-body: #5f574e;
+  --color-soft: #7f7469;
+  --color-muted: #958675;
+  --color-faint: #a79e92;
+
+  /* status */
+  --color-success: #2f7d46;
+  --color-success-bg: #e8f3ea;
+  --color-success-line: #cfe3d4;
+  --color-danger: #b83c24;
+  --color-danger-strong: #a3331d;
+  --color-danger-bg: #fbeeea;
+  --color-danger-line: #e6c4bb;
+  --color-warn: #9a6a12;
+  --color-warn-bg: #fbeed0;
+  --color-warn-accent: #d9890f;
+  --color-info: #2d5e8f;
+  --color-info-bg: #e3ecf6;
+
+  /* elevation */
+  --shadow-float: 0 8px 24px rgba(32, 26, 19, 0.12);
+  --shadow-pop: 0 24px 60px rgba(32, 26, 19, 0.18);
+}
+
 body {
-  background-color: #fbfaf7;
+  background-color: var(--color-paper);
 }
