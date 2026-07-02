@@ -14,8 +14,15 @@ type StoreGuard =
  * manager. While resolving, `loading` is true and `context` is null; once
  * resolved with a valid manager, `loading` is false and `context` is set.
  * (On redirect the component unmounts, so consumers only ever see those states.)
+ *
+ * By default a screen also requires an APPROVED store — a draft/submitted/rejected
+ * store is redirected to `/onboarding`, so the whole live panel is locked until the
+ * Fitzo team approves the application. The onboarding flow itself opts out with
+ * `{ requireApproved: false }`.
  */
-export function useStoreGuard(): StoreGuard {
+export function useStoreGuard(
+  { requireApproved = true }: { requireApproved?: boolean } = {},
+): StoreGuard {
   const router = useRouter();
   const [context, setContext] = useState<StoreContext | null>(null);
 
@@ -27,12 +34,16 @@ export function useStoreGuard(): StoreGuard {
         router.replace("/login");
         return;
       }
+      if (requireApproved && ctx.onboardingStatus !== "approved") {
+        router.replace("/onboarding");
+        return;
+      }
       setContext(ctx);
     });
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, requireApproved]);
 
   return context
     ? { loading: false, context }

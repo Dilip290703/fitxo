@@ -13,6 +13,18 @@
       "runtimeArgs": ["dev:customer"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "store",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:store"],
+      "port": 3003
+    },
+    {
+      "name": "store-verify",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@fitzo/store", "exec", "next", "dev", "--port", "3013"],
+      "port": 3013
     }
   ]
 }
