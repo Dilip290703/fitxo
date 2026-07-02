@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3003",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fitzo/supabase": "workspace:*",
@@ -23,6 +24,7 @@
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
     "tailwindcss": "4.1.4",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^4.1.9"
   }
 }
