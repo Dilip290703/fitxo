@@ -53,7 +53,7 @@ export function EarningsView({ storeId }: { storeId: string }) {
           Earnings & payouts
         </h1>
         <p className="mt-1 text-[13px] text-[#958675]">
-          Payout amounts are issued by Fitzo against items customers kept.
+          What you earn from kept items after the Fitzo commission, and how it&apos;s paid out.
         </p>
       </header>
 
@@ -70,9 +70,21 @@ export function EarningsView({ storeId }: { storeId: string }) {
       ) : (
         <>
           <section className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-3">
-            <StatCard label="Kept-item revenue (gross)" value={formatCurrency(data.grossKeptRevenue)} accent />
-            <StatCard label="Pending payout" value={formatCurrency(data.pendingPayout)} />
+            <StatCard label="Net earnings (yours)" value={formatCurrency(data.netEarnings)} accent />
+            <StatCard label="Awaiting payout" value={formatCurrency(data.awaitingPayout)} />
             <StatCard label="Paid out to date" value={formatCurrency(data.paidOut)} />
+          </section>
+
+          {/* Gross → commission → net breakdown */}
+          <section className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-[#ece5da] bg-white px-5 py-4">
+            <Breakdown label="Kept-item revenue (gross)" value={formatCurrency(data.grossKeptRevenue)} />
+            <span className="text-[15px] text-[#b6ab9c]">−</span>
+            <Breakdown
+              label={`Fitzo commission (${data.commissionRate}%)`}
+              value={formatCurrency(data.commissionAmount)}
+            />
+            <span className="text-[15px] text-[#b6ab9c]">=</span>
+            <Breakdown label="Net earnings" value={formatCurrency(data.netEarnings)} strong />
           </section>
 
           <section className="mt-6 grid gap-4 lg:grid-cols-5">
@@ -118,6 +130,7 @@ export function EarningsView({ storeId }: { storeId: string }) {
 
             <div className="rounded-2xl border border-[#ece5da] bg-white p-5 lg:col-span-2">
               <h2 className="text-[14px] font-semibold text-[#171d2b]">Recently kept items</h2>
+              <p className="mt-0.5 text-[11px] text-[#a0968a]">Item prices are gross (before commission).</p>
               {data.recentKept.length === 0 ? (
                 <p className="mt-3 text-[13px] text-[#7f7469]">No kept items yet.</p>
               ) : (
@@ -142,6 +155,17 @@ export function EarningsView({ storeId }: { storeId: string }) {
           </section>
         </>
       )}
+    </div>
+  );
+}
+
+function Breakdown({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#a0968a]">{label}</p>
+      <p className={`mt-0.5 text-[15px] tracking-[-0.01em] ${strong ? "font-bold text-[#2f7d46]" : "font-semibold text-[#171d2b]"}`}>
+        {value}
+      </p>
     </div>
   );
 }
