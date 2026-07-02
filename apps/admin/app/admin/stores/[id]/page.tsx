@@ -3,16 +3,18 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import StatusBadge from '@/components/admin/StatusBadge';
 import StoreEditClient from './StoreEditClient';
+import OnboardingReviewClient from './OnboardingReviewClient';
 
 export default async function StoreDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: store }, { data: products }, { data: orders }, { data: managers }] = await Promise.all([
+  const [{ data: store }, { data: products }, { data: orders }, { data: managers }, { data: business }] = await Promise.all([
     supabase.from('stores').select('*').eq('id', id).single(),
     supabase.from('products').select('id, name, is_active, base_price').eq('store_id', id).eq('is_deleted', false).order('created_at', { ascending: false }).limit(10),
     supabase.from('orders').select('id, order_number, status, final_amount, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(10),
     supabase.from('store_managers').select('*, users(name, email)').eq('store_id', id),
+    supabase.from('store_business_details').select('*').eq('store_id', id).maybeSingle(),
   ]);
 
   if (!store) notFound();
@@ -30,6 +32,15 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1">
           <StoreEditClient store={store} />
+
+          <OnboardingReviewClient
+            storeId={store.id}
+            storeName={store.name}
+            status={store.onboarding_status}
+            submittedAt={store.submitted_at}
+            rejectionReason={store.rejection_reason}
+            business={business ?? null}
+          />
 
           {/* Managers */}
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mt-4">

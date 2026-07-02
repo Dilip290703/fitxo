@@ -1,4 +1,5 @@
 import { createClient } from "@fitzo/supabase/client";
+import type { StoreOnboardingStatus } from "@fitzo/supabase/types";
 
 /**
  * The store-manager context for the signed-in user. Every store-panel screen
@@ -11,6 +12,10 @@ export type StoreContext = {
   storeId: string;
   storeName: string;
   storeSlug: string;
+  onboardingStatus: StoreOnboardingStatus;
+  rejectionReason: string | null;
+  isActive: boolean;
+  isVerified: boolean;
 };
 
 /**
@@ -31,7 +36,9 @@ export async function getStoreContext(): Promise<StoreContext | null> {
 
   const { data, error } = await supabase
     .from("store_managers")
-    .select("store_id, store:stores(id, name, slug)")
+    .select(
+      "store_id, store:stores(id, name, slug, onboarding_status, rejection_reason, is_active, is_verified)",
+    )
     .eq("user_id", session.user.id)
     .eq("is_active", true)
     .limit(1)
@@ -49,5 +56,9 @@ export async function getStoreContext(): Promise<StoreContext | null> {
     storeId: data.store_id,
     storeName: store.name,
     storeSlug: store.slug,
+    onboardingStatus: store.onboarding_status,
+    rejectionReason: store.rejection_reason,
+    isActive: store.is_active,
+    isVerified: store.is_verified,
   };
 }

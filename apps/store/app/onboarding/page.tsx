@@ -1,11 +1,13 @@
 "use client";
 
 import { useStoreGuard } from "@/lib/useStoreGuard";
-import { StoreShell } from "@/components/StoreShell";
-import { OnboardingView } from "@/components/onboarding/OnboardingView";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 
 export default function OnboardingPage() {
-  const guard = useStoreGuard();
+  // The onboarding flow is the one screen that must be reachable BEFORE approval,
+  // so it opts out of the approved-only gate. (An already-approved store loading
+  // this route is redirected to the dashboard from inside the wizard.)
+  const guard = useStoreGuard({ requireApproved: false });
 
   if (guard.loading) {
     return (
@@ -15,9 +17,5 @@ export default function OnboardingPage() {
     );
   }
 
-  return (
-    <StoreShell active="onboarding" storeName={guard.context.storeName}>
-      <OnboardingView />
-    </StoreShell>
-  );
+  return <OnboardingWizard storeId={guard.context.storeId} email={guard.context.email} />;
 }

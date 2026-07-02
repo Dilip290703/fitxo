@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { key: "staff", label: "Staff", icon: "👥", href: "/staff", ready: true },
   { key: "settings", label: "Settings", icon: "⚙", href: "/settings", ready: true },
   { key: "support", label: "Support", icon: "💬", href: "/support", ready: true },
-  { key: "onboarding", label: "Guide", icon: "🧭", href: "/onboarding", ready: true },
+  { key: "guide", label: "Guide", icon: "🧭", href: "/guide", ready: true },
 ];
 
 export function StoreShell({

@@ -35,8 +35,40 @@ export interface Store {
   pincode: string | null;
   lat: number | null;
   lng: number | null;
+  category: string | null;
+  onboarding_status: StoreOnboardingStatus;
+  rejection_reason: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
   is_active: boolean;
   is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type StoreOnboardingStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+
+export type StoreEntityType =
+  | 'individual'
+  | 'proprietorship'
+  | 'partnership'
+  | 'pvt_ltd'
+  | 'llp';
+
+/**
+ * Private business / KYC / payout details for a store. Lives in its own table
+ * (never on the world-readable `stores` row) with RLS = own manager or admin only.
+ */
+export interface StoreBusinessDetails {
+  store_id: string;
+  legal_name: string | null;
+  entity_type: StoreEntityType | null;
+  gst_number: string | null;
+  pan_number: string | null;
+  bank_account_name: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
+  upi_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -362,6 +394,7 @@ export interface Database {
       riders: { Row: Rider; Insert: Omit<Rider, 'id' | 'user'>; Update: Partial<Omit<Rider, 'id' | 'user'>> };
       deliveries: { Row: Delivery; Insert: Omit<Delivery, 'id' | 'order' | 'rider'>; Update: Partial<Omit<Delivery, 'id' | 'order' | 'rider'>> };
       store_managers: { Row: StoreManager; Insert: Omit<StoreManager, 'id' | 'user' | 'store'>; Update: Partial<Omit<StoreManager, 'id' | 'user' | 'store'>> };
+      store_business_details: { Row: StoreBusinessDetails; Insert: Omit<StoreBusinessDetails, 'created_at' | 'updated_at'>; Update: Partial<Omit<StoreBusinessDetails, 'store_id'>> };
       coupons: { Row: Coupon; Insert: Omit<Coupon, 'id'>; Update: Partial<Omit<Coupon, 'id'>> };
       notifications: { Row: Notification; Insert: Omit<Notification, 'id' | 'created_at'>; Update: Partial<Omit<Notification, 'id'>> };
       activity_logs: { Row: ActivityLog; Insert: Omit<ActivityLog, 'id' | 'created_at' | 'admin'>; Update: never };
