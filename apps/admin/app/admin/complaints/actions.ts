@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 
 export type ComplaintStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
@@ -11,10 +11,7 @@ export async function updateComplaint(
   id: string,
   patch: { status: ComplaintStatus; admin_response: string },
 ): Promise<void> {
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
 
@@ -30,7 +27,7 @@ export async function updateComplaint(
   await logActivity(
     admin,
     { action: `Complaint → ${patch.status}`, entity_type: 'complaint', entity_id: id, new_value: { status: patch.status } },
-    actor?.id,
+    actorId,
   );
 
   revalidatePath('/admin/complaints');

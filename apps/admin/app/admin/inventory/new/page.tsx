@@ -1,8 +1,9 @@
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@fitzo/supabase/server';
 import ProductFormClient from '../ProductFormClient';
 
 export default async function NewProductPage() {
-  const supabase = createAdminClient();
+  // RLS-bound read — the admin session's policies cover these tables.
+  const supabase = await createClient();
 
   const [{ data: stores }, { data: brands }, { data: categories }] = await Promise.all([
     supabase.from('stores').select('id, name').eq('is_active', true),

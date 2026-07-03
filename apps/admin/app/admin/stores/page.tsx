@@ -1,9 +1,11 @@
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@fitzo/supabase/server';
 import Link from 'next/link';
 import StatusBadge from '@/components/admin/StatusBadge';
 
 export default async function StoresPage() {
-  const supabase = createAdminClient();
+  // RLS-bound read — `stores_admin_all` lets the admin session see every
+  // store (incl. drafts); no service-role needed to render a page.
+  const supabase = await createClient();
 
   const { data: stores } = await supabase
     .from('stores')

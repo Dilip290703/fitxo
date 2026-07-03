@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 
 export type NotifType = 'order_update' | 'promo' | 'system';
@@ -25,10 +25,7 @@ export async function sendNotification(input: SendNotificationInput): Promise<{ 
   const body = input.body.trim();
   if (!title || !body) throw new Error('Title and message are required');
 
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
 
@@ -64,7 +61,7 @@ export async function sendNotification(input: SendNotificationInput): Promise<{ 
       entity_type: 'notification',
       new_value: { title, type: input.type, target: input.target, count: recipients.length },
     },
-    actor?.id,
+    actorId,
   );
 
   revalidatePath('/admin/notifications');

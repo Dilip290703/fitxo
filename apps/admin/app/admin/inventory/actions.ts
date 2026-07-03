@@ -2,6 +2,7 @@
 
 import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 
 interface VariantInput {
@@ -41,6 +42,7 @@ export async function createProduct(
   colors: ColorInput[],
   imageUrls: string[],
 ): Promise<string> {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -97,6 +99,7 @@ export async function updateProduct(
   colors: ColorInput[],
   imageUrls: string[],
 ): Promise<void> {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase

@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
         .eq('id', user.id)
         .single();
 
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'store_manager')) {
+      if (!profile || profile.role !== 'admin') {
         await supabase.auth.signOut();
         throw new Error('Access denied. Admin privileges required.');
       }

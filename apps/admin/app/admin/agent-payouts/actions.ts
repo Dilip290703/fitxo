@@ -1,16 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 import { computeAgentPayables } from './compute';
 
 export async function recordAgentPayout(riderId: string): Promise<{ count: number; amount: number }> {
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
 
@@ -41,7 +38,7 @@ export async function recordAgentPayout(riderId: string): Promise<{ count: numbe
       entity_id: riderId,
       new_value: { jobs: rows.length, amount: rider.netOutstanding },
     },
-    actor?.id,
+    actorId,
   );
 
   revalidatePath('/admin/agent-payouts');

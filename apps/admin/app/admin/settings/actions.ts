@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 
 export interface SystemSettings {
   site_name: string;
@@ -62,17 +63,12 @@ function validate(patch: Partial<SystemSettings>) {
 export async function updateSettings(patch: Partial<SystemSettings>): Promise<void> {
   validate(patch);
 
-  // Stamp who made the change (RLS-bound SSR client knows the signed-in admin);
-  // the write itself goes through the service-role client like every admin mutation.
-  const ssr = await createClient();
-  const {
-    data: { user },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
   const { error } = await admin
     .from('system_settings')
-    .update({ ...patch, updated_by: user?.id ?? null })
+    .update({ ...patch, updated_by: actorId })
     .eq('id', 1);
 
   if (error) throw new Error(error.message);
