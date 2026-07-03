@@ -1,3 +1,5 @@
+import type { BadgeTone } from "@/components/ui/StatusBadge";
+
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: "Order placed",
   confirmed: "Confirmed",
@@ -15,9 +17,7 @@ export function formatOrderStatus(status: string): string {
   return ORDER_STATUS_LABELS[status] ?? status;
 }
 
-type Tone = "neutral" | "amber" | "green" | "red";
-
-const STATUS_TONE: Record<string, Tone> = {
+const STATUS_TONE: Record<string, BadgeTone> = {
   pending: "neutral",
   confirmed: "neutral",
   assigned: "amber",
@@ -30,13 +30,7 @@ const STATUS_TONE: Record<string, Tone> = {
   cancelled: "red",
 };
 
-const TONE_CLASS: Record<Tone, string> = {
-  neutral: "bg-[#f0ebe3] text-[#8a8073]",
-  amber: "bg-[#fbeed0] text-[#9a6a12]",
-  green: "bg-[#e8f3ea] text-[#2f7d46]",
-  red: "bg-[#fbeeea] text-[#b83c24]",
-};
-
-export function statusBadgeClass(status: string): string {
-  return TONE_CLASS[STATUS_TONE[status] ?? "neutral"];
+/** Tone for the shared <StatusBadge>. */
+export function statusTone(status: string): BadgeTone {
+  return STATUS_TONE[status] ?? "neutral";
 }

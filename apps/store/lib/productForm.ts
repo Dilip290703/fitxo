@@ -45,7 +45,9 @@ export function emptyProductDraft(): ProductDraft {
   return {
     name: "", slug: "", description: "", shortDescription: "", material: "",
     careInstructions: "", fitType: "", categoryId: "", basePrice: "",
-    discountedPrice: "", depositAmount: "0", tags: "", isActive: true, isFeatured: false,
+    // New products start as DRAFTS (inactive) — the owner flips them live
+    // deliberately, instead of a half-filled product hitting the storefront.
+    discountedPrice: "", depositAmount: "0", tags: "", isActive: false, isFeatured: false,
   };
 }
 
@@ -159,28 +161,51 @@ function buildProductRow(draft: ProductDraft, storeId: string) {
   };
 }
 
-/** Returns a human-readable error string, or null if valid. */
-export function validate(draft: ProductDraft, colors: ColorDraft[]): string | null {
-  if (!draft.name.trim()) return "Enter a product name.";
+export type ProductFieldErrors = {
+  name?: string;
+  basePrice?: string;
+  discountedPrice?: string;
+  /** First colour/variant problem — shown on the colours card. */
+  colors?: string;
+};
+
+/** Field-keyed validation for inline display. Empty object = valid. */
+export function validateFields(draft: ProductDraft, colors: ColorDraft[]): ProductFieldErrors {
+  const errors: ProductFieldErrors = {};
+  if (!draft.name.trim()) errors.name = "Enter a product name.";
   const base = parseFloat(draft.basePrice);
-  if (!Number.isFinite(base) || base <= 0) return "Enter a valid base price.";
+  if (!Number.isFinite(base) || base <= 0) errors.basePrice = "Enter a valid base price.";
   if (draft.discountedPrice) {
     const disc = parseFloat(draft.discountedPrice);
-    if (!Number.isFinite(disc) || disc < 0) return "Discounted price is invalid.";
-    if (disc >= base) return "Discounted price must be below the base price.";
+    if (!Number.isFinite(disc) || disc < 0) errors.discountedPrice = "Discounted price is invalid.";
+    else if (Number.isFinite(base) && disc >= base)
+      errors.discountedPrice = "Discounted price must be below the base price.";
   }
   const realColors = colors.filter((c) => c.colorName.trim());
-  if (realColors.length === 0) return "Add at least one colour.";
-  for (const c of realColors) {
-    const realVariants = c.variants.filter((v) => v.size.trim() && v.sku.trim());
-    if (realVariants.length === 0)
-      return `Colour "${c.colorName}" needs at least one size with a SKU.`;
-    for (const v of realVariants) {
-      if (!Number.isFinite(parseInt(v.stockQty, 10)) || parseInt(v.stockQty, 10) < 0)
-        return `Stock for ${c.colorName} / ${v.size} is invalid.`;
+  if (realColors.length === 0) {
+    errors.colors = "Add at least one colour.";
+  } else {
+    outer: for (const c of realColors) {
+      const realVariants = c.variants.filter((v) => v.size.trim() && v.sku.trim());
+      if (realVariants.length === 0) {
+        errors.colors = `Colour "${c.colorName}" needs at least one size with a SKU.`;
+        break;
+      }
+      for (const v of realVariants) {
+        if (!Number.isFinite(parseInt(v.stockQty, 10)) || parseInt(v.stockQty, 10) < 0) {
+          errors.colors = `Stock for ${c.colorName} / ${v.size} is invalid.`;
+          break outer;
+        }
+      }
     }
   }
-  return null;
+  return errors;
+}
+
+/** Returns a human-readable error string, or null if valid. */
+export function validate(draft: ProductDraft, colors: ColorDraft[]): string | null {
+  const e = validateFields(draft, colors);
+  return e.name ?? e.basePrice ?? e.discountedPrice ?? e.colors ?? null;
 }
 
 async function insertColorsAndVariants(
@@ -235,7 +260,18 @@ export async function createProductFull(
     .single();
   if (error) throw new Error(friendlyDbError(error.message));
 
-  await insertColorsAndVariants(supabase, data.id, colors);
+  try {
+    await insertColorsAndVariants(supabase, data.id, colors);
+  } catch (e) {
+    // Never leave a half-created product behind — retrying "Create" would
+    // otherwise duplicate it. Soft-delete the orphan row (invisible to the
+    // catalogue and storefront) before surfacing the real error.
+    await supabase
+      .from("products")
+      .update({ is_deleted: true, is_active: false })
+      .eq("id", data.id);
+    throw e instanceof Error ? new Error(friendlyDbError(e.message)) : e;
+  }
   return data.id;
 }
 

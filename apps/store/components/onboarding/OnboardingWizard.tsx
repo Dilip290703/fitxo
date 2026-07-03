@@ -8,6 +8,7 @@ import {
   GST_RE,
   IFSC_RE,
   PAN_RE,
+  PHONE_RE,
   PINCODE_RE,
   STORE_CATEGORIES,
   loadOnboarding,
@@ -17,11 +18,9 @@ import {
 } from "@/lib/onboarding";
 import type { StoreOnboardingStatus } from "@fitzo/supabase/types";
 
-const PHONE_RE = /^[6-9][0-9]{9}$/;
-
 const inputClass =
-  "h-11 w-full rounded-xl border border-[#ded3c6] bg-white px-3.5 text-[14px] text-[#171d2b] outline-none transition focus:border-[#171d2b] focus:ring-4 focus:ring-[#ffd233]/25";
-const labelClass = "mb-1.5 block text-[12px] font-semibold text-[#5f574e]";
+  "h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[14px] text-ink outline-none transition focus:border-ink focus:ring-4 focus:ring-accent/25";
+const labelClass = "mb-1.5 block text-[12px] font-semibold text-body";
 
 type StepDef = {
   title: string;
@@ -81,6 +80,7 @@ const STEPS: StepDef[] = [
 export function OnboardingWizard({ storeId, email }: { storeId: string; email: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [status, setStatus] = useState<StoreOnboardingStatus>("draft");
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData | null>(null);
@@ -90,17 +90,24 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
 
   useEffect(() => {
     let active = true;
-    loadOnboarding(storeId).then((state) => {
-      if (!active) return;
-      if (state.status === "approved") {
-        router.replace("/");
-        return;
-      }
-      setStatus(state.status);
-      setRejectionReason(state.rejectionReason);
-      setData(state.data);
-      setLoading(false);
-    });
+    setLoadFailed(false);
+    loadOnboarding(storeId)
+      .then((state) => {
+        if (!active) return;
+        if (state.status === "approved") {
+          router.replace("/");
+          return;
+        }
+        setStatus(state.status);
+        setRejectionReason(state.rejectionReason);
+        setData(state.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Network failure — this is the one screen a pending store is forced
+        // onto, so never leave it stuck on "Loading…".
+        if (active) setLoadFailed(true);
+      });
     return () => {
       active = false;
     };
@@ -150,10 +157,29 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
     }
   };
 
+  if (loadFailed) {
+    return (
+      <Frame email={email} onLogout={handleLogout}>
+        <div className="rounded-2xl border border-danger-line bg-danger-bg p-6 text-center">
+          <p className="text-[14px] font-medium text-danger">
+            We couldn&apos;t load your application — check your connection.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 h-11 rounded-full border border-danger/40 px-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-danger transition hover:bg-white"
+          >
+            Retry
+          </button>
+        </div>
+      </Frame>
+    );
+  }
+
   if (loading || !data) {
     return (
       <Frame email={email} onLogout={handleLogout}>
-        <p className="py-16 text-center text-[13px] uppercase tracking-[0.16em] text-[#958675]">Loading…</p>
+        <p className="py-16 text-center text-[13px] uppercase tracking-[0.16em] text-muted">Loading…</p>
       </Frame>
     );
   }
@@ -169,20 +195,20 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
   return (
     <Frame email={email} onLogout={handleLogout}>
       {status === "rejected" && rejectionReason ? (
-        <div className="mb-6 rounded-2xl border border-[#e6c4bb] bg-[#fbeeea] p-5">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#b83c24]">
+        <div className="mb-6 rounded-2xl border border-danger-line bg-danger-bg p-5">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-danger">
             Application needs changes
           </p>
-          <p className="mt-1.5 text-[13px] leading-6 text-[#8a3b28]">{rejectionReason}</p>
-          <p className="mt-1.5 text-[12px] text-[#8a3b28]">Update the details below and resubmit.</p>
+          <p className="mt-1.5 text-[13px] leading-6 text-danger">{rejectionReason}</p>
+          <p className="mt-1.5 text-[12px] text-danger">Update the details below and resubmit.</p>
         </div>
       ) : null}
 
       <Stepper step={step} />
 
-      <div className="mt-6 rounded-2xl border border-[#ece5da] bg-white p-6 sm:p-7">
-        <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-[#171d2b]">{STEPS[step].title}</h2>
-        <p className="mt-1 text-[13px] leading-6 text-[#7c7268]">{STEPS[step].hint}</p>
+      <div className="mt-6 rounded-2xl border border-line bg-white p-6 sm:p-7">
+        <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">{STEPS[step].title}</h2>
+        <p className="mt-1 text-[13px] leading-6 text-soft">{STEPS[step].hint}</p>
 
         <div className="mt-6 space-y-4">
           {step === 0 && (
@@ -311,8 +337,8 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
 
           {step === 3 && (
             <>
-              <div className="rounded-xl border border-[#ece5da] bg-[#faf7f1] p-4">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#7c7268]">Bank account</p>
+              <div className="rounded-xl border border-line bg-cream p-4">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-soft">Bank account</p>
                 <div className="mt-3 space-y-3">
                   <Field label="Account holder name">
                     <input
@@ -343,7 +369,7 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
                 </div>
               </div>
               <div className="relative text-center">
-                <span className="bg-[#fbfaf7] px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a99e8f]">
+                <span className="bg-paper px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
                   or
                 </span>
               </div>
@@ -362,7 +388,7 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
         </div>
 
         {error ? (
-          <p className="mt-5 rounded-xl border border-[#e6c4bb] bg-[#fbeeea] px-4 py-3 text-[13px] font-medium text-[#b83c24]">
+          <p className="mt-5 rounded-xl border border-danger-line bg-danger-bg px-4 py-3 text-[13px] font-medium text-danger">
             {error}
           </p>
         ) : null}
@@ -372,7 +398,7 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
             type="button"
             onClick={() => setStep((s) => Math.max(s - 1, 0))}
             disabled={step === 0 || busy}
-            className="h-11 rounded-full border border-[#ded3c6] px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5f574e] transition hover:bg-white disabled:opacity-40"
+            className="h-11 rounded-full border border-line-strong px-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-body transition hover:bg-white disabled:opacity-40"
           >
             Back
           </button>
@@ -381,7 +407,7 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
               type="button"
               onClick={next}
               disabled={busy}
-              className="h-11 rounded-full bg-[#171d2b] px-7 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#1f2a3c] disabled:opacity-60"
+              className="h-11 rounded-full bg-ink px-7 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft disabled:opacity-60"
             >
               {busy ? "Saving…" : "Save & continue"}
             </button>
@@ -390,7 +416,7 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
               type="button"
               onClick={submit}
               disabled={busy}
-              className="h-11 rounded-full bg-[#171d2b] px-7 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#1f2a3c] disabled:opacity-60"
+              className="h-11 rounded-full bg-ink px-7 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft disabled:opacity-60"
             >
               {busy ? "Submitting…" : "Submit for review"}
             </button>
@@ -411,31 +437,31 @@ function Frame({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#fbfaf7]">
-      <header className="flex items-center justify-between border-b border-[#ece5da] bg-white px-5 py-4 sm:px-8">
+    <main className="min-h-screen bg-paper">
+      <header className="flex items-center justify-between border-b border-line bg-white px-5 py-4 sm:px-8">
         <div className="flex items-center gap-3">
-          <span className="font-serif text-[18px] font-semibold tracking-[0.18em] text-[#171d2b]">FITZO</span>
-          <span className="rounded-full border border-[#171d2b]/20 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#171d2b]/70">
+          <span className="font-serif text-[18px] font-semibold tracking-[0.18em] text-ink">FITZO</span>
+          <span className="rounded-full border border-ink/20 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink/70">
             Store
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden text-[12px] text-[#7c7268] sm:inline">{email}</span>
+          <span className="hidden text-[12px] text-soft sm:inline">{email}</span>
           <button
             type="button"
             onClick={onLogout}
-            className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#806f5c] hover:text-[#171d2b]"
+            className="text-[12px] font-semibold uppercase tracking-[0.12em] text-soft hover:text-ink"
           >
             Log out
           </button>
         </div>
       </header>
       <div className="mx-auto w-full max-w-[640px] px-5 py-8 sm:px-8 lg:py-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#958675]">Get set up</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-[#171d2b] sm:text-[32px]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Get set up</p>
+        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
           Store onboarding
         </h1>
-        <p className="mt-2 max-w-[480px] text-[14px] leading-6 text-[#625b53]">
+        <p className="mt-2 max-w-[480px] text-[14px] leading-6 text-body">
           Tell us about your store. Once you submit, the Fitzo team reviews and activates your
           account — usually within a business day.
         </p>
@@ -455,16 +481,16 @@ function Stepper({ step }: { step: number }) {
             <span
               className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-bold ${
                 state === "done"
-                  ? "bg-[#171d2b] text-white"
+                  ? "bg-ink text-white"
                   : state === "active"
-                    ? "bg-[#ffd233] text-[#171d2b]"
-                    : "bg-[#ece5da] text-[#a99e8f]"
+                    ? "bg-accent text-ink"
+                    : "bg-line text-faint"
               }`}
             >
               {state === "done" ? "✓" : i + 1}
             </span>
             {i < STEPS.length - 1 ? (
-              <span className={`h-0.5 flex-1 rounded ${i < step ? "bg-[#171d2b]" : "bg-[#ece5da]"}`} />
+              <span className={`h-0.5 flex-1 rounded ${i < step ? "bg-ink" : "bg-line"}`} />
             ) : null}
           </li>
         );
@@ -501,11 +527,11 @@ function Review({ data }: { data: OnboardingData }) {
     ["Payout", payout],
   ];
   return (
-    <dl className="divide-y divide-[#efe9e0] rounded-xl border border-[#ece5da]">
+    <dl className="divide-y divide-hairline rounded-xl border border-line">
       {rows.map(([k, v]) => (
         <div key={k} className="flex gap-4 px-4 py-2.5">
-          <dt className="w-28 shrink-0 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#a0968a]">{k}</dt>
-          <dd className="min-w-0 flex-1 break-words text-[13px] text-[#3f3a34]">{v}</dd>
+          <dt className="w-28 shrink-0 text-[12px] font-semibold uppercase tracking-[0.1em] text-faint">{k}</dt>
+          <dd className="min-w-0 flex-1 break-words text-[13px] text-body">{v}</dd>
         </div>
       ))}
     </dl>
@@ -514,17 +540,17 @@ function Review({ data }: { data: OnboardingData }) {
 
 function UnderReview({ onRefresh }: { onRefresh: () => void }) {
   return (
-    <div className="rounded-2xl border border-[#ece5da] bg-white p-8 text-center">
-      <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#fff4cc] text-[26px]">⏳</div>
-      <h2 className="mt-5 text-[20px] font-semibold tracking-[-0.01em] text-[#171d2b]">Application under review</h2>
-      <p className="mx-auto mt-2 max-w-[400px] text-[14px] leading-6 text-[#625b53]">
+    <div className="rounded-2xl border border-line bg-white p-8 text-center">
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-pale text-[26px]">⏳</div>
+      <h2 className="mt-5 text-[20px] font-semibold tracking-[-0.01em] text-ink">Application under review</h2>
+      <p className="mx-auto mt-2 max-w-[400px] text-[14px] leading-6 text-body">
         Thanks — your store is with the Fitzo team. We&apos;ll email you once it&apos;s approved, and your
         full dashboard unlocks automatically. This usually takes under a business day.
       </p>
       <button
         type="button"
         onClick={onRefresh}
-        className="mt-6 h-11 rounded-full border border-[#ded3c6] px-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5f574e] transition hover:bg-[#faf7f1]"
+        className="mt-6 h-11 rounded-full border border-line-strong px-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-body transition hover:bg-cream"
       >
         Check status
       </button>

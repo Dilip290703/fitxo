@@ -2,33 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   confirmOrder,
   loadStoreOrder,
+  markAllItemsPrepared,
   setItemPrepared,
   type StoreOrderDetail,
   type StoreOrderItem,
 } from "@/lib/orders";
-import { formatOrderStatus, statusBadgeClass } from "@/lib/orderStatus";
-
-function formatCurrency(n: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
-function formatDateTime(ts: string) {
-  return new Date(ts).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatOrderStatus, statusTone } from "@/lib/orderStatus";
+import { formatCurrency, formatDateTime } from "@/lib/format";
+import { useStorePanel } from "@/components/panel/PanelContext";
+import { useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
+import { useToast } from "@/components/ui/Toast";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Banner } from "@/components/ui/Banner";
+import { RowsSkeleton } from "@/components/ui/Skeleton";
 
 const DECISION_LABEL: Record<StoreOrderItem["decision"], string> = {
   pending: "Awaiting decision",
@@ -37,13 +26,15 @@ const DECISION_LABEL: Record<StoreOrderItem["decision"], string> = {
 };
 
 const DECISION_CLASS: Record<StoreOrderItem["decision"], string> = {
-  pending: "bg-[#f0ebe3] text-[#8a8073]",
-  keep: "bg-[#e8f3ea] text-[#2f7d46]",
-  return: "bg-[#fbeeea] text-[#b83c24]",
+  pending: "bg-hairline text-soft",
+  keep: "bg-success-bg text-success",
+  return: "bg-danger-bg text-danger",
 };
 
 export function OrderDetailView({ orderId }: { orderId: string }) {
-  const router = useRouter();
+  const { storeId } = useStorePanel();
+  const { refreshPending } = useOrderAlerts();
+  const toast = useToast();
   const [order, setOrder] = useState<StoreOrderDetail | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState("");
@@ -52,7 +43,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     let active = true;
-    loadStoreOrder(orderId)
+    loadStoreOrder(orderId, storeId)
       .then((data) => {
         if (!active) return;
         if (!data) setNotFound(true);
@@ -64,7 +55,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
     return () => {
       active = false;
     };
-  }, [orderId]);
+  }, [orderId, storeId]);
 
   const togglePrepared = async (item: StoreOrderItem) => {
     if (!order) return;
@@ -93,6 +84,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
       // generic string, so failures are diagnosable.
       const msg = e instanceof Error ? e.message : "";
       setError(msg ? `Couldn't update that item: ${msg}` : "Couldn't update that item. Please try again.");
+      throw e;
     } finally {
       setBusyItem(null);
     }
@@ -101,10 +93,27 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   const markAllReady = async () => {
     if (!order) return;
     const pending = order.items.filter((it) => !it.preparedAt);
-    for (const it of pending) {
-      // sequential keeps the guarded RPC simple and surfaces the first failure
-      // eslint-disable-next-line no-await-in-loop
-      await togglePrepared(it);
+    if (pending.length === 0) return;
+    setBusyItem("__all__");
+    setError("");
+    try {
+      // one bulk RPC (migration 031); falls back per-item pre-migration
+      await markAllItemsPrepared(order.id, pending.map((it) => it.id));
+      const now = new Date().toISOString();
+      setOrder((o) =>
+        o
+          ? {
+              ...o,
+              items: o.items.map((it) => (it.preparedAt ? it : { ...it, preparedAt: now })),
+              preparedCount: o.items.length,
+            }
+          : o,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg ? `Couldn't mark items ready: ${msg}` : "Couldn't mark items ready. Please try again.");
+    } finally {
+      setBusyItem(null);
     }
   };
 
@@ -115,6 +124,8 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
     try {
       await confirmOrder(order.id);
       setOrder((o) => (o ? { ...o, status: "confirmed" } : o));
+      refreshPending();
+      toast(`Order ${order.orderNumber} confirmed`);
     } catch (e) {
       // Surface the real Postgres/RPC error so failures are diagnosable.
       const msg = e instanceof Error ? e.message : String(e);
@@ -127,8 +138,8 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   if (notFound) {
     return (
       <div className="px-6 py-10">
-        <p className="text-[14px] text-[#b83c24]">Order not found in your store.</p>
-        <Link href="/orders" className="mt-4 inline-block rounded-full border border-[#171d2b] px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#171d2b]">
+        <p className="text-[14px] text-danger">Order not found in your store.</p>
+        <Link href="/orders" className="mt-4 inline-block rounded-full border border-ink px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink">
           Back to orders
         </Link>
       </div>
@@ -136,27 +147,35 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   }
 
   if (!order) {
-    return <p className="px-6 py-10 text-[13px] uppercase tracking-[0.16em] text-[#958675]">Loading…</p>;
+    return (
+      <div className="mx-auto w-full max-w-[860px] px-5 py-8 sm:px-8 lg:py-10">
+        {error ? (
+          <Banner variant="error">{error}</Banner>
+        ) : (
+          <div className="rounded-2xl border border-line bg-white">
+            <RowsSkeleton rows={4} />
+          </div>
+        )}
+      </div>
+    );
   }
 
   const allReady = order.items.length > 0 && order.items.every((it) => it.preparedAt);
 
   return (
     <div className="mx-auto w-full max-w-[860px] px-5 py-8 sm:px-8 lg:py-10">
-      <Link href="/orders" className="text-[12px] font-semibold text-[#806f5c] hover:text-[#171d2b]">
+      <Link href="/orders" className="text-[12px] font-semibold text-soft hover:text-ink">
         ← Back to orders
       </Link>
 
       <header className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-mono text-[24px] font-semibold tracking-[-0.01em] text-[#171d2b]">
+          <h1 className="font-mono text-[24px] font-semibold tracking-[-0.01em] text-ink">
             {order.orderNumber}
           </h1>
-          <p className="mt-1 text-[13px] text-[#958675]">Placed {formatDateTime(order.createdAt)}</p>
+          <p className="mt-1 text-[13px] text-muted">Placed {formatDateTime(order.createdAt)}</p>
         </div>
-        <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-[12px] font-semibold ${statusBadgeClass(order.status)}`}>
-          {formatOrderStatus(order.status)}
-        </span>
+        <StatusBadge tone={statusTone(order.status)}>{formatOrderStatus(order.status)}</StatusBadge>
       </header>
 
       <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -167,16 +186,14 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
       </section>
 
       {error ? (
-        <p role="alert" className="mt-4 rounded-xl border border-[#e6c4bb] bg-[#fbeeea] px-4 py-3 text-[13px] font-medium text-[#b83c24]">
-          {error}
-        </p>
+        <Banner variant="error" className="mt-4">{error}</Banner>
       ) : null}
 
       {order.status === "pending" ? (
-        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ded3c6] bg-[#faf6f0] p-5">
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line-strong bg-cream p-5">
           <div>
-            <h2 className="text-[14px] font-semibold text-[#171d2b]">Confirm this order</h2>
-            <p className="mt-1 text-[12px] text-[#7f7469]">
+            <h2 className="text-[14px] font-semibold text-ink">Confirm this order</h2>
+            <p className="mt-1 text-[12px] text-soft">
               {allReady
                 ? "All your items are ready. Confirm to send it to a Fitzo rider."
                 : "Mark every item ready, then confirm to send it to a Fitzo rider."}
@@ -186,42 +203,42 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             type="button"
             onClick={confirm}
             disabled={!allReady || confirming}
-            className="rounded-full bg-[#171d2b] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-ink px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
           >
             {confirming ? "Confirming…" : "Confirm order"}
           </button>
         </section>
       ) : (
-        <section className="mt-6 rounded-2xl border border-[#cfe3d4] bg-[#eef6f0] px-5 py-3.5">
-          <p className="text-[13px] font-medium text-[#2f7d46]">
+        <section className="mt-6 rounded-2xl border border-success-line bg-success-bg px-5 py-3.5">
+          <p className="text-[13px] font-medium text-success">
             Order confirmed — a Fitzo rider will be assigned for pickup.
           </p>
         </section>
       )}
 
-      <section className="mt-6 rounded-2xl border border-[#ece5da] bg-white p-5 sm:p-6">
+      <section className="mt-6 rounded-2xl border border-line bg-white p-5 sm:p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-[14px] font-semibold text-[#171d2b]">Items to prepare</h2>
+          <h2 className="text-[14px] font-semibold text-ink">Items to prepare</h2>
           {!allReady ? (
             <button
               type="button"
               onClick={markAllReady}
               disabled={busyItem !== null}
-              className="rounded-full bg-[#171d2b] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#1f2a3c] disabled:opacity-60"
+              className="rounded-full bg-ink px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-ink-soft disabled:opacity-60"
             >
               Mark all ready
             </button>
           ) : (
-            <span className="text-[12px] font-semibold text-[#2f7d46]">All ready ✓</span>
+            <span className="text-[12px] font-semibold text-success">All ready ✓</span>
           )}
         </div>
 
-        <ul className="mt-4 divide-y divide-[#f0ebe3]">
+        <ul className="mt-4 divide-y divide-hairline">
           {order.items.map((item) => (
             <li key={item.id} className="flex flex-wrap items-center gap-3 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-medium text-[#171d2b]">{item.productName}</p>
-                <p className="text-[12px] text-[#958675]">
+              <div className="min-w-[180px] flex-1">
+                <p className="text-[14px] font-medium text-ink">{item.productName}</p>
+                <p className="text-[12px] text-muted">
                   {item.colorName} · Size {item.size}
                   {item.sku ? (
                     <>
@@ -231,7 +248,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                   ) : null}
                 </p>
                 {item.decision === "return" && item.returnReason ? (
-                  <p className="mt-1 text-[12px] text-[#b83c24]">Return reason: {item.returnReason}</p>
+                  <p className="mt-1 text-[12px] text-danger">Return reason: {item.returnReason}</p>
                 ) : null}
               </div>
 
@@ -239,18 +256,18 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                 {DECISION_LABEL[item.decision]}
               </span>
 
-              <span className="w-16 text-right text-[13px] font-semibold text-[#171d2b]">
+              <span className="w-16 text-right text-[13px] font-semibold text-ink">
                 {formatCurrency(item.price)}
               </span>
 
               <button
                 type="button"
-                onClick={() => togglePrepared(item)}
+                onClick={() => togglePrepared(item).catch(() => {})}
                 disabled={busyItem === item.id}
                 className={`rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition disabled:opacity-50 ${
                   item.preparedAt
-                    ? "border-[#2f7d46] bg-[#e8f3ea] text-[#2f7d46]"
-                    : "border-[#ded3c6] text-[#5f574e] hover:border-[#171d2b] hover:text-[#171d2b]"
+                    ? "border-success bg-success-bg text-success"
+                    : "border-line-strong text-body hover:border-ink hover:text-ink"
                 }`}
               >
                 {item.preparedAt ? "Ready ✓" : "Mark ready"}
@@ -260,7 +277,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
         </ul>
       </section>
 
-      <p className="mt-4 text-[12px] leading-5 text-[#958675]">
+      <p className="mt-4 text-[12px] leading-5 text-muted">
         Customer and delivery details are handled by the Fitzo rider — your store only
         sees the items to prepare.
       </p>
@@ -270,9 +287,9 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#ece5da] bg-white p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#958675]">{label}</p>
-      <p className="mt-1.5 text-[15px] font-semibold text-[#171d2b]">{value}</p>
+    <div className="rounded-2xl border border-line bg-white p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
+      <p className="mt-1.5 text-[15px] font-semibold text-ink">{value}</p>
     </div>
   );
 }

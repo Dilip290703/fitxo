@@ -17,7 +17,7 @@ export type KeptItem = {
   decidedAt: string | null;
 };
 
-export type EarningsData = {
+export type PayoutSummary = {
   grossKeptRevenue: number;
   commissionRate: number;
   commissionAmount: number;
@@ -27,49 +27,47 @@ export type EarningsData = {
   awaitingPayout: number;
   paidOut: number;
   payouts: PayoutRow[];
+};
+
+export type EarningsData = PayoutSummary & {
   recentKept: KeptItem[];
 };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * Earnings = what customers kept, net of the Fitzo commission
+ * The money summary = what customers kept, net of the Fitzo commission
  * (`system_settings.commission_rate`, authenticated-read since migration 011).
  * The math mirrors Admin > Store Payouts (`computeStorePayables`) exactly:
  * per-order net = round2(order gross × (1 − rate/100)), so the store sees the
  * same rupee figures the admin settles. Payout ledger rows hold NET amounts.
  * Kept items are filtered by products.store_id explicitly so a manager's
  * personal customer orders never count as store earnings.
+ *
+ * This is THE payout figure — the dashboard card and the Earnings page both
+ * read it, so they can never disagree.
  */
-export async function loadStoreEarnings(storeId: string): Promise<EarningsData> {
+export async function loadPayoutSummary(storeId: string): Promise<PayoutSummary> {
   const supabase = createClient();
 
-  const [settingsRes, payoutsRes, keptAllRes, keptRecentRes] = await Promise.all([
+  const [settingsRes, payoutsRes, keptAllRes] = await Promise.all([
     supabase.from("system_settings").select("commission_rate").eq("id", 1).maybeSingle(),
     supabase
       .from("payouts")
       .select("id, amount, status, paid_at, created_at, orders(order_number)")
       .eq("store_id", storeId)
       .order("created_at", { ascending: false }),
-    // ALL kept items (order_id + price only) — totals must not be capped by the
-    // display limit below.
+    // ALL kept items (order_id + price only) — totals must never be capped by
+    // a display limit.
     supabase
       .from("order_items")
       .select("order_id, price_at_order, products!inner(store_id)")
       .eq("decision", "keep")
       .eq("products.store_id", storeId),
-    supabase
-      .from("order_items")
-      .select("id, product_name, size, price_at_order, decision_at, products!inner(store_id)")
-      .eq("decision", "keep")
-      .eq("products.store_id", storeId)
-      .order("decision_at", { ascending: false, nullsFirst: false })
-      .limit(50),
   ]);
 
   if (payoutsRes.error) throw payoutsRes.error;
   if (keptAllRes.error) throw keptAllRes.error;
-  if (keptRecentRes.error) throw keptRecentRes.error;
 
   const commissionRate = Number(settingsRes.data?.commission_rate ?? 15);
   const factor = 1 - commissionRate / 100;
@@ -106,6 +104,33 @@ export async function loadStoreEarnings(storeId: string): Promise<EarningsData> 
   const recordedTotal = payouts.reduce((s, p) => s + p.amount, 0);
   const paidOut = round2(payouts.filter((p) => p.status === "paid").reduce((s, p) => s + p.amount, 0));
 
+  return {
+    grossKeptRevenue,
+    commissionRate,
+    commissionAmount: round2(grossKeptRevenue - netEarnings),
+    netEarnings,
+    awaitingPayout: Math.max(0, round2(netEarnings - recordedTotal)),
+    paidOut,
+    payouts,
+  };
+}
+
+export async function loadStoreEarnings(storeId: string): Promise<EarningsData> {
+  const supabase = createClient();
+
+  const [summary, keptRecentRes] = await Promise.all([
+    loadPayoutSummary(storeId),
+    supabase
+      .from("order_items")
+      .select("id, product_name, size, price_at_order, decision_at, products!inner(store_id)")
+      .eq("decision", "keep")
+      .eq("products.store_id", storeId)
+      .order("decision_at", { ascending: false, nullsFirst: false })
+      .limit(50),
+  ]);
+
+  if (keptRecentRes.error) throw keptRecentRes.error;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recentKept: KeptItem[] = (keptRecentRes.data ?? []).map((i: any) => ({
     id: i.id,
@@ -115,14 +140,5 @@ export async function loadStoreEarnings(storeId: string): Promise<EarningsData> 
     decidedAt: i.decision_at ?? null,
   }));
 
-  return {
-    grossKeptRevenue,
-    commissionRate,
-    commissionAmount: round2(grossKeptRevenue - netEarnings),
-    netEarnings,
-    awaitingPayout: Math.max(0, round2(netEarnings - recordedTotal)),
-    paidOut,
-    payouts,
-    recentKept,
-  };
+  return { ...summary, recentKept };
 }
