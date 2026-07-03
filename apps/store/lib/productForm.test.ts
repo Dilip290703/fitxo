@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { emptyColor, emptyProductDraft, makeSlug, validate, type ColorDraft } from "./productForm";
+import {
+  emptyColor,
+  emptyProductDraft,
+  makeSlug,
+  validate,
+  validateFields,
+  type ColorDraft,
+} from "./productForm";
 
 function validDraft() {
   return { ...emptyProductDraft(), name: "Linen Shirt", basePrice: "1499" };
@@ -38,6 +45,28 @@ describe("validate", () => {
   it("rejects negative stock", () => {
     const bad = [{ ...validColors()[0], variants: [{ size: "M", sku: "X", stockQty: "-2" }] }];
     expect(validate(validDraft(), bad)).toMatch(/stock/i);
+  });
+});
+
+describe("validateFields", () => {
+  it("is empty for a valid product", () => {
+    expect(validateFields(validDraft(), validColors())).toEqual({});
+  });
+  it("keys each problem to its field", () => {
+    const e = validateFields(
+      { ...validDraft(), name: " ", basePrice: "0", discountedPrice: "abc" },
+      [emptyColor()],
+    );
+    expect(e.name).toMatch(/name/i);
+    expect(e.basePrice).toMatch(/price/i);
+    expect(e.discountedPrice).toMatch(/invalid/i);
+    expect(e.colors).toMatch(/colour/i);
+  });
+});
+
+describe("emptyProductDraft", () => {
+  it("starts new products as drafts (inactive)", () => {
+    expect(emptyProductDraft().isActive).toBe(false);
   });
 });
 

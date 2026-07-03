@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   confirmOrder,
   loadStoreOrder,
+  markAllItemsPrepared,
   setItemPrepared,
   type StoreOrderDetail,
   type StoreOrderItem,
@@ -92,15 +93,27 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   const markAllReady = async () => {
     if (!order) return;
     const pending = order.items.filter((it) => !it.preparedAt);
+    if (pending.length === 0) return;
+    setBusyItem("__all__");
+    setError("");
     try {
-      for (const it of pending) {
-        // sequential keeps the guarded RPC simple; togglePrepared rethrows so
-        // the loop STOPS at the first failure instead of hammering on
-        // eslint-disable-next-line no-await-in-loop
-        await togglePrepared(it);
-      }
-    } catch {
-      /* error already surfaced by togglePrepared */
+      // one bulk RPC (migration 031); falls back per-item pre-migration
+      await markAllItemsPrepared(order.id, pending.map((it) => it.id));
+      const now = new Date().toISOString();
+      setOrder((o) =>
+        o
+          ? {
+              ...o,
+              items: o.items.map((it) => (it.preparedAt ? it : { ...it, preparedAt: now })),
+              preparedCount: o.items.length,
+            }
+          : o,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg ? `Couldn't mark items ready: ${msg}` : "Couldn't mark items ready. Please try again.");
+    } finally {
+      setBusyItem(null);
     }
   };
 

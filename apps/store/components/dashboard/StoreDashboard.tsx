@@ -12,7 +12,7 @@ import {
 import {
   confirmOrder,
   loadPendingStoreOrders,
-  setItemPrepared,
+  markAllItemsPrepared,
   type StoreOrderDetail,
 } from "@/lib/orders";
 import { formatCurrency, timeAgo } from "@/lib/format";
@@ -68,11 +68,10 @@ export function StoreDashboard() {
     setError("");
     try {
       const unprepared = order.items.filter((it) => !it.preparedAt);
-      for (let i = 0; i < unprepared.length; i++) {
-        setProgress(`Preparing ${i + 1}/${unprepared.length}…`);
-        // sequential per-item RPC for now; Phase 3 replaces with one bulk RPC
-        // eslint-disable-next-line no-await-in-loop
-        await setItemPrepared(unprepared[i].id, true);
+      if (unprepared.length > 0) {
+        setProgress("Preparing…");
+        // one bulk RPC (migration 031); falls back per-item pre-migration
+        await markAllItemsPrepared(order.id, unprepared.map((it) => it.id));
       }
       setProgress("Confirming…");
       await confirmOrder(order.id);

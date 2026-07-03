@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FIT_TYPES,
@@ -12,9 +12,10 @@ import {
   loadProductForEdit,
   createProductFull,
   updateProductFull,
-  validate,
+  validateFields,
   type ColorDraft,
   type ProductDraft,
+  type ProductFieldErrors,
 } from "@/lib/productForm";
 import {
   MAX_IMAGES,
@@ -27,6 +28,7 @@ import { useStorePanel } from "@/components/panel/PanelContext";
 import { useToast } from "@/components/ui/Toast";
 import { Banner } from "@/components/ui/Banner";
 import { BlockSkeleton } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Field, inputClass } from "@/components/ui/FormField";
 
 type Mode = "create" | "edit";
@@ -50,7 +52,21 @@ export function ProductForm({
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<ProductFieldErrors>({});
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [showDiscard, setShowDiscard] = useState(false);
+  const dragIdx = useRef<number | null>(null);
+
+  // Unsaved changes must survive an accidental tab close / reload.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   useEffect(() => {
     let active = true;
@@ -82,17 +98,30 @@ export function ProductForm({
     };
   }, [mode, productId, storeId]);
 
-  const setField = <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) => {
-    setDraft((d) => ({ ...d, [key]: value }));
+  const markDirty = () => {
+    setDirty(true);
     setError("");
+    setFieldErrors({});
   };
 
-  // ---- colour / variant editing ----
-  const updateColor = (ci: number, patch: Partial<ColorDraft>) =>
+  const setField = <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) => {
+    setDraft((d) => ({ ...d, [key]: value }));
+    markDirty();
+  };
+
+  // ---- colour / variant editing (all variant ops funnel through updateColor) ----
+  const updateColor = (ci: number, patch: Partial<ColorDraft>) => {
     setColors((cs) => cs.map((c, i) => (i === ci ? { ...c, ...patch } : c)));
-  const addColor = () => setColors((cs) => [...cs, emptyColor()]);
-  const removeColor = (ci: number) =>
+    markDirty();
+  };
+  const addColor = () => {
+    setColors((cs) => [...cs, emptyColor()]);
+    markDirty();
+  };
+  const removeColor = (ci: number) => {
     setColors((cs) => (cs.length === 1 ? cs : cs.filter((_, i) => i !== ci)));
+    markDirty();
+  };
   const addVariant = (ci: number) =>
     updateColor(ci, { variants: [...colors[ci].variants, emptyVariant()] });
   const updateVariant = (ci: number, vi: number, patch: Partial<ColorDraft["variants"][number]>) =>
@@ -110,7 +139,7 @@ export function ProductForm({
   // ---- image editing (pending files upload on save) ----
   const addImageFiles = (files: FileList | null) => {
     if (!files) return;
-    setError("");
+    markDirty();
     const next: ImageDraft[] = [];
     for (const file of Array.from(files)) {
       if (images.length + next.length >= MAX_IMAGES) {
@@ -133,7 +162,7 @@ export function ProductForm({
     });
   };
 
-  const removeImage = (idx: number) =>
+  const removeImage = (idx: number) => {
     setImages((imgs) => {
       const target = imgs[idx];
       if (target.id) setRemovedImages((r) => [...r, target]);
@@ -142,11 +171,15 @@ export function ProductForm({
       if (target.isPrimary && rest.length > 0) rest[0] = { ...rest[0], isPrimary: true };
       return rest;
     });
+    markDirty();
+  };
 
-  const setPrimaryImage = (idx: number) =>
+  const setPrimaryImage = (idx: number) => {
     setImages((imgs) => imgs.map((img, i) => ({ ...img, isPrimary: i === idx })));
+    markDirty();
+  };
 
-  const moveImage = (idx: number, dir: -1 | 1) =>
+  const moveImage = (idx: number, dir: -1 | 1) => {
     setImages((imgs) => {
       const j = idx + dir;
       if (j < 0 || j >= imgs.length) return imgs;
@@ -154,32 +187,72 @@ export function ProductForm({
       [next[idx], next[j]] = [next[j], next[idx]];
       return next;
     });
+    markDirty();
+  };
+
+  const dropImage = (to: number) => {
+    const from = dragIdx.current;
+    dragIdx.current = null;
+    if (from === null || from === to) return;
+    setImages((imgs) => {
+      const next = [...imgs];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    markDirty();
+  };
 
   const handleSave = async () => {
-    const validationError = validate(draft, colors);
-    if (validationError) {
-      setError(validationError);
+    const errs = validateFields(draft, colors);
+    if (errs.name || errs.basePrice || errs.discountedPrice || errs.colors) {
+      setFieldErrors(errs);
+      setError(errs.name ?? errs.basePrice ?? errs.discountedPrice ?? errs.colors ?? "");
       return;
     }
     setSaving(true);
     setError("");
+    let savedId = productId;
     try {
-      let savedId = productId;
       if (mode === "create") {
         savedId = await createProductFull(storeId, draft, colors);
       } else if (productId) {
         await updateProductFull(productId, storeId, draft, colors, original);
       }
-      if (savedId) {
-        await syncProductImages(savedId, storeId, images, removedImages);
-      }
-      toast(mode === "create" ? "Product created" : "Changes saved");
-      router.push("/catalogue");
-      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save the product. Please try again.");
       setSaving(false);
+      return;
     }
+
+    if (savedId) {
+      try {
+        await syncProductImages(savedId, storeId, images, removedImages);
+      } catch (e) {
+        if (mode === "create") {
+          // The product itself saved — do NOT let a retry of "Create" make a
+          // duplicate. Continue on the edit screen, where images can be retried.
+          setDirty(false);
+          toast("Product saved, but images failed to upload — retry them here", "error");
+          router.replace(`/catalogue/${savedId}/edit`);
+          return;
+        }
+        setError(e instanceof Error ? e.message : "Couldn't upload the images. Please try again.");
+        setSaving(false);
+        return;
+      }
+    }
+
+    setDirty(false);
+    toast(
+      mode === "create"
+        ? draft.isActive
+          ? "Product created and live"
+          : "Draft saved — activate it when ready"
+        : "Changes saved",
+    );
+    router.push("/catalogue");
+    router.refresh();
   };
 
   if (loadingInitial) {
@@ -217,7 +290,7 @@ export function ProductForm({
       {/* Details */}
       <Card title="Details">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Product name" className="sm:col-span-2">
+          <Field label="Product name" className="sm:col-span-2" error={fieldErrors.name}>
             <input
               className={inputClass}
               value={draft.name}
@@ -229,7 +302,7 @@ export function ProductForm({
                   // auto-fill slug only while creating / if empty
                   slug: mode === "create" || !d.slug ? makeSlug(name) : d.slug,
                 }));
-                setError("");
+                markDirty();
               }}
             />
           </Field>
@@ -284,7 +357,7 @@ export function ProductForm({
               onChange={(e) => setField("careInstructions", e.target.value)}
             />
           </Field>
-          <Field label="Base price (₹)">
+          <Field label="Base price (₹)" error={fieldErrors.basePrice}>
             <input
               className={inputClass}
               inputMode="decimal"
@@ -292,7 +365,7 @@ export function ProductForm({
               onChange={(e) => setField("basePrice", e.target.value)}
             />
           </Field>
-          <Field label="Discounted price (₹)">
+          <Field label="Discounted price (₹)" error={fieldErrors.discountedPrice}>
             <input
               className={inputClass}
               inputMode="decimal"
@@ -311,9 +384,20 @@ export function ProductForm({
           <Field label="Tags (comma-separated)">
             <input className={inputClass} value={draft.tags} onChange={(e) => setField("tags", e.target.value)} />
           </Field>
-          <div className="flex items-center gap-5 sm:col-span-2">
-            <Toggle label="Active" checked={draft.isActive} onChange={(v) => setField("isActive", v)} />
-            <Toggle label="Featured" checked={draft.isFeatured} onChange={(v) => setField("isFeatured", v)} />
+          <div className="sm:col-span-2">
+            <div className="flex items-center gap-5">
+              <Toggle
+                label="Live on storefront"
+                checked={draft.isActive}
+                onChange={(v) => setField("isActive", v)}
+              />
+              <Toggle label="Featured" checked={draft.isFeatured} onChange={(v) => setField("isFeatured", v)} />
+            </div>
+            {!draft.isActive ? (
+              <p className="mt-2 text-[12px] text-soft">
+                Saved as a draft — customers won&apos;t see it until you turn this on.
+              </p>
+            ) : null}
           </div>
         </div>
       </Card>
@@ -321,14 +405,23 @@ export function ProductForm({
       {/* Images */}
       <Card title="Images">
         <p className="-mt-1 mb-4 text-[12px] leading-5 text-soft">
-          Up to {MAX_IMAGES} photos. The ★ image is the cover customers see first.
+          Up to {MAX_IMAGES} photos. The ★ image is the cover customers see first — drag to reorder.
           {mode === "create" ? " Images upload when you create the product." : ""}
         </p>
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {images.map((img, i) => (
             <div
               key={img.id ?? img.url}
-              className={`group relative aspect-square overflow-hidden rounded-xl border ${
+              draggable
+              onDragStart={() => {
+                dragIdx.current = i;
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                dropImage(i);
+              }}
+              className={`group relative aspect-square cursor-grab overflow-hidden rounded-xl border active:cursor-grabbing ${
                 img.isPrimary ? "border-accent ring-2 ring-accent/40" : "border-line"
               }`}
             >
@@ -407,6 +500,9 @@ export function ProductForm({
 
       {/* Colours & variants */}
       <Card title="Colours & variants">
+        {fieldErrors.colors ? (
+          <Banner variant="error" className="mb-4">{fieldErrors.colors}</Banner>
+        ) : null}
         <div className="space-y-5">
           {colors.map((color, ci) => (
             <div key={ci} className="rounded-xl border border-line p-4">
@@ -518,7 +614,7 @@ export function ProductForm({
           <div className="flex shrink-0 gap-3">
             <button
               type="button"
-              onClick={() => router.push("/catalogue")}
+              onClick={() => (dirty ? setShowDiscard(true) : router.push("/catalogue"))}
               className="rounded-full border border-line-strong px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-body hover:border-ink hover:text-ink"
             >
               Cancel
@@ -534,6 +630,16 @@ export function ProductForm({
           </div>
         </div>
       </div>
+
+      {showDiscard ? (
+        <ConfirmDialog
+          title="Discard changes?"
+          body="You have unsaved changes — they'll be lost if you leave now."
+          confirmLabel="Discard"
+          onConfirm={() => router.push("/catalogue")}
+          onCancel={() => setShowDiscard(false)}
+        />
+      ) : null}
     </div>
   );
 }

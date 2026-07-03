@@ -23,6 +23,8 @@ export type StoreOrderSummary = {
   keptCount: number;
   returnedCount: number;
   preparedCount: number;
+  /** Ids of this store's not-yet-ready items (bulk mark-ready fallback). */
+  unpreparedItemIds: string[];
 };
 
 export type StoreOrderDetail = StoreOrderSummary & {
@@ -70,6 +72,7 @@ function summarize(o: any, items: StoreOrderItem[]): StoreOrderSummary {
     keptCount: items.filter((it) => it.decision === "keep").length,
     returnedCount: items.filter((it) => it.decision === "return").length,
     preparedCount: items.filter((it) => it.preparedAt).length,
+    unpreparedItemIds: items.filter((it) => !it.preparedAt).map((it) => it.id),
   };
 }
 
@@ -152,6 +155,33 @@ export async function setItemPrepared(itemId: string, ready: boolean): Promise<v
     p_ready: ready,
   });
   if (error) throw error;
+}
+
+/**
+ * Mark ALL of this store's items in an order ready in one round-trip via the
+ * bulk RPC (migration 031). Until that migration is applied, falls back to
+ * the per-item RPC over `fallbackItemIds` so the button keeps working —
+ * PostgREST reports a missing function as PGRST202.
+ */
+export async function markAllItemsPrepared(
+  orderId: string,
+  fallbackItemIds: string[],
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("mark_order_items_prepared", {
+    p_order_id: orderId,
+    p_ready: true,
+  });
+  if (!error) return;
+
+  const missingFn =
+    error.code === "PGRST202" || /mark_order_items_prepared/i.test(error.message ?? "");
+  if (!missingFn) throw error;
+
+  for (const id of fallbackItemIds) {
+    // eslint-disable-next-line no-await-in-loop
+    await setItemPrepared(id, true);
+  }
 }
 
 /**

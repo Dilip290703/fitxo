@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loadStoreOrders, type StoreOrderSummary } from "@/lib/orders";
+import {
+  confirmOrder,
+  loadStoreOrders,
+  markAllItemsPrepared,
+  type StoreOrderSummary,
+} from "@/lib/orders";
 import { formatOrderStatus, statusTone } from "@/lib/orderStatus";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
+import { useToast } from "@/components/ui/Toast";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
 import { RowsSkeleton } from "@/components/ui/Skeleton";
+import { inputClass } from "@/components/ui/FormField";
 
 type Bucket = "all" | "active" | "try" | "returns" | "completed";
 
@@ -40,29 +48,46 @@ const BUCKETS: { key: Bucket; label: string }[] = [
 
 export function OrdersView() {
   const { storeId } = useStorePanel();
+  const { pendingCount, refreshPending } = useOrderAlerts();
+  const toast = useToast();
   const router = useRouter();
   const [orders, setOrders] = useState<StoreOrderSummary[] | null>(null);
   const [error, setError] = useState("");
   const [bucket, setBucket] = useState<Bucket>("all");
+  const [search, setSearch] = useState("");
+  const [busyOrder, setBusyOrder] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
+  const reload = useCallback(() => {
     loadStoreOrders(storeId)
       .then((rows) => {
-        if (active) setOrders(rows);
+        setOrders(rows);
+        setError("");
       })
-      .catch(() => {
-        if (active) setError("We couldn't load your orders. Please try again.");
-      });
-    return () => {
-      active = false;
-    };
+      .catch(() => setError("We couldn't load your orders. Please try again."));
   }, [storeId]);
 
-  const filtered = useMemo(
-    () => (orders ?? []).filter((o) => inBucket(o.status, bucket)),
-    [orders, bucket],
-  );
+  // Live list without a dedicated subscription: the alerts provider's
+  // pendingCount is the reliable "orders changed" signal (its notifications
+  // poll is the mechanism Realtime couldn't provide for store sessions — see
+  // OrderAlertsProvider). Also refetch when the tab regains focus.
+  const lastPending = useRef<number | null>(null);
+  useEffect(() => {
+    if (lastPending.current === pendingCount && orders) return;
+    lastPending.current = pendingCount;
+    reload();
+  }, [reload, pendingCount, orders]);
+
+  useEffect(() => {
+    window.addEventListener("focus", reload);
+    return () => window.removeEventListener("focus", reload);
+  }, [reload]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return (orders ?? []).filter(
+      (o) => inBucket(o.status, bucket) && (!q || o.orderNumber.toLowerCase().includes(q)),
+    );
+  }, [orders, bucket, search]);
 
   // Chip counts — the owner should see how much work each view holds
   // without clicking into it.
@@ -76,6 +101,25 @@ export function OrdersView() {
 
   const openOrder = (id: string) => router.push(`/orders/${id}`);
 
+  const readyAndConfirm = async (o: StoreOrderSummary) => {
+    setBusyOrder(o.id);
+    setError("");
+    try {
+      if (o.unpreparedItemIds.length > 0) {
+        await markAllItemsPrepared(o.id, o.unpreparedItemIds);
+      }
+      await confirmOrder(o.id);
+      toast(`Order ${o.orderNumber} confirmed`);
+      refreshPending();
+      reload();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg ? `Couldn't confirm ${o.orderNumber}: ${msg}` : `Couldn't confirm ${o.orderNumber}. Please try again.`);
+    } finally {
+      setBusyOrder(null);
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
       <header>
@@ -84,11 +128,11 @@ export function OrdersView() {
           Order management
         </h1>
         <p className="mt-1 text-[13px] text-muted">
-          Select an order to see its items and mark them ready for pickup.
+          Confirm pending orders right here, or open one to prepare item by item.
         </p>
       </header>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
         {BUCKETS.map((b) => {
           const n = counts.get(b.key) ?? 0;
           return (
@@ -107,6 +151,14 @@ export function OrdersView() {
             </button>
           );
         })}
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search order no…"
+          aria-label="Search by order number"
+          className={`${inputClass} ml-auto h-10 w-full font-mono sm:w-[200px]`}
+        />
       </div>
 
       {error ? (
@@ -118,7 +170,11 @@ export function OrdersView() {
           <RowsSkeleton rows={4} />
         ) : filtered.length === 0 ? (
           <p className="p-8 text-center text-[14px] text-soft">
-            {orders.length === 0 ? "No orders yet." : "No orders in this view."}
+            {orders.length === 0
+              ? "No orders yet."
+              : search.trim()
+                ? "No orders match that number."
+                : "No orders in this view."}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -131,7 +187,7 @@ export function OrdersView() {
                   <th className="px-4 py-3 text-left font-semibold">Outcome</th>
                   <th className="px-4 py-3 text-right font-semibold">Subtotal</th>
                   <th className="px-4 py-3 text-right font-semibold">Placed</th>
-                  <th className="px-2 py-3" />
+                  <th className="px-3 py-3 text-right font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -176,7 +232,23 @@ export function OrdersView() {
                       {formatCurrency(o.subtotal)}
                     </td>
                     <td className="px-4 py-3 text-right text-muted">{formatDate(o.createdAt)}</td>
-                    <td className="px-2 py-3 text-right text-[16px] leading-none text-faint">›</td>
+                    <td className="px-3 py-3 text-right">
+                      {o.status === "pending" ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            readyAndConfirm(o);
+                          }}
+                          disabled={busyOrder !== null}
+                          className="whitespace-nowrap rounded-full bg-ink px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-ink-soft disabled:opacity-50"
+                        >
+                          {busyOrder === o.id ? "Confirming…" : "Ready & confirm"}
+                        </button>
+                      ) : (
+                        <span className="text-[16px] leading-none text-faint">›</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
