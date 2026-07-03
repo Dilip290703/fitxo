@@ -1,39 +1,92 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  loadActivityFeed,
   loadStoreDashboard,
+  type ActivityEvent,
   type DashboardData,
   type LowStockVariant,
-  type RecentOrder,
 } from "@/lib/dashboard";
-import { formatOrderStatus, statusTone } from "@/lib/orderStatus";
-import { formatCurrency, formatShortDateTime } from "@/lib/format";
+import {
+  confirmOrder,
+  loadPendingStoreOrders,
+  setItemPrepared,
+  type StoreOrderDetail,
+} from "@/lib/orders";
+import { formatCurrency, timeAgo } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
+import { useToast } from "@/components/ui/Toast";
 import { StatCard } from "@/components/ui/StatCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
-import { CardsSkeleton } from "@/components/ui/Skeleton";
+import { CardsSkeleton, RowsSkeleton } from "@/components/ui/Skeleton";
+import { Icon, type IconName } from "@/components/icons";
 
 export function StoreDashboard() {
   const { storeId } = useStorePanel();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState("");
+  const { pendingCount, refreshPending } = useOrderAlerts();
+  const toast = useToast();
 
-  useEffect(() => {
-    let active = true;
-    loadStoreDashboard(storeId)
-      .then((result) => {
-        if (active) setData(result);
-      })
-      .catch(() => {
-        if (active) setError("We couldn't load your dashboard. Please try again.");
-      });
-    return () => {
-      active = false;
-    };
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [queue, setQueue] = useState<StoreOrderDetail[] | null>(null);
+  const [activity, setActivity] = useState<ActivityEvent[] | null>(null);
+  const [error, setError] = useState("");
+  const [busyOrder, setBusyOrder] = useState<string | null>(null);
+  const [progress, setProgress] = useState("");
+
+  const reload = useCallback(async () => {
+    try {
+      const [d, q, a] = await Promise.all([
+        loadStoreDashboard(storeId),
+        loadPendingStoreOrders(storeId),
+        loadActivityFeed(storeId),
+      ]);
+      setData(d);
+      setQueue(q);
+      setActivity(a);
+      setError("");
+    } catch {
+      setError("We couldn't load your dashboard. Please try again.");
+    }
   }, [storeId]);
+
+  // Reload on mount AND whenever the pending-order count changes — that's the
+  // signal from the alerts provider that a new order arrived (or one was
+  // confirmed elsewhere), so the queue stays live without its own poll.
+  // Existing data stays on screen during a refresh (no skeleton flash).
+  const lastPending = useRef<number | null>(null);
+  useEffect(() => {
+    if (lastPending.current === pendingCount && data) return;
+    lastPending.current = pendingCount;
+    reload();
+  }, [reload, pendingCount, data]);
+
+  const readyAndConfirm = async (order: StoreOrderDetail) => {
+    setBusyOrder(order.id);
+    setError("");
+    try {
+      const unprepared = order.items.filter((it) => !it.preparedAt);
+      for (let i = 0; i < unprepared.length; i++) {
+        setProgress(`Preparing ${i + 1}/${unprepared.length}…`);
+        // sequential per-item RPC for now; Phase 3 replaces with one bulk RPC
+        // eslint-disable-next-line no-await-in-loop
+        await setItemPrepared(unprepared[i].id, true);
+      }
+      setProgress("Confirming…");
+      await confirmOrder(order.id);
+      setQueue((q) => (q ?? []).filter((o) => o.id !== order.id));
+      toast(`Order ${order.orderNumber} confirmed — a rider will be offered the pickup`);
+      refreshPending();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg ? `Couldn't confirm ${order.orderNumber}: ${msg}` : `Couldn't confirm ${order.orderNumber}. Please try again.`);
+    } finally {
+      setBusyOrder(null);
+      setProgress("");
+    }
+  };
 
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -55,13 +108,94 @@ export function StoreDashboard() {
 
       {error ? (
         <Banner variant="error" className="mt-6">{error}</Banner>
-      ) : !data ? (
+      ) : null}
+
+      {/* ——— Needs your action: the reason the owner opens this app ——— */}
+      <section className="mt-7">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[15px] font-semibold text-ink">Needs your action</h2>
+          {queue && queue.length > 0 ? (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-ink">
+              {queue.length}
+            </span>
+          ) : null}
+        </div>
+
+        {!queue ? (
+          <div className="mt-3 rounded-2xl border border-line bg-white">
+            <RowsSkeleton rows={2} />
+          </div>
+        ) : queue.length === 0 ? (
+          <div className="mt-3 flex items-center gap-3 rounded-2xl border border-success-line bg-success-bg px-5 py-4">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-success text-[14px] font-bold text-white">✓</span>
+            <p className="text-[13px] font-medium text-success">
+              All caught up — no orders waiting to be confirmed.
+            </p>
+          </div>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {queue.map((o) => {
+              const preview = o.items
+                .slice(0, 3)
+                .map((it) => it.productName)
+                .join(", ");
+              const more = o.items.length - 3;
+              const busy = busyOrder === o.id;
+              return (
+                <li
+                  key={o.id}
+                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-accent-soft bg-white p-4 sm:p-5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <Link
+                        href={`/orders/${o.id}`}
+                        className="font-mono text-[14px] font-semibold text-ink underline-offset-4 hover:underline"
+                      >
+                        {o.orderNumber}
+                      </Link>
+                      <span className="text-[12px] text-muted">placed {timeAgo(o.createdAt)}</span>
+                    </div>
+                    <p className="mt-1 truncate text-[13px] text-body">
+                      {preview}
+                      {more > 0 ? ` +${more} more` : ""}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-muted">
+                      {o.itemCount} item{o.itemCount === 1 ? "" : "s"} · {formatCurrency(o.subtotal)} ·{" "}
+                      {o.preparedCount}/{o.itemCount} ready
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Link
+                      href={`/orders/${o.id}`}
+                      className="rounded-full border border-line-strong px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-body transition hover:border-ink hover:text-ink"
+                    >
+                      View
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => readyAndConfirm(o)}
+                      disabled={busyOrder !== null}
+                      className="rounded-full bg-ink px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-ink-soft disabled:opacity-50"
+                    >
+                      {busy ? progress || "Working…" : "Ready & confirm"}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      {/* ——— KPI cards (every card is a door) ——— */}
+      {!data ? (
         <div className="mt-7">
           <CardsSkeleton />
         </div>
       ) : (
         <>
-          {/* Every card is a door — it opens the screen that explains it. */}
           <section className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Today's orders" value={data.stats.todayOrders} accent href="/orders" />
             <StatCard label="Active try windows" value={data.stats.activeTryWindows} accent href="/orders" />
@@ -82,7 +216,7 @@ export function StoreDashboard() {
 
           <section className="mt-6 grid gap-4 lg:grid-cols-3">
             <LowStockPanel items={data.lowStock} />
-            <RecentOrdersPanel orders={data.recentOrders} />
+            <ActivityPanel events={activity} />
           </section>
         </>
       )}
@@ -126,38 +260,42 @@ function LowStockPanel({ items }: { items: LowStockVariant[] }) {
   );
 }
 
-function RecentOrdersPanel({ orders }: { orders: RecentOrder[] }) {
+const EVENT_STYLE: Record<ActivityEvent["kind"], { icon: IconName; className: string }> = {
+  order_placed: { icon: "orders", className: "bg-accent/25 text-ink" },
+  item_kept: { icon: "catalogue", className: "bg-success-bg text-success" },
+  item_returned: { icon: "returns", className: "bg-danger-bg text-danger" },
+  payout: { icon: "earnings", className: "bg-info-bg text-info" },
+};
+
+function ActivityPanel({ events }: { events: ActivityEvent[] | null }) {
   return (
     <div className="rounded-2xl border border-line bg-white p-5 lg:col-span-2">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-[14px] font-semibold text-ink">Recent orders</h2>
-        <Link href="/orders" className="text-[12px] font-semibold text-soft hover:text-ink">
-          View all →
-        </Link>
-      </div>
-      {orders.length === 0 ? (
-        <p className="mt-3 text-[13px] text-soft">No orders yet.</p>
+      <h2 className="text-[14px] font-semibold text-ink">Activity</h2>
+      {!events ? (
+        <RowsSkeleton rows={3} />
+      ) : events.length === 0 ? (
+        <p className="mt-3 text-[13px] text-soft">
+          New orders, keep/return decisions and payouts show up here as they happen.
+        </p>
       ) : (
-        <ul className="mt-3 divide-y divide-hairline">
-          {orders.map((o) => (
-            <li key={o.id}>
-              <Link
-                href={`/orders/${o.id}`}
-                className="flex items-center gap-3 py-2.5 transition hover:bg-paper"
-              >
-                <span className="w-[110px] shrink-0 truncate font-mono text-[12px] font-semibold text-ink">
-                  {o.orderNumber}
-                </span>
-                <StatusBadge tone={statusTone(o.status)}>{formatOrderStatus(o.status)}</StatusBadge>
-                <span className="ml-auto shrink-0 text-[13px] font-semibold text-ink">
-                  {formatCurrency(o.amount)}
-                </span>
-                <span className="hidden w-[110px] shrink-0 text-right text-[12px] text-muted sm:block">
-                  {formatShortDateTime(o.createdAt)}
-                </span>
-              </Link>
-            </li>
-          ))}
+        <ul className="mt-2 divide-y divide-hairline">
+          {events.map((e) => {
+            const style = EVENT_STYLE[e.kind];
+            return (
+              <li key={e.id}>
+                <Link href={e.href} className="flex items-center gap-3 py-2.5 transition hover:bg-paper">
+                  <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${style.className}`}>
+                    <Icon name={style.icon} className="h-[15px] w-[15px]" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-medium text-ink">{e.title}</p>
+                    <p className="truncate text-[11px] text-muted">{e.detail}</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-faint">{timeAgo(e.at)}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

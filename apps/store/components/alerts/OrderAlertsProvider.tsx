@@ -13,7 +13,7 @@ import { createClient } from "@fitzo/supabase/client";
 import { countPendingStoreOrders, loadStoreOrder } from "@/lib/orders";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { Icon } from "@/components/icons";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, timeAgo } from "@/lib/format";
 
 type AlertItem = {
   orderId: string;
@@ -47,13 +47,6 @@ export function useOrderAlerts(): AlertsApi {
 }
 
 const MUTE_KEY = "fitzo-store-alerts-muted";
-
-function timeAgo(at: number) {
-  const s = Math.round((Date.now() - at) / 1000);
-  if (s < 60) return "just now";
-  const m = Math.round(s / 60);
-  return `${m}m ago`;
-}
 
 /**
  * Live new-order alerts for the store. Mounted ONCE in the panel layout, so

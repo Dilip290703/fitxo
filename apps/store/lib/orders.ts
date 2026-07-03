@@ -86,6 +86,30 @@ export async function loadStoreOrders(storeId: string): Promise<StoreOrderSummar
   return (data ?? []).map((o: any) => summarize(o, (o.order_items ?? []).map(mapItem)));
 }
 
+/**
+ * The dashboard action queue: orders still waiting for this store to confirm,
+ * WITH their line items so "Mark all ready & confirm" can run inline. Oldest
+ * first — the store should clear them in arrival order.
+ */
+export async function loadPendingStoreOrders(storeId: string): Promise<StoreOrderDetail[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select(
+      `id, order_number, status, created_at, try_deadline, payment_status, ${SCOPED_ITEMS}`,
+    )
+    .eq("order_items.products.store_id", storeId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((o: any) => {
+    const items = (o.order_items ?? []).map(mapItem);
+    return { ...summarize(o, items), paymentStatus: o.payment_status ?? "pending", items };
+  });
+}
+
 /** Orders still waiting for this store to confirm — the sidebar badge count. */
 export async function countPendingStoreOrders(storeId: string): Promise<number> {
   const supabase = createClient();
