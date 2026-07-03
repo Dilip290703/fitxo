@@ -32,10 +32,18 @@ function formatDateTime(ts: string) {
   return new Date(ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function ComplaintsClient({ complaints }: { complaints: ComplaintRow[] }) {
+export default function ComplaintsClient({
+  complaints,
+  initialTab,
+}: {
+  complaints: ComplaintRow[];
+  initialTab?: string;
+}) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [tab, setTab] = useState<ComplaintStatus | 'all'>('all');
+  const [tab, setTab] = useState<ComplaintStatus | 'all'>(
+    STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as ComplaintStatus | 'all') : 'all',
+  );
   const [search, setSearch] = useState('');
 
   const [active, setActive] = useState<ComplaintRow | null>(null);

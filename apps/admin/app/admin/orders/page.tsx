@@ -9,7 +9,12 @@ type OrderRow = {
   order_items: { id: string }[];
 };
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const supabase = await createClient();
 
   const { data: orders } = await supabase
@@ -27,7 +32,7 @@ export default async function OrdersPage() {
         <h2 className="text-xl font-bold text-ink">Orders</h2>
         <p className="text-sm text-muted">{orders?.length ?? 0} total orders</p>
       </div>
-      <OrdersClient orders={(orders ?? []) as unknown as OrderRow[]} />
+      <OrdersClient orders={(orders ?? []) as unknown as OrderRow[]} initialTab={status} />
     </div>
   );
 }

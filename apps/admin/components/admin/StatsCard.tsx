@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface StatsCardProps {
   title: string;
   value: string | number;
@@ -5,6 +7,8 @@ interface StatsCardProps {
   trend?: { value: number; positive: boolean };
   icon?: string;
   color?: 'indigo' | 'green' | 'amber' | 'red' | 'blue';
+  /** Make the whole card a door into its filtered destination. */
+  href?: string;
 }
 
 const colorMap = {
@@ -22,9 +26,10 @@ export default function StatsCard({
   trend,
   icon,
   color = 'indigo',
+  href,
 }: StatsCardProps) {
-  return (
-    <div className="bg-white border border-line rounded-xl p-4">
+  const inner = (
+    <>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs text-soft font-medium uppercase tracking-wide">{title}</p>
@@ -45,6 +50,15 @@ export default function StatsCard({
           <span className="text-xs text-muted">vs last week</span>
         </div>
       )}
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block bg-white border border-line rounded-xl p-4 transition hover:border-ink">
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="bg-white border border-line rounded-xl p-4">{inner}</div>;
 }

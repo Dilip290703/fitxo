@@ -39,9 +39,11 @@ function formatDateTime(ts: string) {
   });
 }
 
-export default function PaymentsClient({ payments }: { payments: PaymentRow[] }) {
+export default function PaymentsClient({ payments, initialTab }: { payments: PaymentRow[]; initialTab?: string }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>(
+    STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as string) : 'all',
+  );
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {

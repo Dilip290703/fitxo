@@ -6,7 +6,12 @@ function formatINR(n: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 }
 
-export default async function PaymentsPage() {
+export default async function PaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -37,7 +42,7 @@ export default async function PaymentsPage() {
         <StatsCard title="Failed" value={failedCount} icon="✕" color="red" />
       </div>
 
-      <PaymentsClient payments={payments} />
+      <PaymentsClient payments={payments} initialTab={status} />
     </div>
   );
 }

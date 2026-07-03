@@ -29,9 +29,11 @@ const STATUS_TABS: { label: string; value: OrderStatus | 'all' }[] = [
   { label: 'Cancelled', value: 'cancelled' },
 ];
 
-export default function OrdersClient({ orders }: { orders: OrderRow[] }) {
+export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[]; initialTab?: string }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>(
+    STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as OrderStatus | 'all') : 'all',
+  );
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
