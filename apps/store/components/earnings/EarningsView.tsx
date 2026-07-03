@@ -76,7 +76,7 @@ export function EarningsView() {
           </section>
 
           <section className="mt-6 grid gap-4 lg:grid-cols-5">
-            <div className="rounded-2xl border border-line bg-white p-5 lg:col-span-3">
+            <div className="min-w-0 rounded-2xl border border-line bg-white p-5 lg:col-span-3">
               <h2 className="text-[14px] font-semibold text-ink">Payouts</h2>
               {data.payouts.length === 0 ? (
                 <p className="mt-3 text-[13px] text-soft">
@@ -96,14 +96,14 @@ export function EarningsView() {
                     <tbody>
                       {data.payouts.map((p) => (
                         <tr key={p.id} className="border-b border-hairline last:border-0">
-                          <td className="py-2.5 pr-3 font-mono text-[12px] text-ink">{p.orderNumber}</td>
+                          <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-[12px] text-ink">{p.orderNumber}</td>
                           <td className="py-2.5 pr-3">
                             <StatusBadge tone={PAYOUT_TONE[p.status]}>{PAYOUT_LABEL[p.status]}</StatusBadge>
                           </td>
-                          <td className="py-2.5 pr-3 text-right font-semibold text-ink">
+                          <td className="whitespace-nowrap py-2.5 pr-3 text-right font-semibold text-ink">
                             {formatCurrency(p.amount)}
                           </td>
-                          <td className="py-2.5 text-right text-muted">
+                          <td className="whitespace-nowrap py-2.5 text-right text-muted">
                             {p.paidAt ? formatDate(p.paidAt) : "—"}
                           </td>
                         </tr>
@@ -114,7 +114,7 @@ export function EarningsView() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-line bg-white p-5 lg:col-span-2">
+            <div className="min-w-0 rounded-2xl border border-line bg-white p-5 lg:col-span-2">
               <h2 className="text-[14px] font-semibold text-ink">Recently kept items</h2>
               <p className="mt-0.5 text-[11px] text-faint">Item prices are gross (before commission).</p>
               {data.recentKept.length === 0 ? (

@@ -236,7 +236,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
         <ul className="mt-4 divide-y divide-hairline">
           {order.items.map((item) => (
             <li key={item.id} className="flex flex-wrap items-center gap-3 py-3">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-[180px] flex-1">
                 <p className="text-[14px] font-medium text-ink">{item.productName}</p>
                 <p className="text-[12px] text-muted">
                   {item.colorName} · Size {item.size}

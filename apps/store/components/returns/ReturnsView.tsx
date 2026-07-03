@@ -123,7 +123,7 @@ export function ReturnsView() {
                         {r.colorName} · Size {r.size}
                       </p>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[12px] text-body">{r.orderNumber}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-[12px] text-body">{r.orderNumber}</td>
                     <td className="max-w-[200px] px-4 py-3 text-[12px] text-body">
                       {r.reason ?? <span className="text-faint">—</span>}
                     </td>
@@ -135,8 +135,8 @@ export function ReturnsView() {
                     <td className="px-4 py-3">
                       <StatusBadge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</StatusBadge>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-ink">{formatCurrency(r.price)}</td>
-                    <td className="px-4 py-3 text-right text-muted">{formatDate(r.requestedAt)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-ink">{formatCurrency(r.price)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-muted">{formatDate(r.requestedAt)}</td>
                   </tr>
                 ))}
               </tbody>

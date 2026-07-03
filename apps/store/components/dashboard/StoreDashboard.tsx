@@ -137,7 +137,7 @@ export function StoreDashboard() {
               return (
                 <li
                   key={o.id}
-                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-accent-soft bg-white p-4 sm:p-5"
+                  className="flex flex-col gap-3 rounded-2xl border border-accent-soft bg-white p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -159,10 +159,10 @@ export function StoreDashboard() {
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex items-center gap-2 sm:shrink-0">
                     <Link
                       href={`/orders/${o.id}`}
-                      className="rounded-full border border-line-strong px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-body transition hover:border-ink hover:text-ink"
+                      className="rounded-full border border-line-strong px-4 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-body transition hover:border-ink hover:text-ink"
                     >
                       View
                     </Link>
@@ -170,7 +170,7 @@ export function StoreDashboard() {
                       type="button"
                       onClick={() => readyAndConfirm(o)}
                       disabled={busyOrder !== null}
-                      className="rounded-full bg-ink px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-ink-soft disabled:opacity-50"
+                      className="flex-1 rounded-full bg-ink px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-ink-soft disabled:opacity-50 sm:flex-initial"
                     >
                       {busy ? progress || "Working…" : "Ready & confirm"}
                     </button>

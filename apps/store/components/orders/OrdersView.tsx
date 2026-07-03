@@ -203,7 +203,7 @@ export function OrdersView() {
                     aria-label={`Open order ${o.orderNumber}`}
                     className="cursor-pointer border-b border-hairline last:border-0 hover:bg-paper focus-visible:bg-paper focus-visible:outline-none"
                   >
-                    <td className="px-4 py-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <span className="font-mono text-[12px] font-semibold text-ink">
                         {o.orderNumber}
                       </span>
@@ -211,7 +211,7 @@ export function OrdersView() {
                     <td className="px-4 py-3">
                       <StatusBadge tone={statusTone(o.status)}>{formatOrderStatus(o.status)}</StatusBadge>
                     </td>
-                    <td className="px-4 py-3 text-right text-ink">
+                    <td className="px-4 py-3 text-right text-ink whitespace-nowrap">
                       {o.preparedCount}/{o.itemCount} ready
                     </td>
                     <td className="px-4 py-3 text-[12px] text-body">
@@ -225,10 +225,10 @@ export function OrdersView() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-ink">
+                    <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-ink">
                       {formatCurrency(o.subtotal)}
                     </td>
-                    <td className="px-4 py-3 text-right text-muted">{formatDate(o.createdAt)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-muted">{formatDate(o.createdAt)}</td>
                     <td className="px-3 py-3 text-right">
                       {o.status === "pending" ? (
                         <button

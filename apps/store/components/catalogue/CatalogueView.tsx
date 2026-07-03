@@ -204,7 +204,7 @@ export function CatalogueView() {
                     >
                       {p.totalStock === 0 ? "Out" : p.totalStock}
                     </td>
-                    <td className="px-4 py-3 text-right text-muted">
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-muted">
                       {formatDate(p.createdAt)}
                     </td>
                     <td className="px-4 py-3">
