@@ -17,6 +17,13 @@ interface DataTableProps<T> {
   pageSize?: number;
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
+  /** Optional row selection (adds a leading checkbox column) for bulk actions. */
+  selection?: {
+    selected: Set<string>;
+    onToggle: (id: string) => void;
+    /** Called with the visible page's ids when the header checkbox flips. */
+    onToggleAll: (ids: string[], select: boolean) => void;
+  };
 }
 
 function getNestedValue<T>(obj: T, key: string): unknown {
@@ -35,6 +42,7 @@ export default function DataTable<T>({
   pageSize = 20,
   emptyMessage = 'No results found.',
   onRowClick,
+  selection,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -60,6 +68,8 @@ export default function DataTable<T>({
 
   const totalPages = Math.ceil(sorted.length / pageSize);
   const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
+  const pagedIds = paged.map((row) => String(row[keyField]));
+  const allPagedSelected = selection ? pagedIds.length > 0 && pagedIds.every((id) => selection.selected.has(id)) : false;
 
   return (
     <div>
@@ -67,6 +77,17 @@ export default function DataTable<T>({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line bg-cream/60">
+              {selection ? (
+                <th className="w-8 px-3 py-2">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on this page"
+                    checked={allPagedSelected}
+                    onChange={() => selection.onToggleAll(pagedIds, !allPagedSelected)}
+                    className="accent-ink"
+                  />
+                </th>
+              ) : null}
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
@@ -84,7 +105,7 @@ export default function DataTable<T>({
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-muted">
+                <td colSpan={columns.length + (selection ? 1 : 0)} className="px-4 py-12 text-center text-muted">
                   {emptyMessage}
                 </td>
               </tr>
@@ -95,6 +116,17 @@ export default function DataTable<T>({
                   onClick={() => onRowClick?.(row)}
                   className={`border-b border-hairline hover:bg-cream transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
+                  {selection ? (
+                    <td className="w-8 px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label="Select row"
+                        checked={selection.selected.has(String(row[keyField]))}
+                        onChange={() => selection.onToggle(String(row[keyField]))}
+                        className="accent-ink"
+                      />
+                    </td>
+                  ) : null}
                   {columns.map((col) => {
                     const value = getNestedValue(row, String(col.key));
                     return (
