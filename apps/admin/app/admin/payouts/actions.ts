@@ -28,7 +28,15 @@ export async function recordStorePayout(storeId: string): Promise<{ count: numbe
   }));
 
   const { error } = await admin.from('payouts').insert(rows);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // 23505 = unique_violation on (store_id, order_id) — migration 032's
+    // double-payout guard fired (concurrent click / stale page).
+    if (error.code === '23505') {
+      revalidatePath('/admin/payouts');
+      throw new Error('Some of these orders were already paid out — refresh to see the current outstanding amount.');
+    }
+    throw new Error(error.message);
+  }
 
   await logActivity(
     admin,

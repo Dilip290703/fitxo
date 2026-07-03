@@ -28,7 +28,15 @@ export async function recordAgentPayout(riderId: string): Promise<{ count: numbe
   }));
 
   const { error } = await admin.from('agent_payouts').insert(rows);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // 23505 = unique_violation on (rider_id, order_id) — double-payout guard
+    // fired (concurrent click / stale page).
+    if (error.code === '23505') {
+      revalidatePath('/admin/agent-payouts');
+      throw new Error('Some of these jobs were already paid out — refresh to see the current outstanding amount.');
+    }
+    throw new Error(error.message);
+  }
 
   await logActivity(
     admin,
