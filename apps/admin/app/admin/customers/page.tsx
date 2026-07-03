@@ -13,8 +13,8 @@ export default async function CustomersPage() {
   return (
     <div className="space-y-4 max-w-7xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Customers</h2>
-        <p className="text-sm text-gray-500">{customers?.length ?? 0} customers</p>
+        <h2 className="text-xl font-bold text-ink">Customers</h2>
+        <p className="text-sm text-muted">{customers?.length ?? 0} customers</p>
       </div>
       <CustomersClient customers={customers ?? []} />
     </div>

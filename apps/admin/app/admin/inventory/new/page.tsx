@@ -14,8 +14,8 @@ export default async function NewProductPage() {
   return (
     <div className="max-w-3xl">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-white">Add New Product</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Complete all steps to publish</p>
+        <h2 className="text-xl font-bold text-ink">Add New Product</h2>
+        <p className="text-sm text-muted mt-0.5">Complete all steps to publish</p>
       </div>
       <ProductFormClient
         stores={stores ?? []}

@@ -66,20 +66,20 @@ export default function PaymentsClient({ payments }: { payments: PaymentRow[] })
     {
       key: 'razorpay_payment_id',
       label: 'Payment ID',
-      render: (v) => <span className="font-mono text-xs text-indigo-400">{v ? String(v) : '—'}</span>,
+      render: (v) => <span className="font-mono text-xs text-info">{v ? String(v) : '—'}</span>,
     },
     {
       key: 'orders.order_number',
       label: 'Order #',
-      render: (_, row) => <span className="font-mono text-xs text-gray-300">{row.orders?.order_number ?? '—'}</span>,
+      render: (_, row) => <span className="font-mono text-xs text-body">{row.orders?.order_number ?? '—'}</span>,
     },
     {
       key: 'users.name',
       label: 'Customer',
       render: (_, row) => (
         <div>
-          <p className="text-sm text-white">{row.users?.name ?? '—'}</p>
-          <p className="text-xs text-gray-500">{row.users?.email ?? ''}</p>
+          <p className="text-sm text-ink">{row.users?.name ?? '—'}</p>
+          <p className="text-xs text-muted">{row.users?.email ?? ''}</p>
         </div>
       ),
     },
@@ -88,7 +88,7 @@ export default function PaymentsClient({ payments }: { payments: PaymentRow[] })
       label: 'Amount',
       sortable: true,
       render: (v, row) => (
-        <span className="text-sm font-medium text-white">
+        <span className="text-sm font-medium text-ink">
           {new Intl.NumberFormat('en-IN', { style: 'currency', currency: row.currency || 'INR' }).format(Number(v))}
         </span>
       ),
@@ -96,14 +96,14 @@ export default function PaymentsClient({ payments }: { payments: PaymentRow[] })
     {
       key: 'payment_method',
       label: 'Method',
-      render: (v) => <span className="text-sm text-gray-300 capitalize">{String(v)}</span>,
+      render: (v) => <span className="text-sm text-body capitalize">{String(v)}</span>,
     },
     { key: 'status', label: 'Status', render: (v) => <StatusBadge status={String(v)} size="sm" /> },
     {
       key: 'created_at',
       label: 'Date',
       sortable: true,
-      render: (_, row) => <span className="text-xs text-gray-400">{formatDateTime(row.paid_at ?? row.created_at)}</span>,
+      render: (_, row) => <span className="text-xs text-soft">{formatDateTime(row.paid_at ?? row.created_at)}</span>,
     },
   ];
 
@@ -117,7 +117,7 @@ export default function PaymentsClient({ payments }: { payments: PaymentRow[] })
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === tab.value ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                activeTab === tab.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {tab.label}
@@ -129,7 +129,7 @@ export default function PaymentsClient({ payments }: { payments: PaymentRow[] })
           placeholder="Search payment ID, order #, customer…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="sm:ml-auto w-full sm:w-72 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+          className="sm:ml-auto w-full sm:w-72 bg-white border border-line rounded-xl px-4 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
         />
       </div>
 

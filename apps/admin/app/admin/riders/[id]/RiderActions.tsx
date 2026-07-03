@@ -31,12 +31,12 @@ export default function RiderActions({ rider }: { rider: Rider }) {
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-2">
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Actions</h3>
+    <div className="bg-white border border-line rounded-xl p-5 space-y-2">
+      <h3 className="text-xs font-semibold text-soft uppercase tracking-wide mb-2">Actions</h3>
       <button
         onClick={() => update({ is_available: !rider.is_available })}
         disabled={loading}
-        className="w-full py-2 text-sm border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg transition-colors disabled:opacity-60"
+        className="w-full py-2 text-sm border border-line-strong text-body hover:text-ink hover:border-line-strong rounded-lg transition-colors disabled:opacity-60"
       >
         {rider.is_available ? 'Mark Unavailable' : 'Mark Available'}
       </button>
@@ -45,7 +45,7 @@ export default function RiderActions({ rider }: { rider: Rider }) {
         disabled={loading}
         className={`w-full py-2 text-sm rounded-lg transition-colors disabled:opacity-60 ${
           rider.is_verified
-            ? 'border border-red-700 text-red-400 hover:bg-red-900/20'
+            ? 'border border-danger-line text-danger hover:bg-danger-bg'
             : 'bg-green-600 hover:bg-green-500 text-white'
         }`}
       >

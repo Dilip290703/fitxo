@@ -28,19 +28,19 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-3xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/admin/inventory" className="text-sm text-gray-500 hover:text-white">← Inventory</Link>
-        <span className="text-gray-700">/</span>
-        <h2 className="text-xl font-bold text-white">{product.name}</h2>
+        <Link href="/admin/inventory" className="text-sm text-muted hover:text-ink">← Inventory</Link>
+        <span className="text-faint">/</span>
+        <h2 className="text-xl font-bold text-ink">{product.name}</h2>
       </div>
 
       {/* Variant stock table */}
       {product.product_colors && product.product_colors.length > 0 && (
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-6">
-          <h3 className="text-sm font-semibold text-white mb-3">Variant Stock</h3>
+        <div className="bg-white border border-line rounded-xl p-5 mb-6">
+          <h3 className="text-sm font-semibold text-ink mb-3">Variant Stock</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-700 text-gray-400">
+                <tr className="border-b border-line text-soft">
                   <th className="text-left pb-2">Color</th>
                   <th className="text-left pb-2">Size</th>
                   <th className="text-left pb-2">SKU</th>
@@ -63,18 +63,18 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
                   }[];
                 }) =>
                   color.product_variants.map((v) => (
-                    <tr key={v.id} className="border-b border-gray-700/50">
+                    <tr key={v.id} className="border-b border-hairline">
                       <td className="py-2 pr-3">
                         <div className="flex items-center gap-1.5">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.color_hex ?? '#888' }} />
                           {color.color_name}
                         </div>
                       </td>
-                      <td className="py-2 pr-3 text-gray-300">{v.size}</td>
-                      <td className="py-2 pr-3 font-mono text-gray-400">{v.sku}</td>
-                      <td className="py-2 text-right text-gray-300">{v.stock_qty}</td>
-                      <td className="py-2 text-right text-amber-400">{v.reserved_qty}</td>
-                      <td className={`py-2 text-right font-medium ${v.available_qty === 0 ? 'text-red-400' : 'text-green-400'}`}>
+                      <td className="py-2 pr-3 text-body">{v.size}</td>
+                      <td className="py-2 pr-3 font-mono text-soft">{v.sku}</td>
+                      <td className="py-2 text-right text-body">{v.stock_qty}</td>
+                      <td className="py-2 text-right text-warn">{v.reserved_qty}</td>
+                      <td className={`py-2 text-right font-medium ${v.available_qty === 0 ? 'text-danger' : 'text-success'}`}>
                         {v.available_qty}
                       </td>
                     </tr>

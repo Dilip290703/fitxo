@@ -120,8 +120,8 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6 max-w-7xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Analytics</h2>
-        <p className="text-sm text-gray-500">Last 30 days</p>
+        <h2 className="text-xl font-bold text-ink">Analytics</h2>
+        <p className="text-sm text-muted">Last 30 days</p>
       </div>
       <AnalyticsClient
         dailyData={dailyChartData}
@@ -136,8 +136,8 @@ export default async function AnalyticsPage() {
       />
 
       <div className="pt-2">
-        <h3 className="text-base font-bold text-white">Try &amp; Return</h3>
-        <p className="text-sm text-gray-500">Doorstep try-on outcomes across all orders</p>
+        <h3 className="text-base font-bold text-ink">Try &amp; Return</h3>
+        <p className="text-sm text-muted">Doorstep try-on outcomes across all orders</p>
       </div>
       <TryReturnClient
         totalSessions={totalSessions}

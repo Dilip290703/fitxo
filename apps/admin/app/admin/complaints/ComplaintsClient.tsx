@@ -87,7 +87,7 @@ export default function ComplaintsClient({ complaints }: { complaints: Complaint
               key={t.value}
               onClick={() => setTab(t.value)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                tab === t.value ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {t.label}
@@ -99,39 +99,39 @@ export default function ComplaintsClient({ complaints }: { complaints: Complaint
           placeholder="Search subject, message, email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="sm:ml-auto w-full sm:w-72 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+          className="sm:ml-auto w-full sm:w-72 bg-white border border-line rounded-xl px-4 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
         />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-700 bg-gray-800/50">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Subject</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">From</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">When</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">Action</th>
+            <tr className="border-b border-line bg-cream/60">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Subject</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">From</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">When</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-soft uppercase tracking-wide">Action</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-500">No complaints.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-muted">No complaints.</td></tr>
             ) : (
               filtered.map((c) => (
-                <tr key={c.id} className="border-b border-gray-700/50 hover:bg-gray-800/50 transition-colors">
+                <tr key={c.id} className="border-b border-hairline hover:bg-cream transition-colors">
                   <td className="px-4 py-3">
-                    <p className="text-sm text-white">{c.subject}</p>
-                    <p className="text-xs text-gray-500 line-clamp-1 max-w-sm">{c.message}</p>
+                    <p className="text-sm text-ink">{c.subject}</p>
+                    <p className="text-xs text-muted line-clamp-1 max-w-sm">{c.message}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm text-gray-300">{c.user?.name ?? '—'}</p>
-                    <p className="text-xs text-gray-500">{c.user?.email ?? ''}</p>
+                    <p className="text-sm text-body">{c.user?.name ?? '—'}</p>
+                    <p className="text-xs text-muted">{c.user?.email ?? ''}</p>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={c.status} size="sm" /></td>
-                  <td className="px-4 py-3 text-xs text-gray-400">{formatDateTime(c.created_at)}</td>
+                  <td className="px-4 py-3 text-xs text-soft">{formatDateTime(c.created_at)}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => open(c)} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Manage</button>
+                    <button onClick={() => open(c)} className="text-xs text-info hover:text-ink font-medium">Manage</button>
                   </td>
                 </tr>
               ))
@@ -142,29 +142,29 @@ export default function ComplaintsClient({ complaints }: { complaints: Complaint
 
       {active && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !isPending && setActive(null)}>
-          <div className="w-full max-w-lg bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg bg-white border border-line rounded-xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div>
-              <h3 className="text-sm font-semibold text-white">{active.subject}</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <h3 className="text-sm font-semibold text-ink">{active.subject}</h3>
+              <p className="text-xs text-muted mt-0.5">
                 {active.user?.email ?? '—'}{active.order ? ` · order ${active.order.order_number}` : ''}
               </p>
             </div>
-            <p className="text-sm text-gray-300 bg-gray-900/60 rounded-lg p-3 max-h-40 overflow-y-auto">{active.message}</p>
+            <p className="text-sm text-body bg-white/60 rounded-lg p-3 max-h-40 overflow-y-auto">{active.message}</p>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as ComplaintStatus)} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white capitalize focus:outline-none focus:border-indigo-500">
+              <label className="block text-xs font-medium text-soft mb-1.5">Status</label>
+              <select value={status} onChange={(e) => setStatus(e.target.value as ComplaintStatus)} className="w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink capitalize focus:outline-none focus:border-ink">
                 {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Response (internal/notes)</label>
-              <textarea value={response} onChange={(e) => setResponse(e.target.value)} rows={3} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="How was this handled…" />
+              <label className="block text-xs font-medium text-soft mb-1.5">Response (internal/notes)</label>
+              <textarea value={response} onChange={(e) => setResponse(e.target.value)} rows={3} className="w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink focus:outline-none focus:border-ink" placeholder="How was this handled…" />
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setActive(null)} disabled={isPending} className="px-4 py-2 text-sm border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500">Cancel</button>
-              <button onClick={save} disabled={isPending} className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium rounded-lg">
+              <button onClick={() => setActive(null)} disabled={isPending} className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:border-line-strong">Cancel</button>
+              <button onClick={save} disabled={isPending} className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft disabled:opacity-50 text-white font-medium rounded-lg">
                 {isPending ? 'Saving…' : 'Save'}
               </button>
             </div>

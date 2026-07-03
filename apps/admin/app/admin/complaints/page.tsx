@@ -19,8 +19,8 @@ export default async function ComplaintsPage() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Complaints & Support</h2>
-        <p className="text-sm text-gray-500">{complaints.length} total · {open} open</p>
+        <h2 className="text-xl font-bold text-ink">Complaints & Support</h2>
+        <p className="text-sm text-muted">{complaints.length} total · {open} open</p>
       </div>
       <ComplaintsClient complaints={complaints} />
     </div>

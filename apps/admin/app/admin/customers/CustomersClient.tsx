@@ -40,23 +40,23 @@ export default function CustomersClient({ customers }: { customers: Customer[] }
       sortable: true,
       render: (_, row) => (
         <div>
-          <p className="text-sm font-medium text-white">{row.name ?? '—'}</p>
-          <p className="text-xs text-gray-500">{row.email}</p>
+          <p className="text-sm font-medium text-ink">{row.name ?? '—'}</p>
+          <p className="text-xs text-muted">{row.email}</p>
         </div>
       ),
     },
-    { key: 'phone', label: 'Phone', render: (v) => <span className="text-sm text-gray-300">{String(v || '—')}</span> },
+    { key: 'phone', label: 'Phone', render: (v) => <span className="text-sm text-body">{String(v || '—')}</span> },
     {
       key: 'orders',
       label: 'Orders',
       sortable: true,
-      render: (_, row) => <span className="text-sm text-gray-300">{row.orders.length}</span>,
+      render: (_, row) => <span className="text-sm text-body">{row.orders.length}</span>,
     },
     {
       key: 'orders',
       label: 'Total Spent',
       render: (_, row) => (
-        <span className="text-sm text-gray-300">
+        <span className="text-sm text-body">
           ₹{new Intl.NumberFormat('en-IN').format(row.orders.reduce((s, o) => s + (o.final_amount ?? 0), 0))}
         </span>
       ),
@@ -65,7 +65,7 @@ export default function CustomersClient({ customers }: { customers: Customer[] }
       key: 'created_at',
       label: 'Joined',
       sortable: true,
-      render: (v) => <span className="text-xs text-gray-500">{new Date(String(v)).toLocaleDateString('en-IN')}</span>,
+      render: (v) => <span className="text-xs text-muted">{new Date(String(v)).toLocaleDateString('en-IN')}</span>,
     },
     {
       key: 'is_blocked',
@@ -86,14 +86,14 @@ export default function CustomersClient({ customers }: { customers: Customer[] }
           placeholder="Search by name, email or phone…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 w-72"
+          className="bg-white border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder-faint w-72"
         />
         {(['all', 'active', 'blocked'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-3 py-2 text-xs font-medium rounded-lg capitalize transition-colors ${
-              filter === f ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white border border-gray-700'
+              filter === f ? 'bg-ink text-white' : 'text-soft hover:text-ink border border-line'
             }`}
           >
             {f}

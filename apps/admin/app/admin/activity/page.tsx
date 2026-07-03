@@ -18,8 +18,8 @@ export default async function ActivityLogPage() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Activity Log</h2>
-        <p className="text-sm text-gray-500">{logs.length} most recent admin actions</p>
+        <h2 className="text-xl font-bold text-ink">Activity Log</h2>
+        <p className="text-sm text-muted">{logs.length} most recent admin actions</p>
       </div>
       <ActivityLogClient logs={logs} />
     </div>

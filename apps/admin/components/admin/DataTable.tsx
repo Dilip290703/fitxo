@@ -63,14 +63,14 @@ export default function DataTable<T>({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-700 bg-gray-800/50">
+            <tr className="border-b border-line bg-cream/60">
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
-                  className={`px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap ${col.className ?? ''} ${col.sortable ? 'cursor-pointer select-none hover:text-white' : ''}`}
+                  className={`px-3 py-2 text-left text-[11px] font-semibold text-soft uppercase tracking-wide whitespace-nowrap ${col.className ?? ''} ${col.sortable ? 'cursor-pointer select-none hover:text-ink' : ''}`}
                   onClick={() => col.sortable && handleSort(String(col.key))}
                 >
                   {col.label}
@@ -84,7 +84,7 @@ export default function DataTable<T>({
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-500">
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-muted">
                   {emptyMessage}
                 </td>
               </tr>
@@ -93,12 +93,12 @@ export default function DataTable<T>({
                 <tr
                   key={String(row[keyField])}
                   onClick={() => onRowClick?.(row)}
-                  className={`border-b border-gray-700/50 hover:bg-gray-800/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`border-b border-hairline hover:bg-cream transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   {columns.map((col) => {
                     const value = getNestedValue(row, String(col.key));
                     return (
-                      <td key={String(col.key)} className={`px-4 py-3 text-gray-300 ${col.className ?? ''}`}>
+                      <td key={String(col.key)} className={`px-3 py-2 text-body ${col.className ?? ''}`}>
                         {col.render ? col.render(value, row) : String(value ?? '—')}
                       </td>
                     );
@@ -111,7 +111,7 @@ export default function DataTable<T>({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-gray-400">
+        <div className="flex items-center justify-between mt-4 text-sm text-soft">
           <span>
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </span>
@@ -119,7 +119,7 @@ export default function DataTable<T>({
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="px-3 py-1.5 rounded border border-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded border border-line hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ←
             </button>
@@ -130,7 +130,7 @@ export default function DataTable<T>({
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`px-3 py-1.5 rounded border ${p === page ? 'border-indigo-500 bg-indigo-600 text-white' : 'border-gray-700 hover:border-gray-500'}`}
+                  className={`px-3 py-1.5 rounded border ${p === page ? 'border-ink bg-ink text-white' : 'border-line hover:border-line-strong'}`}
                 >
                   {p + 1}
                 </button>
@@ -139,7 +139,7 @@ export default function DataTable<T>({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="px-3 py-1.5 rounded border border-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded border border-line hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
             >
               →
             </button>

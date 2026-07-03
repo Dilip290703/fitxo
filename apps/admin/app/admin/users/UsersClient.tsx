@@ -101,7 +101,7 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
               key={t.value}
               onClick={() => setTab(t.value)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                tab === t.value ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {t.label}
@@ -113,39 +113,39 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
           placeholder="Search name, email, phone…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="sm:ml-auto w-full sm:w-72 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+          className="sm:ml-auto w-full sm:w-72 bg-white border border-line rounded-xl px-4 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
         />
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-700 bg-gray-800/50">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">User</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Phone</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Assigned</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">Action</th>
+            <tr className="border-b border-line bg-cream/60">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">User</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Phone</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Assigned</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-soft uppercase tracking-wide">Action</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-gray-500">No users found.</td>
+                <td colSpan={5} className="px-4 py-12 text-center text-muted">No users found.</td>
               </tr>
             ) : (
               filtered.map((u) => (
-                <tr key={u.id} className="border-b border-gray-700/50 hover:bg-gray-800/50 transition-colors">
+                <tr key={u.id} className="border-b border-hairline hover:bg-cream transition-colors">
                   <td className="px-4 py-3">
-                    <p className="text-sm text-white">{u.name ?? '—'}</p>
-                    <p className="text-xs text-gray-500">{u.email}</p>
+                    <p className="text-sm text-ink">{u.name ?? '—'}</p>
+                    <p className="text-xs text-muted">{u.email}</p>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-300">{u.phone ?? '—'}</td>
+                  <td className="px-4 py-3 text-sm text-body">{u.phone ?? '—'}</td>
                   <td className="px-4 py-3"><StatusBadge status={u.role} size="sm" /></td>
-                  <td className="px-4 py-3 text-sm text-gray-400">{linkedLabel(u)}</td>
+                  <td className="px-4 py-3 text-sm text-soft">{linkedLabel(u)}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => openModal(u)} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+                    <button onClick={() => openModal(u)} className="text-xs text-info hover:text-ink font-medium">
                       Change role
                     </button>
                   </td>
@@ -159,18 +159,18 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
       {/* Change-role modal */}
       {target && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={closeModal}>
-          <div className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md bg-white border border-line rounded-xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div>
-              <h3 className="text-sm font-semibold text-white">Change role</h3>
-              <p className="text-xs text-gray-500 mt-0.5">{target.name ?? target.email}</p>
+              <h3 className="text-sm font-semibold text-ink">Change role</h3>
+              <p className="text-xs text-muted mt-0.5">{target.name ?? target.email}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Role</label>
+              <label className="block text-xs font-medium text-soft mb-1.5">Role</label>
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value as Role)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white capitalize focus:outline-none focus:border-indigo-500"
+                className="w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink capitalize focus:outline-none focus:border-ink"
               >
                 {ROLES.map((r) => (
                   <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
@@ -180,11 +180,11 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
 
             {newRole === 'store_manager' && (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Store</label>
+                <label className="block text-xs font-medium text-soft mb-1.5">Store</label>
                 <select
                   value={storeId}
                   onChange={(e) => setStoreId(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink focus:outline-none focus:border-ink"
                 >
                   <option value="">Select a store…</option>
                   {stores.map((s) => (
@@ -195,19 +195,19 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
             )}
 
             {newRole === 'admin' && (
-              <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              <p className="text-xs text-warn bg-warn-bg border border-warn-accent/40 rounded-lg px-3 py-2">
                 ⚠ Grants full admin access to the entire platform.
               </p>
             )}
 
             <div className="flex justify-end gap-2 pt-1">
-              <button onClick={closeModal} className="px-4 py-2 text-sm border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500">
+              <button onClick={closeModal} className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:border-line-strong">
                 Cancel
               </button>
               <button
                 onClick={submit}
                 disabled={isPending || (newRole === 'store_manager' && !storeId)}
-                className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg"
+                className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg"
               >
                 {isPending ? 'Saving…' : 'Save'}
               </button>

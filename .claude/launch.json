@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "admin",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:admin"],
+      "port": 3001
+    },
+    {
       "name": "agent",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev:agent"],

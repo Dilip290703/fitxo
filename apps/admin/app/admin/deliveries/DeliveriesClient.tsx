@@ -72,28 +72,28 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
     <div className="space-y-6">
       {/* Unassigned */}
       <div>
-        <h3 className="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-2">
-          <span className="w-2 h-2 bg-amber-400 rounded-full" />
+        <h3 className="text-sm font-semibold text-warn mb-3 flex items-center gap-2">
+          <span className="w-2 h-2 bg-warn-accent rounded-full" />
           Unassigned Deliveries ({unassigned.length})
         </h3>
         {unassigned.length === 0 ? (
-          <p className="text-sm text-gray-500 pl-4">All deliveries are assigned ✓</p>
+          <p className="text-sm text-muted pl-4">All deliveries are assigned ✓</p>
         ) : (
           <div className="space-y-2">
             {unassigned.map((d) => (
-              <div key={d.id} className="bg-gray-800 border border-amber-700/40 rounded-xl p-4 flex flex-wrap items-center gap-4">
+              <div key={d.id} className="bg-white border border-warn-accent/40 rounded-xl p-4 flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-0">
-                  <Link href={`/admin/orders/${d.order_id}`} className="text-sm font-medium text-indigo-400 hover:text-indigo-300">
+                  <Link href={`/admin/orders/${d.order_id}`} className="text-sm font-medium text-info hover:text-ink">
                     {d.orders?.order_number ?? d.order_id.slice(0, 8)}
                   </Link>
-                  <p className="text-xs text-gray-500 mt-0.5">{d.orders?.users?.name ?? '—'} · {d.type.replace('_', ' ')}</p>
+                  <p className="text-xs text-muted mt-0.5">{d.orders?.users?.name ?? '—'} · {d.type.replace('_', ' ')}</p>
                 </div>
                 <StatusBadge status={d.status} size="sm" />
                 <div className="flex items-center gap-2">
                   <select
                     value={selectedRiders[d.id] ?? ''}
                     onChange={(e) => setSelectedRiders((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-sm text-white"
+                    className="bg-sand border border-line-strong rounded-lg px-2 py-1.5 text-sm text-ink"
                   >
                     <option value="">Select rider…</option>
                     {availableRiders.map((r) => (
@@ -103,7 +103,7 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                   <button
                     onClick={() => assignRider(d.id)}
                     disabled={!selectedRiders[d.id] || assigning === d.id}
-                    className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white rounded-lg"
+                    className="px-3 py-1.5 text-sm bg-ink hover:bg-ink-soft disabled:opacity-60 text-white rounded-lg"
                   >
                     {assigning === d.id ? '…' : 'Assign'}
                   </button>
@@ -116,14 +116,14 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
 
       {/* Active/assigned */}
       <div>
-        <h3 className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+        <h3 className="text-sm font-semibold text-success mb-3 flex items-center gap-2">
+          <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
           Active Deliveries ({assigned.length})
         </h3>
-        <div className="overflow-x-auto rounded-xl border border-gray-700">
+        <div className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-700 bg-gray-800/50 text-xs text-gray-400">
+              <tr className="border-b border-line bg-cream/60 text-xs text-soft">
                 <th className="px-4 py-3 text-left font-medium">Order</th>
                 <th className="px-4 py-3 text-left font-medium">Customer</th>
                 <th className="px-4 py-3 text-left font-medium">Type</th>
@@ -135,17 +135,17 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
             </thead>
             <tbody>
               {assigned.map((d) => (
-                <tr key={d.id} className="border-b border-gray-700/50 hover:bg-gray-800/30">
+                <tr key={d.id} className="border-b border-hairline hover:bg-cream/50">
                   <td className="px-4 py-3">
-                    <Link href={`/admin/orders/${d.order_id}`} className="text-indigo-400 hover:text-indigo-300 font-mono text-xs">
+                    <Link href={`/admin/orders/${d.order_id}`} className="text-info hover:text-ink font-mono text-xs">
                       {d.orders?.order_number ?? '—'}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{d.orders?.users?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-300 capitalize text-xs">{d.type.replace('_', ' ')}</td>
-                  <td className="px-4 py-3 text-gray-300">{d.riders?.users?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-body">{d.orders?.users?.name ?? '—'}</td>
+                  <td className="px-4 py-3 text-body capitalize text-xs">{d.type.replace('_', ' ')}</td>
+                  <td className="px-4 py-3 text-body">{d.riders?.users?.name ?? '—'}</td>
                   <td className="px-4 py-3"><StatusBadge status={d.status} size="sm" /></td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">
+                  <td className="px-4 py-3 text-muted text-xs">
                     {d.distance_km ? `${d.distance_km} km` : '—'}
                     {d.estimated_minutes ? ` · ~${d.estimated_minutes}m` : ''}
                   </td>
@@ -154,7 +154,7 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                       onClick={() => releaseDelivery(d.id)}
                       disabled={releasing === d.id}
                       title="Return this delivery to the rider pool"
-                      className="px-2.5 py-1 text-xs border border-gray-600 text-gray-300 rounded-lg hover:border-amber-500 hover:text-amber-400 disabled:opacity-50"
+                      className="px-2.5 py-1 text-xs border border-line-strong text-body rounded-lg hover:border-warn-accent hover:text-warn disabled:opacity-50"
                     >
                       {releasing === d.id ? '…' : 'Release'}
                     </button>
@@ -162,7 +162,7 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                 </tr>
               ))}
               {assigned.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">No active deliveries</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted">No active deliveries</td></tr>
               )}
             </tbody>
           </table>

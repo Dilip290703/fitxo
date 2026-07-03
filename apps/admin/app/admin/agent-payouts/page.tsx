@@ -20,8 +20,8 @@ export default async function AgentPayoutsPage() {
   return (
     <div className="space-y-4 max-w-5xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Agent Payouts</h2>
-        <p className="text-sm text-gray-500">Settle rider earnings — the delivery fee per completed job</p>
+        <h2 className="text-xl font-bold text-ink">Agent Payouts</h2>
+        <p className="text-sm text-muted">Settle rider earnings — the delivery fee per completed job</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -38,19 +38,19 @@ export default async function InventoryPage() {
     <div className="space-y-4 max-w-7xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Inventory</h2>
-          <p className="text-sm text-gray-500">{products?.length ?? 0} products</p>
+          <h2 className="text-xl font-bold text-ink">Inventory</h2>
+          <p className="text-sm text-muted">{products?.length ?? 0} products</p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/admin/inventory/bulk-upload"
-            className="px-4 py-2 text-sm border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm border border-line-strong text-body hover:text-ink hover:border-line-strong rounded-lg transition-colors"
           >
             Bulk Upload
           </Link>
           <Link
             href="/admin/inventory/new"
-            className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors"
+            className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft text-white font-medium rounded-lg transition-colors"
           >
             + Add Product
           </Link>

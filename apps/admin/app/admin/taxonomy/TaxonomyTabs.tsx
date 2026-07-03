@@ -31,7 +31,7 @@ export default function TaxonomyTabs({
             key={t.value}
             onClick={() => setTab(t.value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              tab === t.value ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
             }`}
           >
             {t.label}

@@ -26,7 +26,7 @@ export default function StoreEditClient({ store }: { store: Store }) {
   const set = (k: keyof typeof form, v: string | boolean) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors';
+  const inputClass = 'w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink transition-colors';
 
   const handleSave = async () => {
     setSaving(true);
@@ -40,35 +40,35 @@ export default function StoreEditClient({ store }: { store: Store }) {
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-3">
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Store Info</h3>
+    <div className="bg-white border border-line rounded-xl p-5 space-y-3">
+      <h3 className="text-xs font-semibold text-soft uppercase tracking-wide">Store Info</h3>
 
       <div>
-        <label className="block text-xs text-gray-400 mb-1">Name</label>
+        <label className="block text-xs text-soft mb-1">Name</label>
         <input type="text" value={form.name} onChange={(e) => set('name', e.target.value)} className={inputClass} />
       </div>
       <div>
-        <label className="block text-xs text-gray-400 mb-1">City</label>
+        <label className="block text-xs text-soft mb-1">City</label>
         <input type="text" value={form.city} onChange={(e) => set('city', e.target.value)} className={inputClass} />
       </div>
       <div>
-        <label className="block text-xs text-gray-400 mb-1">Pincode</label>
+        <label className="block text-xs text-soft mb-1">Pincode</label>
         <input type="text" value={form.pincode} onChange={(e) => set('pincode', e.target.value)} className={inputClass} />
       </div>
       <div>
-        <label className="block text-xs text-gray-400 mb-1">Contact Email</label>
+        <label className="block text-xs text-soft mb-1">Contact Email</label>
         <input type="email" value={form.contact_email} onChange={(e) => set('contact_email', e.target.value)} className={inputClass} />
       </div>
       <div>
-        <label className="block text-xs text-gray-400 mb-1">Phone</label>
+        <label className="block text-xs text-soft mb-1">Phone</label>
         <input type="tel" value={form.contact_phone} onChange={(e) => set('contact_phone', e.target.value)} className={inputClass} />
       </div>
       <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-          <input type="checkbox" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} className="accent-indigo-600" />
+        <label className="flex items-center gap-2 text-sm text-body cursor-pointer">
+          <input type="checkbox" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} className="accent-ink" />
           Active
         </label>
-        <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+        <label className="flex items-center gap-2 text-sm text-body cursor-pointer">
           <input type="checkbox" checked={form.is_verified} onChange={(e) => set('is_verified', e.target.checked)} className="accent-green-600" />
           Verified
         </label>
@@ -76,7 +76,7 @@ export default function StoreEditClient({ store }: { store: Store }) {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium rounded-lg"
+        className="w-full py-2 text-sm bg-ink hover:bg-ink-soft disabled:opacity-60 text-white font-medium rounded-lg"
       >
         {saving ? 'Saving…' : 'Save Changes'}
       </button>

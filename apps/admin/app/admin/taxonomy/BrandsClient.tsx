@@ -55,37 +55,37 @@ export default function BrandsClient({ brands }: { brands: Brand[] }) {
     toast('Brand deleted', 'success'); router.refresh();
   };
 
-  const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500';
+  const inputClass = 'w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink';
 
   return (
     <div className="space-y-4">
-      <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg">
+      <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft text-white font-medium rounded-lg">
         {showForm ? '× Cancel' : '+ Add Brand'}
       </button>
 
       {showForm && (
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">New Brand</h3>
+        <div className="bg-white border border-line rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-ink">New Brand</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Name *</label>
+              <label className="block text-xs text-soft mb-1">Name *</label>
               <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))} className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Slug</label>
+              <label className="block text-xs text-soft mb-1">Slug</label>
               <input type="text" value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Website URL</label>
+              <label className="block text-xs text-soft mb-1">Website URL</label>
               <input type="url" value={form.website_url} onChange={(e) => setForm((f) => ({ ...f, website_url: e.target.value }))} className={inputClass} placeholder="https://..." />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Logo</label>
+              <label className="block text-xs text-soft mb-1">Logo</label>
               <ImageUploader bucket="brand-logos" onUpload={setLogoUrl} />
-              {logoUrl && <p className="text-xs text-green-400 mt-1">Uploaded ✓</p>}
+              {logoUrl && <p className="text-xs text-success mt-1">Uploaded ✓</p>}
             </div>
             <div className="col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Description</label>
+              <label className="block text-xs text-soft mb-1">Description</label>
               <input type="text" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className={inputClass} />
             </div>
           </div>
@@ -97,32 +97,32 @@ export default function BrandsClient({ brands }: { brands: Brand[] }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {brands.map((brand) => (
-          <div key={brand.id} className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-start justify-between">
+          <div key={brand.id} className="bg-white border border-line rounded-xl p-4 flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+              <div className="w-10 h-10 bg-sand rounded-lg flex items-center justify-center overflow-hidden">
                 {brand.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
                 ) : <span className="text-lg">🏷️</span>}
               </div>
               <div>
-                <p className="text-sm font-medium text-white">{brand.name}</p>
-                <p className="text-xs text-gray-500">{brand.product_count} products</p>
+                <p className="text-sm font-medium text-ink">{brand.name}</p>
+                <p className="text-xs text-muted">{brand.product_count} products</p>
                 {brand.website_url && (
-                  <a href={brand.website_url} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-400 hover:text-indigo-300">
+                  <a href={brand.website_url} target="_blank" rel="noopener noreferrer" className="text-xs text-info hover:text-ink">
                     Website →
                   </a>
                 )}
               </div>
             </div>
-            <button onClick={() => setDeleteId(brand.id)} className="text-gray-600 hover:text-red-400 text-xs transition-colors">
+            <button onClick={() => setDeleteId(brand.id)} className="text-faint hover:text-danger text-xs transition-colors">
               ✕
             </button>
           </div>
         ))}
 
         {brands.length === 0 && (
-          <div className="col-span-3 py-12 text-center text-gray-500">No brands yet</div>
+          <div className="col-span-3 py-12 text-center text-muted">No brands yet</div>
         )}
       </div>
 

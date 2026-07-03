@@ -44,22 +44,22 @@ export default function TryReturnClient({
       </div>
 
       {/* Keep vs return split */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-white mb-3">Keep vs Return</h3>
+      <div className="bg-white border border-line rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-ink mb-3">Keep vs Return</h3>
         {decisionCounts.keep + decisionCounts.return === 0 ? (
-          <p className="text-sm text-gray-500">No decided items yet.</p>
+          <p className="text-sm text-muted">No decided items yet.</p>
         ) : (
           <>
             <div className="flex h-4 w-full overflow-hidden rounded-full">
               <div className="bg-green-500" style={{ width: `${keepRate}%` }} />
               <div className="bg-amber-500" style={{ width: `${returnRate}%` }} />
             </div>
-            <div className="mt-2 flex justify-between text-xs text-gray-400">
+            <div className="mt-2 flex justify-between text-xs text-soft">
               <span>✅ Kept {decisionCounts.keep} ({keepRate}%)</span>
               <span>↩️ Returned {decisionCounts.return} ({returnRate}%)</span>
             </div>
             {decisionCounts.pending > 0 && (
-              <p className="mt-2 text-xs text-gray-500">{decisionCounts.pending} item(s) still pending a decision.</p>
+              <p className="mt-2 text-xs text-muted">{decisionCounts.pending} item(s) still pending a decision.</p>
             )}
           </>
         )}
@@ -67,8 +67,8 @@ export default function TryReturnClient({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily decisions */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Decisions · last 30 days</h3>
+        <div className="bg-white border border-line rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-ink mb-4">Decisions · last 30 days</h3>
           <div className="flex items-end gap-1 h-40">
             {dailyData.map((d, i) => {
               const total = d.keep + d.return;
@@ -82,29 +82,29 @@ export default function TryReturnClient({
               );
             })}
           </div>
-          <div className="mt-3 flex gap-4 text-xs text-gray-400">
+          <div className="mt-3 flex gap-4 text-xs text-soft">
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500" /> Kept</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500" /> Returned</span>
           </div>
         </div>
 
         {/* Returns by condition */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Returns by condition</h3>
+        <div className="bg-white border border-line rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-ink mb-4">Returns by condition</h3>
           {conditions.length === 0 ? (
-            <p className="text-sm text-gray-500">No returns recorded yet.</p>
+            <p className="text-sm text-muted">No returns recorded yet.</p>
           ) : (
             <div className="space-y-3">
               {conditions.map((c) => {
                 const pct = totalReturns > 0 ? Math.round((c.count / totalReturns) * 100) : 0;
                 return (
                   <div key={c.condition}>
-                    <div className="flex justify-between text-xs text-gray-300 mb-1">
+                    <div className="flex justify-between text-xs text-body mb-1">
                       <span className="capitalize">{c.condition}</span>
-                      <span className="text-gray-500">{c.count} ({pct}%)</span>
+                      <span className="text-muted">{c.count} ({pct}%)</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-gray-700 overflow-hidden">
-                      <div className={`h-full rounded-full ${CONDITION_COLOR[c.condition] ?? 'bg-indigo-500'}`} style={{ width: `${pct}%` }} />
+                    <div className="h-2 w-full rounded-full bg-sand overflow-hidden">
+                      <div className={`h-full rounded-full ${CONDITION_COLOR[c.condition] ?? 'bg-ink-soft'}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );

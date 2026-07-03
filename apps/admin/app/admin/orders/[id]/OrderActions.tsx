@@ -75,7 +75,7 @@ export default function OrderActions({ order, items }: { order: Order; items: Ac
   if (order.status === 'return_picked') actions.push({ label: 'Mark Completed', status: 'completed', color: 'bg-green-600 hover:bg-green-500' });
 
   if (!['completed', 'cancelled'].includes(order.status)) {
-    actions.push({ label: 'Cancel Order', status: 'cancelled', color: 'bg-red-900/40 hover:bg-red-800/60 border border-red-700 text-red-300' });
+    actions.push({ label: 'Cancel Order', status: 'cancelled', color: 'bg-danger-bg hover:bg-danger-line border border-danger-line text-danger' });
   }
 
   if (actions.length === 0) return null;
@@ -83,8 +83,8 @@ export default function OrderActions({ order, items }: { order: Order; items: Ac
   const blockedReason = actions.find((a) => a.blockedReason)?.blockedReason;
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Actions</h3>
+    <div className="bg-white border border-line rounded-xl p-5">
+      <h3 className="text-xs font-semibold text-soft uppercase tracking-wide mb-3">Actions</h3>
       <div className="flex flex-wrap gap-2">
         {actions.map((a) => (
           <button
@@ -99,7 +99,7 @@ export default function OrderActions({ order, items }: { order: Order; items: Ac
         ))}
       </div>
       {blockedReason ? (
-        <p className="mt-3 text-xs text-amber-400">⏳ {blockedReason}</p>
+        <p className="mt-3 text-xs text-warn">⏳ {blockedReason}</p>
       ) : null}
     </div>
   );

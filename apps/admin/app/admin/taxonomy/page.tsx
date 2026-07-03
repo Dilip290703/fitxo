@@ -36,7 +36,7 @@ export default async function TaxonomyPage() {
 
   return (
     <div className="space-y-4 max-w-4xl">
-      <h2 className="text-xl font-bold text-white">Brands &amp; Categories</h2>
+      <h2 className="text-xl font-bold text-ink">Brands &amp; Categories</h2>
       <TaxonomyTabs
         brands={brandsWithCount}
         categories={categories ?? []}

@@ -2,52 +2,66 @@ import type { OrderStatus, DeliveryStatus, PaymentStatus } from '@fitzo/supabase
 
 type StatusValue = OrderStatus | DeliveryStatus | PaymentStatus | string;
 
-const statusStyles: Record<string, string> = {
+/**
+ * All statuses flow through the Store panel's 5 badge tones so both panels
+ * read the same. The status-string API is unchanged from the first build.
+ */
+type Tone = 'neutral' | 'amber' | 'green' | 'red' | 'blue';
+
+const TONE_CLASS: Record<Tone, string> = {
+  neutral: 'bg-hairline text-soft',
+  amber: 'bg-warn-bg text-warn',
+  green: 'bg-success-bg text-success',
+  red: 'bg-danger-bg text-danger',
+  blue: 'bg-info-bg text-info',
+};
+
+const STATUS_TONE: Record<string, Tone> = {
   // Order statuses
-  pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  confirmed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  assigned: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  out_for_delivery: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  delivered: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  try_window_active: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  return_requested: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  return_picked: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  completed: 'bg-green-500/10 text-green-400 border-green-500/20',
-  cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
+  pending: 'amber',
+  confirmed: 'blue',
+  assigned: 'blue',
+  out_for_delivery: 'blue',
+  delivered: 'green',
+  try_window_active: 'amber',
+  return_requested: 'amber',
+  return_picked: 'blue',
+  completed: 'green',
+  cancelled: 'red',
   // Delivery statuses
-  accepted: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  picked_up: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  en_route: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  arrived: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  failed: 'bg-red-500/10 text-red-400 border-red-500/20',
+  accepted: 'blue',
+  picked_up: 'blue',
+  en_route: 'blue',
+  arrived: 'green',
+  failed: 'red',
   // Payment
-  paid: 'bg-green-500/10 text-green-400 border-green-500/20',
-  success: 'bg-green-500/10 text-green-400 border-green-500/20',
-  initiated: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  partially_paid: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  refunded: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  paid: 'green',
+  success: 'green',
+  initiated: 'amber',
+  partially_paid: 'amber',
+  refunded: 'blue',
   // User roles
-  admin: 'bg-red-500/10 text-red-400 border-red-500/20',
-  store_manager: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  rider: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  customer: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  admin: 'red',
+  store_manager: 'blue',
+  rider: 'blue',
+  customer: 'neutral',
   // Notification types
-  system: 'bg-gray-500/10 text-gray-300 border-gray-500/20',
-  promo: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  order_update: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  system: 'neutral',
+  promo: 'amber',
+  order_update: 'blue',
   // Complaint statuses
-  open: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  in_progress: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  resolved: 'bg-green-500/10 text-green-400 border-green-500/20',
-  closed: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  open: 'amber',
+  in_progress: 'blue',
+  resolved: 'green',
+  closed: 'neutral',
   // Content types
-  page: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  banner: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  faq: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  announcement: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  page: 'blue',
+  banner: 'blue',
+  faq: 'neutral',
+  announcement: 'amber',
   // Generic
-  active: 'bg-green-500/10 text-green-400 border-green-500/20',
-  inactive: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  active: 'green',
+  inactive: 'neutral',
 };
 
 const formatLabel = (status: string) =>
@@ -59,12 +73,12 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
-  const style = statusStyles[status] ?? 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+  const tone = STATUS_TONE[status] ?? 'neutral';
 
   return (
     <span
-      className={`inline-flex items-center border rounded-full font-medium ${style} ${
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
+      className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${TONE_CLASS[tone]} ${
+        size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-[11px]'
       }`}
     >
       {formatLabel(status)}

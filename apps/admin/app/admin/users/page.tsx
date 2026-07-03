@@ -19,8 +19,8 @@ export default async function UsersPage() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div>
-        <h2 className="text-xl font-bold text-white">User Roles</h2>
-        <p className="text-sm text-gray-500">{users?.length ?? 0} users</p>
+        <h2 className="text-xl font-bold text-ink">User Roles</h2>
+        <p className="text-sm text-muted">{users?.length ?? 0} users</p>
       </div>
       <UsersClient
         users={(users ?? []) as unknown as UserRow[]}

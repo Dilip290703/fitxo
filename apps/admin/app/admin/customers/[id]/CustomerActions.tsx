@@ -36,15 +36,15 @@ export default function CustomerActions({ customer }: { customer: User }) {
 
   return (
     <>
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-2">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Actions</h3>
+      <div className="bg-white border border-line rounded-xl p-5 space-y-2">
+        <h3 className="text-xs font-semibold text-soft uppercase tracking-wide mb-2">Actions</h3>
         <button
           onClick={() => setConfirm(true)}
           disabled={loading}
           className={`w-full py-2 text-sm rounded-lg transition-colors disabled:opacity-60 ${
             customer.is_blocked
               ? 'bg-green-600 hover:bg-green-500 text-white'
-              : 'border border-red-700 text-red-400 hover:bg-red-900/20'
+              : 'border border-danger-line text-danger hover:bg-danger-bg'
           }`}
         >
           {customer.is_blocked ? 'Unblock Customer' : 'Block Customer'}

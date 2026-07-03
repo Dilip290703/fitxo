@@ -162,12 +162,12 @@ export default function BulkUploadPage() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Bulk Upload Products</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Import products via CSV file</p>
+          <h2 className="text-xl font-bold text-ink">Bulk Upload Products</h2>
+          <p className="text-sm text-muted mt-0.5">Import products via CSV file</p>
         </div>
         <button
           onClick={downloadTemplate}
-          className="px-4 py-2 text-sm border border-gray-600 text-gray-300 hover:text-white rounded-lg"
+          className="px-4 py-2 text-sm border border-line-strong text-body hover:text-ink rounded-lg"
         >
           ↓ Download Template
         </button>
@@ -176,11 +176,11 @@ export default function BulkUploadPage() {
       {/* Upload area */}
       <div
         onClick={() => fileRef.current?.click()}
-        className="border-2 border-dashed border-gray-600 rounded-xl p-10 text-center cursor-pointer hover:border-gray-500 transition-colors"
+        className="border-2 border-dashed border-line-strong rounded-xl p-10 text-center cursor-pointer hover:border-line-strong transition-colors"
       >
         <p className="text-3xl mb-2">📋</p>
-        <p className="text-sm text-gray-400">Click to select a CSV file</p>
-        <p className="text-xs text-gray-600 mt-1">One variant per row. Use | to separate multiple tags.</p>
+        <p className="text-sm text-soft">Click to select a CSV file</p>
+        <p className="text-xs text-faint mt-1">One variant per row. Use | to separate multiple tags.</p>
         <input
           ref={fileRef}
           type="file"
@@ -194,11 +194,11 @@ export default function BulkUploadPage() {
       {rows.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-400">{rows.length} rows parsed</p>
+            <p className="text-sm text-soft">{rows.length} rows parsed</p>
             {!uploading && (
               <button
                 onClick={processRows}
-                className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg"
+                className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft text-white font-medium rounded-lg"
               >
                 Import All
               </button>
@@ -206,49 +206,49 @@ export default function BulkUploadPage() {
           </div>
 
           {uploading && (
-            <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+            <div className="bg-white border border-line rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-300">Importing…</p>
-                <p className="text-sm text-indigo-400">{progress.done}/{progress.total}</p>
+                <p className="text-sm text-body">Importing…</p>
+                <p className="text-sm text-info">{progress.done}/{progress.total}</p>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-sand rounded-full h-2">
                 <div
-                  className="bg-indigo-600 h-2 rounded-full transition-all"
+                  className="bg-ink h-2 rounded-full transition-all"
                   style={{ width: `${(progress.done / progress.total) * 100}%` }}
                 />
               </div>
             </div>
           )}
 
-          <div className="overflow-x-auto rounded-xl border border-gray-700">
+          <div className="overflow-x-auto rounded-xl border border-line">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-700 bg-gray-800/50">
-                  <th className="px-3 py-2 text-left text-gray-400 font-medium">Status</th>
-                  <th className="px-3 py-2 text-left text-gray-400 font-medium">Name</th>
-                  <th className="px-3 py-2 text-left text-gray-400 font-medium">SKU</th>
-                  <th className="px-3 py-2 text-left text-gray-400 font-medium">Color</th>
-                  <th className="px-3 py-2 text-left text-gray-400 font-medium">Size</th>
-                  <th className="px-3 py-2 text-right text-gray-400 font-medium">Price</th>
-                  <th className="px-3 py-2 text-right text-gray-400 font-medium">Stock</th>
-                  <th className="px-3 py-2 text-left text-gray-400 font-medium">Error</th>
+                <tr className="border-b border-line bg-cream/60">
+                  <th className="px-3 py-2 text-left text-soft font-medium">Status</th>
+                  <th className="px-3 py-2 text-left text-soft font-medium">Name</th>
+                  <th className="px-3 py-2 text-left text-soft font-medium">SKU</th>
+                  <th className="px-3 py-2 text-left text-soft font-medium">Color</th>
+                  <th className="px-3 py-2 text-left text-soft font-medium">Size</th>
+                  <th className="px-3 py-2 text-right text-soft font-medium">Price</th>
+                  <th className="px-3 py-2 text-right text-soft font-medium">Stock</th>
+                  <th className="px-3 py-2 text-left text-soft font-medium">Error</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
-                  <tr key={i} className={`border-b border-gray-700/50 ${row._status === 'error' ? 'bg-red-900/10' : row._status === 'success' ? 'bg-green-900/10' : ''}`}>
+                  <tr key={i} className={`border-b border-hairline ${row._status === 'error' ? 'bg-danger-bg/10' : row._status === 'success' ? 'bg-success-bg/10' : ''}`}>
                     <td className="px-3 py-2">
-                      {row._status === 'success' && <span className="text-green-400">✓</span>}
-                      {row._status === 'error' && <span className="text-red-400">✕</span>}
-                      {row._status === 'pending' && <span className="text-gray-500">—</span>}
+                      {row._status === 'success' && <span className="text-success">✓</span>}
+                      {row._status === 'error' && <span className="text-danger">✕</span>}
+                      {row._status === 'pending' && <span className="text-muted">—</span>}
                     </td>
-                    <td className="px-3 py-2 text-gray-300">{row.name}</td>
-                    <td className="px-3 py-2 font-mono text-gray-400">{row.sku}</td>
-                    <td className="px-3 py-2 text-gray-300">{row.color_name}</td>
-                    <td className="px-3 py-2 text-gray-300">{row.size}</td>
-                    <td className="px-3 py-2 text-right text-gray-300">₹{row.base_price}</td>
-                    <td className="px-3 py-2 text-right text-gray-300">{row.stock_qty}</td>
-                    <td className="px-3 py-2 text-red-400 text-xs max-w-xs truncate">{row._error ?? ''}</td>
+                    <td className="px-3 py-2 text-body">{row.name}</td>
+                    <td className="px-3 py-2 font-mono text-soft">{row.sku}</td>
+                    <td className="px-3 py-2 text-body">{row.color_name}</td>
+                    <td className="px-3 py-2 text-body">{row.size}</td>
+                    <td className="px-3 py-2 text-right text-body">₹{row.base_price}</td>
+                    <td className="px-3 py-2 text-right text-body">{row.stock_qty}</td>
+                    <td className="px-3 py-2 text-danger text-xs max-w-xs truncate">{row._error ?? ''}</td>
                   </tr>
                 ))}
               </tbody>

@@ -27,8 +27,8 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-4 max-w-7xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Payment Records</h2>
-        <p className="text-sm text-gray-500">{payments.length} transactions</p>
+        <h2 className="text-xl font-bold text-ink">Payment Records</h2>
+        <p className="text-sm text-muted">{payments.length} transactions</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

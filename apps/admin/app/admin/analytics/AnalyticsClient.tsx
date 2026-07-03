@@ -56,20 +56,20 @@ export default function AnalyticsClient({
       </div>
 
       {/* Revenue/Orders chart */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
+      <div className="bg-white border border-line rounded-xl p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="text-sm font-semibold text-white">
+          <h3 className="text-sm font-semibold text-ink">
             {metric === 'revenue' ? 'Revenue' : 'Orders'} Over Time
           </h3>
           <div className="flex gap-2">
             <div className="flex gap-1">
               {(['orders', 'revenue'] as const).map((m) => (
-                <button key={m} onClick={() => setMetric(m)} className={`px-2.5 py-1 text-xs rounded capitalize ${metric === m ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>{m}</button>
+                <button key={m} onClick={() => setMetric(m)} className={`px-2.5 py-1 text-xs rounded capitalize ${metric === m ? 'bg-ink text-white' : 'text-soft hover:text-ink'}`}>{m}</button>
               ))}
             </div>
             <div className="flex gap-1">
               {(['week', 'month'] as const).map((r) => (
-                <button key={r} onClick={() => setRange(r)} className={`px-2.5 py-1 text-xs rounded capitalize ${range === r ? 'bg-gray-600 text-white' : 'text-gray-400 hover:text-white'}`}>{r}</button>
+                <button key={r} onClick={() => setRange(r)} className={`px-2.5 py-1 text-xs rounded capitalize ${range === r ? 'bg-knob text-ink' : 'text-soft hover:text-ink'}`}>{r}</button>
               ))}
             </div>
           </div>
@@ -93,10 +93,10 @@ export default function AnalyticsClient({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top products */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Top Products (by orders)</h3>
+        <div className="bg-white border border-line rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-ink mb-4">Top Products (by orders)</h3>
           {topProducts.length === 0 ? (
-            <p className="text-sm text-gray-500">No data yet</p>
+            <p className="text-sm text-muted">No data yet</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={topProducts.slice(0, 8)} layout="vertical" margin={{ left: 0, right: 20 }}>
@@ -110,10 +110,10 @@ export default function AnalyticsClient({
         </div>
 
         {/* Keep vs Return */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Try-to-Buy Conversion</h3>
+        <div className="bg-white border border-line rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-ink mb-4">Try-to-Buy Conversion</h3>
           {keptItems + returnedItems === 0 ? (
-            <p className="text-sm text-gray-500">No decisions recorded yet</p>
+            <p className="text-sm text-muted">No decisions recorded yet</p>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={160}>
@@ -127,12 +127,12 @@ export default function AnalyticsClient({
               </ResponsiveContainer>
               <div className="grid grid-cols-2 gap-3 mt-2">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-400">{keepRate}%</p>
-                  <p className="text-xs text-gray-500">Keep Rate</p>
+                  <p className="text-2xl font-bold text-success">{keepRate}%</p>
+                  <p className="text-xs text-muted">Keep Rate</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-amber-400">{returnRate}%</p>
-                  <p className="text-xs text-gray-500">Return Rate</p>
+                  <p className="text-2xl font-bold text-warn">{returnRate}%</p>
+                  <p className="text-xs text-muted">Return Rate</p>
                 </div>
               </div>
             </>
