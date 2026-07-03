@@ -13,6 +13,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
 import { useToast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
 import { RowsSkeleton } from "@/components/ui/Skeleton";
@@ -122,15 +123,11 @@ export function OrdersView() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Orders</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Order management
-        </h1>
-        <p className="mt-1 text-[13px] text-muted">
-          Confirm pending orders right here, or open one to prepare item by item.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Orders"
+        title="Order management"
+        sub="Confirm pending orders right here, or open one to prepare item by item."
+      />
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {BUCKETS.map((b) => {

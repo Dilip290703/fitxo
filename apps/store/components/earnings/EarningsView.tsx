@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadStoreEarnings, type EarningsData, type PayoutRow } from "@/lib/earnings";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { StatusBadge, type BadgeTone } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
@@ -42,15 +43,11 @@ export function EarningsView() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Earnings</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Earnings & payouts
-        </h1>
-        <p className="mt-1 text-[13px] text-muted">
-          What you earn from kept items after the Fitzo commission, and how it&apos;s paid out.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Earnings"
+        title="Earnings & payouts"
+        sub="What you earn from kept items after the Fitzo commission, and how it's paid out."
+      />
 
       {error ? (
         <Banner variant="error" className="mt-6">{error}</Banner>

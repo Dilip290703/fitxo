@@ -2,18 +2,36 @@
 
 import { useEffect, useState } from "react";
 import { loadStoreProfile, saveStoreProfile, type StoreProfile } from "@/lib/storeSettings";
+import { PHONE_RE, PINCODE_RE } from "@/lib/onboarding";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { useToast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
 import { BlockSkeleton } from "@/components/ui/Skeleton";
 import { Field, inputClass } from "@/components/ui/FormField";
+
+type ProfileErrors = Partial<Record<"contactEmail" | "contactPhone" | "pincode", string>>;
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateProfile(p: StoreProfile): ProfileErrors {
+  const errors: ProfileErrors = {};
+  if (p.contactEmail.trim() && !EMAIL_RE.test(p.contactEmail.trim()))
+    errors.contactEmail = "Enter a valid email.";
+  if (p.contactPhone.trim() && !PHONE_RE.test(p.contactPhone.trim()))
+    errors.contactPhone = "Enter a valid 10-digit mobile number.";
+  if (p.pincode.trim() && !PINCODE_RE.test(p.pincode.trim()))
+    errors.pincode = "Enter a valid 6-digit pincode.";
+  return errors;
+}
 
 export function SettingsView() {
   const { storeId } = useStorePanel();
   const toast = useToast();
   const [profile, setProfile] = useState<StoreProfile | null>(null);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<ProfileErrors>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -35,12 +53,14 @@ export function SettingsView() {
   const setField = <K extends keyof StoreProfile>(key: K, value: StoreProfile[K]) => {
     setProfile((p) => (p ? { ...p, [key]: value } : p));
     setError("");
+    setFieldErrors({});
   };
 
   const handleSave = async () => {
     if (!profile) return;
-    if (profile.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.contactEmail.trim())) {
-      setError("Enter a valid contact email.");
+    const errs = validateProfile(profile);
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
       return;
     }
     setSaving(true);
@@ -57,12 +77,7 @@ export function SettingsView() {
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Settings</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Store profile
-        </h1>
-      </header>
+      <PageHeader eyebrow="Settings" title="Store profile" />
 
       {!profile && !error ? <BlockSkeleton className="mt-7 h-64" /> : null}
 
@@ -97,7 +112,7 @@ export function SettingsView() {
                   onChange={(e) => setField("description", e.target.value)}
                 />
               </Field>
-              <Field label="Contact email">
+              <Field label="Contact email" error={fieldErrors.contactEmail}>
                 <input
                   type="email"
                   className={inputClass}
@@ -105,12 +120,14 @@ export function SettingsView() {
                   onChange={(e) => setField("contactEmail", e.target.value)}
                 />
               </Field>
-              <Field label="Contact phone">
+              <Field label="Contact phone" error={fieldErrors.contactPhone}>
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
                   className={inputClass}
                   value={profile.contactPhone}
-                  onChange={(e) => setField("contactPhone", e.target.value)}
+                  onChange={(e) => setField("contactPhone", e.target.value.replace(/\D/g, ""))}
                 />
               </Field>
               <Field label="Address" className="sm:col-span-2">
@@ -123,12 +140,13 @@ export function SettingsView() {
               <Field label="City">
                 <input className={inputClass} value={profile.city} onChange={(e) => setField("city", e.target.value)} />
               </Field>
-              <Field label="Pincode">
+              <Field label="Pincode" error={fieldErrors.pincode}>
                 <input
                   className={inputClass}
                   inputMode="numeric"
+                  maxLength={6}
                   value={profile.pincode}
-                  onChange={(e) => setField("pincode", e.target.value)}
+                  onChange={(e) => setField("pincode", e.target.value.replace(/\D/g, ""))}
                 />
               </Field>
             </div>

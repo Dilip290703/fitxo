@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadStoreAnalytics, type AnalyticsData, type DayBucket } from "@/lib/analytics";
 import { formatCurrency } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { Banner } from "@/components/ui/Banner";
 import { CardsSkeleton } from "@/components/ui/Skeleton";
@@ -32,12 +33,7 @@ export function AnalyticsView() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Analytics</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Last 30 days
-        </h1>
-      </header>
+      <PageHeader eyebrow="Analytics" title="Last 30 days" />
 
       {error ? (
         <Banner variant="error" className="mt-6">{error}</Banner>

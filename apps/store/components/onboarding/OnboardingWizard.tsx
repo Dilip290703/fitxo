@@ -8,6 +8,7 @@ import {
   GST_RE,
   IFSC_RE,
   PAN_RE,
+  PHONE_RE,
   PINCODE_RE,
   STORE_CATEGORIES,
   loadOnboarding,
@@ -16,8 +17,6 @@ import {
   type OnboardingData,
 } from "@/lib/onboarding";
 import type { StoreOnboardingStatus } from "@fitzo/supabase/types";
-
-const PHONE_RE = /^[6-9][0-9]{9}$/;
 
 const inputClass =
   "h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[14px] text-ink outline-none transition focus:border-ink focus:ring-4 focus:ring-accent/25";

@@ -11,6 +11,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { useToast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
 import { RowsSkeleton } from "@/components/ui/Skeleton";
@@ -89,27 +90,25 @@ export function CatalogueView() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Catalogue
-          </p>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
+      <PageHeader
+        eyebrow="Catalogue"
+        title={
+          <>
             Products
             {products ? (
-              <span className="ml-2 text-[16px] font-medium text-muted">
-                {products.length}
-              </span>
+              <span className="ml-2 text-[16px] font-medium text-muted">{products.length}</span>
             ) : null}
-          </h1>
-        </div>
-        <Link
-          href="/catalogue/new"
-          className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft"
-        >
-          + Add product
-        </Link>
-      </header>
+          </>
+        }
+        action={
+          <Link
+            href="/catalogue/new"
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft"
+          >
+            + Add product
+          </Link>
+        }
+      />
 
       <div className="mt-6 flex flex-wrap gap-3">
         <input

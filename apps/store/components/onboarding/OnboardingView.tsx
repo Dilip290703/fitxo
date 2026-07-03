@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const STEPS: { title: string; body: string; href?: string; cta?: string }[] = [
   {
@@ -42,16 +43,11 @@ const STEPS: { title: string; body: string; href?: string; cta?: string }[] = [
 export function OnboardingView() {
   return (
     <div className="mx-auto w-full max-w-[760px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Guide</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Selling on Fitzo
-        </h1>
-        <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-body">
-          Fitzo brings the fitting room to your customers' doorstep: they order, try on
-          while the rider waits, and keep only what they love. Here's how to run your store on it.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Guide"
+        title="Selling on Fitzo"
+        sub="Fitzo brings the fitting room to your customers' doorstep: they order, try on while the rider waits, and keep only what they love. Here's how to run your store on it."
+      />
 
       <ol className="mt-7 space-y-4">
         {STEPS.map((s, i) => (

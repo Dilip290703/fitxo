@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadStaff, type StaffMember } from "@/lib/storeSettings";
 import { formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
 import { RowsSkeleton } from "@/components/ui/Skeleton";
@@ -29,15 +30,11 @@ export function StaffView() {
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Staff</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Staff management
-        </h1>
-        <p className="mt-1 text-[13px] text-muted">
-          Everyone with manager access to this store.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Staff"
+        title="Staff management"
+        sub="Everyone with manager access to this store."
+      />
 
       {error ? (
         <Banner variant="error" className="mt-6">{error}</Banner>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { loadStoreReturns, type StoreReturn } from "@/lib/returns";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge, type BadgeTone } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
 import { RowsSkeleton } from "@/components/ui/Skeleton";
@@ -59,31 +60,33 @@ export function ReturnsView() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Returns</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Returns management
-        </h1>
-        <p className="mt-1 text-[13px] text-muted">
-          Items customers chose to return — pickups are handled by Fitzo riders.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Returns"
+        title="Returns management"
+        sub="Items customers chose to return — pickups are handled by Fitzo riders."
+      />
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {chips.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            onClick={() => setFilter(c.key)}
-            className={`rounded-full px-4 py-2 text-[12px] font-semibold transition ${
-              filter === c.key
-                ? "bg-ink text-white"
-                : "border border-line-strong text-body hover:border-ink hover:text-ink"
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
+        {chips.map((c) => {
+          const n = (returns ?? []).filter((r) => c.key === "all" || r.status === c.key).length;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setFilter(c.key)}
+              className={`rounded-full px-4 py-2 text-[12px] font-semibold transition ${
+                filter === c.key
+                  ? "bg-ink text-white"
+                  : "border border-line-strong text-body hover:border-ink hover:text-ink"
+              }`}
+            >
+              {c.label}
+              {returns ? (
+                <span className={filter === c.key ? "ml-1.5 text-white/60" : "ml-1.5 text-faint"}>{n}</span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       {error ? (

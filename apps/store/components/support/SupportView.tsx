@@ -4,8 +4,10 @@ import { FormEvent, useEffect, useState } from "react";
 import { fileTicket, loadMyTickets, type Ticket, type TicketStatus } from "@/lib/support";
 import { formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge, type BadgeTone } from "@/components/ui/StatusBadge";
 import { Banner } from "@/components/ui/Banner";
+import { RowsSkeleton } from "@/components/ui/Skeleton";
 import { Field, inputClass } from "@/components/ui/FormField";
 
 const FAQS: { q: string; a: string }[] = [
@@ -91,12 +93,7 @@ export function SupportView() {
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Support</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          We&apos;re here to help
-        </h1>
-      </header>
+      <PageHeader eyebrow="Support" title="We're here to help" />
 
       <section className="mt-7 grid gap-4 sm:grid-cols-2">
         <a
@@ -178,7 +175,9 @@ export function SupportView() {
         {loadError ? (
           <p className="mt-3 text-[13px] text-danger">{loadError}</p>
         ) : tickets === null ? (
-          <p className="mt-3 text-[13px] text-muted">Loading…</p>
+          <div className="-mx-5 mt-1" aria-hidden>
+            <RowsSkeleton rows={2} />
+          </div>
         ) : tickets.length === 0 ? (
           <p className="mt-3 text-[13px] text-soft">No tickets yet.</p>
         ) : (

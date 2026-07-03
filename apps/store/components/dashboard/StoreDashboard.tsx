@@ -19,6 +19,7 @@ import { formatCurrency, timeAgo } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
 import { useToast } from "@/components/ui/Toast";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { Banner } from "@/components/ui/Banner";
 import { CardsSkeleton, RowsSkeleton } from "@/components/ui/Skeleton";
@@ -96,14 +97,7 @@ export function StoreDashboard() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
-      <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-          {today}
-        </p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
-          Dashboard
-        </h1>
-      </header>
+      <PageHeader eyebrow={today} title="Dashboard" />
 
       {error ? (
         <Banner variant="error" className="mt-6">{error}</Banner>
