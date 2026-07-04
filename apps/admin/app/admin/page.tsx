@@ -2,15 +2,14 @@ import { createClient } from '@fitzo/supabase/server';
 import Link from 'next/link';
 import StatsCard from '@/components/admin/StatsCard';
 import RevenueChart from '@/components/admin/RevenueChart';
-import ActiveDeliveries, { ACTIVE_DELIVERY_SELECT, mapRow } from './ActiveDeliveries';
+import ActiveDeliveries from './ActiveDeliveries';
+import { ACTIVE_DELIVERY_SELECT, ACTIVE_DELIVERY_STATUSES, mapRow } from './active-deliveries-lib';
 import { computeStorePayables } from './payouts/compute';
 import { computeAgentPayables } from './agent-payouts/compute';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 }
-
-const ACTIVE_DELIVERY_STATUSES = ['assigned', 'accepted', 'picked_up', 'en_route', 'arrived'];
 const STUCK_PENDING_MINUTES = 30;
 
 type QueueTone = 'red' | 'amber' | 'blue';
