@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { logActivity } from '@/lib/activity';
 
 interface Rider {
@@ -34,6 +35,7 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
   const [assigning, setAssigning] = useState<string | null>(null);
   const [releasing, setReleasing] = useState<string | null>(null);
   const [selectedRiders, setSelectedRiders] = useState<Record<string, string>>({});
+  const [confirmAction, setConfirmAction] = useState<{ kind: 'release' | 'fail'; delivery: Delivery } | null>(null);
 
   const activeDeliveries = deliveries.filter((d) => !['completed', 'failed'].includes(d.status));
   const unassigned = activeDeliveries.filter((d) => !d.rider_id);
@@ -59,10 +61,33 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
       .update({ rider_id: null, status: 'assigned', accepted_at: null })
       .eq('id', deliveryId);
     setReleasing(null);
+    setConfirmAction(null);
     if (error) toast(error.message, 'error');
     else {
       await logActivity(supabase, { action: 'Released delivery back to pool', entity_type: 'delivery', entity_id: deliveryId });
       toast('Delivery released back to the pool', 'success'); router.refresh();
+    }
+  };
+
+  // The terminal "this delivery isn't happening" path — customer unreachable,
+  // rider gave up, etc. Before this, `failed` existed in the enum with no
+  // admin UI able to set it (loops of Release were the only option).
+  const failDelivery = async (delivery: Delivery) => {
+    setReleasing(delivery.id);
+    const { error } = await supabase.from('deliveries').update({ status: 'failed' }).eq('id', delivery.id);
+    setReleasing(null);
+    setConfirmAction(null);
+    if (error) toast(error.message, 'error');
+    else {
+      await logActivity(supabase, {
+        action: 'Marked delivery failed',
+        entity_type: 'delivery',
+        entity_id: delivery.id,
+        old_value: { status: delivery.status },
+        new_value: { status: 'failed' },
+      });
+      toast('Delivery marked failed — handle the order from its detail page', 'success');
+      router.refresh();
     }
   };
 
@@ -107,6 +132,14 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                   >
                     {assigning === d.id ? '…' : 'Assign'}
                   </button>
+                  <button
+                    onClick={() => setConfirmAction({ kind: 'fail', delivery: d })}
+                    disabled={releasing === d.id}
+                    title="Give up on this delivery"
+                    className="px-2.5 py-1.5 text-xs border border-danger-line text-danger rounded-lg hover:bg-danger-bg disabled:opacity-50"
+                  >
+                    Fail
+                  </button>
                 </div>
               </div>
             ))}
@@ -150,14 +183,24 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
                     {d.estimated_minutes ? ` · ~${d.estimated_minutes}m` : ''}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => releaseDelivery(d.id)}
-                      disabled={releasing === d.id}
-                      title="Return this delivery to the rider pool"
-                      className="px-2.5 py-1 text-xs border border-line-strong text-body rounded-lg hover:border-warn-accent hover:text-warn disabled:opacity-50"
-                    >
-                      {releasing === d.id ? '…' : 'Release'}
-                    </button>
+                    <div className="inline-flex items-center gap-1.5">
+                      <button
+                        onClick={() => setConfirmAction({ kind: 'release', delivery: d })}
+                        disabled={releasing === d.id}
+                        title="Return this delivery to the rider pool"
+                        className="px-2.5 py-1 text-xs border border-line-strong text-body rounded-lg hover:border-warn-accent hover:text-warn disabled:opacity-50"
+                      >
+                        {releasing === d.id ? '…' : 'Release'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmAction({ kind: 'fail', delivery: d })}
+                        disabled={releasing === d.id}
+                        title="Give up on this delivery (customer unreachable, rider no-show…)"
+                        className="px-2.5 py-1 text-xs border border-danger-line text-danger rounded-lg hover:bg-danger-bg disabled:opacity-50"
+                      >
+                        Fail
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -168,6 +211,24 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        title={confirmAction?.kind === 'fail' ? 'Mark delivery failed' : 'Release delivery'}
+        message={
+          confirmAction?.kind === 'fail'
+            ? `Give up on ${confirmAction.delivery.orders?.order_number ?? 'this delivery'}? It leaves the rider pool for good — then cancel or re-dispatch the order from its detail page.`
+            : `Return ${confirmAction?.delivery.orders?.order_number ?? 'this delivery'} to the pool? The current rider loses it and any online rider can claim it.`
+        }
+        confirmLabel={confirmAction?.kind === 'fail' ? 'Mark failed' : 'Release'}
+        destructive={confirmAction?.kind === 'fail'}
+        onConfirm={() => {
+          if (!confirmAction) return;
+          if (confirmAction.kind === 'fail') failDelivery(confirmAction.delivery);
+          else releaseDelivery(confirmAction.delivery.id);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

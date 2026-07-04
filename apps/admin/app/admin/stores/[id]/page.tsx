@@ -9,13 +9,33 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: store }, { data: products }, { data: orders }, { data: managers }, { data: business }] = await Promise.all([
+  // A store's orders come via its line items (order_items → products.store_id);
+  // there is no store column on orders. (The old .eq('user_id', id) matched a
+  // CUSTOMER column against a store id — the panel always showed "No orders".)
+  const [{ data: store }, { data: products }, { data: storeItems }, { data: managers }, { data: business }] = await Promise.all([
     supabase.from('stores').select('*').eq('id', id).single(),
     supabase.from('products').select('id, name, is_active, base_price').eq('store_id', id).eq('is_deleted', false).order('created_at', { ascending: false }).limit(10),
-    supabase.from('orders').select('id, order_number, status, final_amount, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(10),
+    supabase
+      .from('order_items')
+      .select('order_id, orders(id, order_number, status, final_amount, created_at), products!inner(store_id)')
+      .eq('products.store_id', id)
+      .order('created_at', { ascending: false })
+      .limit(60),
     supabase.from('store_managers').select('*, users(name, email)').eq('store_id', id),
     supabase.from('store_business_details').select('*').eq('store_id', id).maybeSingle(),
   ]);
+
+  // Dedupe line items into orders, newest first, top 10.
+  const orderMap = new Map<string, { id: string; order_number: string; status: string; final_amount: number; created_at: string }>();
+  for (const it of (storeItems ?? []) as unknown as {
+    order_id: string;
+    orders: { id: string; order_number: string; status: string; final_amount: number; created_at: string } | null;
+  }[]) {
+    if (it.orders && !orderMap.has(it.order_id)) orderMap.set(it.order_id, it.orders);
+  }
+  const orders = [...orderMap.values()]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 10);
 
   if (!store) notFound();
 
