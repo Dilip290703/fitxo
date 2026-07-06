@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchAvailableJobs, riderClaim, riderDecline, type AvailableJob } from "@/lib/deliveries";
 import { useAgent } from "@/components/AgentShell";
+import { IconBell, IconBellOff, IconScooter } from "@/components/icons";
 
 const POLL_MS = 7000; // how often we refresh the offer feed while online
 const RING_MS = 3500; // gap between repeat chimes while an offer is pending
@@ -158,12 +159,12 @@ export function IncomingJobsProvider() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[70] flex flex-col items-center gap-3 px-4 lg:bottom-6">
       {error ? (
-        <div className="pointer-events-auto rounded-full bg-[#3a2020] px-4 py-2 text-[12px] font-medium text-[#ffb4a2] shadow-lg">
-          ⚠️ {error}
+        <div className="pointer-events-auto rounded-full border border-danger-line bg-danger-bg px-4 py-2 text-[13px] font-medium text-danger shadow-float">
+          {error}
         </div>
       ) : offers.length === 0 ? (
-        <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[#131a28] px-4 py-2 text-[12px] font-medium text-[#7fe0b0] shadow-lg">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#34d399]" />
+        <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-success-line bg-white px-4 py-2 text-[13px] font-medium text-success shadow-float">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-success" />
           Online · waiting for orders…
         </div>
       ) : null}
@@ -171,28 +172,29 @@ export function IncomingJobsProvider() {
       {offers.slice(0, 2).map((job) => (
         <div
           key={job.deliveryId}
-          className="pointer-events-auto w-full max-w-[380px] overflow-hidden rounded-2xl border border-[#3b82f6]/50 bg-[#131a28] shadow-[0_24px_60px_rgba(0,0,0,0.6)]"
+          className="pointer-events-auto w-full max-w-[380px] overflow-hidden rounded-2xl border border-ink bg-white shadow-pop"
         >
-          <div className="flex items-center justify-between bg-[#3b82f6] px-4 py-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white">
-              🛵 New delivery offer
+          <div className="flex items-center justify-between bg-ink px-4 py-2.5">
+            <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.14em] text-accent">
+              <IconScooter size={16} /> New delivery offer
             </p>
             <button
               type="button"
               onClick={toggleMute}
-              className="text-[11px] font-semibold text-white/85 hover:text-white"
+              aria-label={muted ? "Unmute offer alerts" : "Mute offer alerts"}
+              className="grid h-8 w-8 place-items-center rounded-full text-white/80 hover:text-white"
             >
-              {muted ? "🔇" : "🔔"}
+              {muted ? <IconBellOff size={16} /> : <IconBell size={16} />}
             </button>
           </div>
           <div className="px-4 py-3">
             <div className="flex items-center justify-between">
-              <p className="font-mono text-[13px] font-semibold text-white">{job.orderNumber}</p>
-              <p className="text-[13px] font-semibold text-[#7fe0b0]">
+              <p className="font-mono text-[14px] font-semibold text-ink">{job.orderNumber}</p>
+              <p className="text-[16px] font-bold text-success">
                 +{formatCurrency(job.deliveryFee)}
               </p>
             </div>
-            <p className="mt-1 text-[12px] text-[#9fb0cc]">
+            <p className="mt-1 text-[13px] text-body">
               {job.itemCount} item{job.itemCount === 1 ? "" : "s"} · {areaOf(job.dropAddress)}
             </p>
             <div className="mt-3 flex gap-2">
@@ -200,7 +202,7 @@ export function IncomingJobsProvider() {
                 type="button"
                 onClick={() => decline(job.deliveryId)}
                 disabled={claiming === job.deliveryId}
-                className="flex-1 rounded-full border border-[#33405a] py-2.5 text-[12px] font-semibold text-[#9fb0cc] transition hover:bg-white/5"
+                className="h-12 flex-1 rounded-2xl border border-line-strong text-[14px] font-semibold text-body transition hover:bg-cream"
               >
                 Decline
               </button>
@@ -208,7 +210,7 @@ export function IncomingJobsProvider() {
                 type="button"
                 onClick={() => accept(job)}
                 disabled={claiming === job.deliveryId}
-                className="flex-[2] rounded-full bg-[#3b82f6] py-2.5 text-[12px] font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#2f6fe0] disabled:opacity-60"
+                className="h-12 flex-[2] rounded-2xl bg-ink text-[14px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-ink-soft disabled:opacity-60"
               >
                 {claiming === job.deliveryId ? "Accepting…" : "Accept"}
               </button>
@@ -218,7 +220,7 @@ export function IncomingJobsProvider() {
       ))}
 
       {offers.length > 2 ? (
-        <p className="pointer-events-auto text-[11px] font-medium text-[#7c8aa5]">
+        <p className="pointer-events-auto rounded-full bg-white px-3 py-1 text-[12px] font-medium text-soft shadow-float">
           +{offers.length - 2} more offer{offers.length - 2 === 1 ? "" : "s"} waiting
         </p>
       ) : null}

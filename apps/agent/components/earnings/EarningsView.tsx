@@ -7,7 +7,8 @@ import {
   rollupEarnings,
   type EarningsSummary,
 } from "@/lib/agent-data";
-import { ContentWrap, PageHeader, StatCard, Card, Empty, inr } from "@/components/ui";
+import { ContentWrap, PageHeader, StatCard, Card, Empty, Skeleton, inr } from "@/components/ui";
+import { IconWallet } from "@/components/icons";
 
 export function EarningsView() {
   const { rider } = useAgent();
@@ -30,7 +31,13 @@ export function EarningsView() {
     return (
       <ContentWrap>
         <PageHeader title="Earnings" />
-        <p className="text-[13px] text-[#7c8aa5]">Loading…</p>
+        <Skeleton className="mb-5 h-[220px]" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Skeleton className="h-[96px]" />
+          <Skeleton className="h-[96px]" />
+          <Skeleton className="h-[96px]" />
+          <Skeleton className="h-[96px]" />
+        </div>
       </ContentWrap>
     );
   }
@@ -46,26 +53,26 @@ export function EarningsView() {
       />
 
       {/* This-week hero */}
-      <Card className="mb-5 bg-gradient-to-br from-[#10203f] to-[#161e2e]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#7c8aa5]">This week</p>
+      <div className="mb-5 rounded-2xl bg-ink p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">This week</p>
         <p className="mt-1 text-[40px] font-bold leading-none text-white">{inr(data.week)}</p>
-        <p className="mt-1 text-[12px] text-[#9fb0cc]">{data.weekCount} deliveries completed</p>
+        <p className="mt-1 text-[13px] text-white/60">{data.weekCount} deliveries completed</p>
 
         <div className="mt-5 flex items-end justify-between gap-2">
           {weeklyBars(completed).map((b) => (
-            <div key={b.label} className="flex flex-1 flex-col items-center gap-1.5">
+            <div key={b.key} className="flex flex-1 flex-col items-center gap-1.5">
               <div className="flex h-24 w-full items-end justify-center">
                 <div
-                  className="w-full max-w-[28px] rounded-t-[6px] bg-[#3b82f6]"
+                  className="w-full max-w-[28px] rounded-t-[6px] bg-accent"
                   style={{ height: `${Math.max(4, (b.amount / maxDay) * 100)}%` }}
                   title={inr(b.amount)}
                 />
               </div>
-              <span className="text-[10px] text-[#7c8aa5]">{b.label}</span>
+              <span className="text-[11px] text-white/50">{b.label}</span>
             </div>
           ))}
         </div>
-      </Card>
+      </div>
 
       {/* Rollups */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -75,18 +82,22 @@ export function EarningsView() {
         <StatCard label="Avg / job" value={inr(data.avgPerJob)} accent="plain" />
       </div>
 
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.15em] text-[#7c8aa5]">
-        Recent payouts
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.12em] text-muted">
+        Completed jobs
       </h2>
       {completed.length === 0 ? (
-        <Empty icon="💰" title="No earnings yet" text="Complete a delivery to start earning." />
+        <Empty
+          icon={<IconWallet size={22} />}
+          title="No earnings yet"
+          text="Complete a delivery to start earning."
+        />
       ) : (
-        <Card className="divide-y divide-[#22304a] p-0">
+        <Card className="divide-y divide-hairline p-0">
           {completed.slice(0, 25).map((r) => (
-            <div key={r.id} className="flex items-center justify-between px-4 py-3">
+            <div key={r.id} className="flex items-center justify-between px-4 py-3.5">
               <div>
-                <p className="text-[13px] font-medium">{r.orderNumber}</p>
-                <p className="text-[11px] text-[#7c8aa5]">
+                <p className="font-mono text-[14px] font-medium text-ink">{r.orderNumber}</p>
+                <p className="text-[12px] text-soft">
                   {r.completedAt
                     ? new Date(r.completedAt).toLocaleDateString("en-IN", {
                         day: "numeric",
@@ -96,13 +107,13 @@ export function EarningsView() {
                   {r.city ? ` · ${r.city}` : ""}
                 </p>
               </div>
-              <span className="text-[14px] font-semibold text-[#7fe0b0]">+{inr(r.deliveryFee)}</span>
+              <span className="text-[15px] font-semibold text-success">+{inr(r.deliveryFee)}</span>
             </div>
           ))}
         </Card>
       )}
 
-      <p className="mt-4 text-[11px] leading-5 text-[#54627d]">
+      <p className="mt-4 text-[12px] leading-5 text-faint">
         Payouts are settled through Razorpay (coming soon). Amounts shown reflect the
         delivery fee earned on each completed order.
       </p>

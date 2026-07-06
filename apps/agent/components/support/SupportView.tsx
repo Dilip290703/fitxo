@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ContentWrap, PageHeader, Card, Label } from "@/components/ui";
+import { Card, ContentWrap, Label, PageHeader } from "@/components/ui";
+import { IconChevronDown, IconMail, IconPhone } from "@/components/icons";
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -36,41 +37,48 @@ export function SupportView() {
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <a
           href="tel:+918000000000"
-          className="flex items-center gap-3 rounded-[16px] border border-[#22304a] bg-[#161e2e] p-4 transition hover:border-[#3b82f6]"
+          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-line-strong hover:shadow-float"
         >
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-[#16322a] text-[18px]">📞</span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-success-bg text-success">
+            <IconPhone size={19} />
+          </span>
           <div>
-            <p className="text-[14px] font-semibold">Call rider helpline</p>
-            <p className="text-[12px] text-[#7c8aa5]">+91 80000 00000 · 24×7</p>
+            <p className="text-[15px] font-semibold text-ink">Call rider helpline</p>
+            <p className="text-[13px] text-soft">+91 80000 00000 · 24×7</p>
           </div>
         </a>
         <a
           href="mailto:riders@fitzo.in"
-          className="flex items-center gap-3 rounded-[16px] border border-[#22304a] bg-[#161e2e] p-4 transition hover:border-[#3b82f6]"
+          className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-line-strong hover:shadow-float"
         >
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-[#1e2a45] text-[18px]">✉️</span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-info-bg text-info">
+            <IconMail size={19} />
+          </span>
           <div>
-            <p className="text-[14px] font-semibold">Email support</p>
-            <p className="text-[12px] text-[#7c8aa5]">riders@fitzo.in</p>
+            <p className="text-[15px] font-semibold text-ink">Email support</p>
+            <p className="text-[13px] text-soft">riders@fitzo.in</p>
           </div>
         </a>
       </div>
 
       <Card>
         <Label>Frequently asked</Label>
-        <div className="mt-1 divide-y divide-[#22304a]">
+        <div className="mt-1 divide-y divide-hairline">
           {FAQ.map((item, i) => {
             const isOpen = open === i;
             return (
               <div key={i}>
                 <button
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className="flex w-full items-center justify-between gap-3 py-3.5 text-left"
+                  className="flex min-h-[48px] w-full items-center justify-between gap-3 py-3 text-left"
                 >
-                  <span className="text-[13px] font-medium">{item.q}</span>
-                  <span className={["text-[#7c8aa5] transition", isOpen ? "rotate-180" : ""].join(" ")}>⌄</span>
+                  <span className="text-[14px] font-medium text-ink">{item.q}</span>
+                  <IconChevronDown
+                    size={16}
+                    className={["shrink-0 text-muted transition", isOpen ? "rotate-180" : ""].join(" ")}
+                  />
                 </button>
-                {isOpen && <p className="pb-3.5 text-[13px] leading-6 text-[#9fb0cc]">{item.a}</p>}
+                {isOpen && <p className="pb-3.5 text-[14px] leading-6 text-body">{item.a}</p>}
               </div>
             );
           })}

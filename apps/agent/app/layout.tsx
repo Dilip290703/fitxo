@@ -1,9 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FitZo Agent",
-  description: "FitZo delivery agent panel.",
+  title: "Fitzo Rider",
+  description: "Fitzo delivery partner app.",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Fitzo Rider" },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#171d2b",
 };
 
 export default function RootLayout({

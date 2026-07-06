@@ -11,7 +11,8 @@ import {
 } from "@/lib/agent-data";
 import { isActiveDelivery } from "@/components/status";
 import { DeliveryCard } from "@/components/DeliveryCard";
-import { ContentWrap, StatCard, Empty, inr } from "@/components/ui";
+import { ContentWrap, StatCard, Empty, Skeleton, inr } from "@/components/ui";
+import { IconChevronRight, IconScooter } from "@/components/icons";
 
 export function AgentDashboard() {
   const { rider, available, setAvailable } = useAgent();
@@ -44,23 +45,31 @@ export function AgentDashboard() {
       {/* Greeting + availability banner */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[13px] text-[#7c8aa5]">Welcome back,</p>
-          <h1 className="text-[24px] font-semibold text-white">{firstName} 👋</h1>
+          <p className="text-[14px] text-soft">Welcome back,</p>
+          <h1 className="text-[26px] font-semibold tracking-tight text-ink">{firstName}</h1>
         </div>
         <button
           onClick={() => setAvailable(!available)}
           className={[
-            "rounded-[14px] border px-5 py-3 text-left transition",
-            available
-              ? "border-[#16322a] bg-[#0f2a20]"
-              : "border-[#3a2d16] bg-[#241d10]",
+            "rounded-2xl border px-5 py-3.5 text-left transition",
+            available ? "border-success-line bg-success-bg" : "border-line-strong bg-warn-bg",
           ].join(" ")}
         >
-          <span className="flex items-center gap-2 text-[13px] font-semibold">
-            <span className={["h-2.5 w-2.5 rounded-full", available ? "bg-[#34d399]" : "bg-[#f59e0b]"].join(" ")} />
+          <span
+            className={[
+              "flex items-center gap-2 text-[14px] font-bold",
+              available ? "text-success" : "text-warn",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "h-2.5 w-2.5 rounded-full",
+                available ? "animate-pulse bg-success" : "bg-warn-accent",
+              ].join(" ")}
+            />
             {available ? "You're online" : "You're offline"}
           </span>
-          <span className="mt-0.5 block text-[11px] text-[#7c8aa5]">
+          <span className="mt-0.5 block text-[12px] text-body">
             {available ? "Tap to stop receiving jobs" : "Tap to start receiving jobs"}
           </span>
         </button>
@@ -71,17 +80,17 @@ export function AgentDashboard() {
         <StatCard label="Active" value={loading ? "—" : String(active.length)} accent="blue" hint="in progress" />
         <StatCard label="Done today" value={loading ? "—" : String(earnings?.todayCount ?? 0)} accent="green" hint="deliveries" />
         <StatCard label="Earned today" value={loading ? "—" : inr(earnings?.today ?? 0)} accent="amber" hint="delivery fees" />
-        <StatCard label="Rating" value={(rider.rating ?? 5).toFixed(2)} accent="plain" hint={`${rider.totalDeliveries} all-time`} />
+        <StatCard label="All-time" value={String(rider.totalDeliveries)} accent="plain" hint="deliveries" />
       </div>
 
       {/* New jobs to accept */}
       {newJobs.length > 0 && (
         <section className="mb-7">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[13px] font-semibold uppercase tracking-[0.15em] text-[#ffd27f]">
+            <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-warn">
               New jobs · accept now ({newJobs.length})
             </h2>
-            <Link href="/deliveries" className="text-[12px] text-[#9fc0ff] hover:text-white">
+            <Link href="/deliveries" className="flex h-9 items-center text-[13px] font-medium text-info">
               View all →
             </Link>
           </div>
@@ -94,30 +103,33 @@ export function AgentDashboard() {
       {/* Active deliveries */}
       <section className="mb-7">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.15em] text-[#7c8aa5]">
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-muted">
             Active deliveries ({active.length})
           </h2>
-          <Link href="/deliveries" className="text-[12px] text-[#9fc0ff] hover:text-white">
+          <Link href="/deliveries" className="flex h-9 items-center text-[13px] font-medium text-info">
             All deliveries →
           </Link>
         </div>
         {loading ? (
-          <p className="text-[13px] text-[#7c8aa5]">Loading…</p>
+          <div className="space-y-3">
+            <Skeleton className="h-[104px]" />
+            <Skeleton className="h-[104px]" />
+          </div>
         ) : active.length === 0 ? (
           <Empty
-            icon="🛵"
+            icon={<IconScooter size={22} />}
             title={available ? "No active deliveries" : "You're offline"}
             text={
               available
-                ? "New jobs assigned to you will appear here."
-                : "Go online to start receiving delivery jobs."
+                ? "New delivery offers pop up here while you're online."
+                : "Go online to start receiving delivery offers."
             }
           />
         ) : (
           <div className="space-y-3">
             {active.filter((d) => d.status !== "assigned").map((d) => <DeliveryCard key={d.id} d={d} />)}
             {active.every((d) => d.status === "assigned") && newJobs.length > 0 && (
-              <p className="text-[13px] text-[#7c8aa5]">Accept a new job above to get started.</p>
+              <p className="text-[14px] text-soft">Accept a new job above to get started.</p>
             )}
           </div>
         )}
@@ -126,14 +138,16 @@ export function AgentDashboard() {
       {/* Earnings teaser */}
       <Link
         href="/earnings"
-        className="flex items-center justify-between rounded-[16px] border border-[#22304a] bg-gradient-to-r from-[#161e2e] to-[#10203f] p-5 transition hover:border-[#3b82f6]"
+        className="flex items-center justify-between rounded-2xl border border-line bg-ink p-5 transition hover:bg-ink-soft"
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#7c8aa5]">This week</p>
-          <p className="text-[26px] font-bold text-white">{loading ? "—" : inr(earnings?.week ?? 0)}</p>
-          <p className="text-[12px] text-[#7c8aa5]">{earnings?.weekCount ?? 0} deliveries</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">This week</p>
+          <p className="text-[28px] font-bold text-white">{loading ? "—" : inr(earnings?.week ?? 0)}</p>
+          <p className="text-[13px] text-white/60">{earnings?.weekCount ?? 0} deliveries</p>
         </div>
-        <span className="text-[13px] font-medium text-[#9fc0ff]">View earnings →</span>
+        <span className="flex items-center gap-1 text-[13px] font-medium text-accent">
+          View earnings <IconChevronRight size={15} />
+        </span>
       </Link>
     </ContentWrap>
   );

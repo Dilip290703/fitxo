@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@fitzo/supabase/client";
+import { Banner, btnPrimary, inputCls } from "@/components/ui";
 
 type Mode = "signin" | "signup" | "forgot";
 
@@ -61,12 +62,12 @@ export default function AgentLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0f1522] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-paper px-4">
       <div className="w-full max-w-[400px]">
         <div className="mb-8 text-center">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.35em] text-[#7c8aa5]">Fitzo</p>
-          <h1 className="mt-2 text-[28px] font-semibold text-white">Delivery Partner</h1>
-          <p className="mt-1 text-[13px] text-[#7c8aa5]">
+          <p className="font-serif text-[13px] font-semibold uppercase tracking-[0.35em] text-muted">Fitzo</p>
+          <h1 className="mt-2 text-[28px] font-semibold tracking-tight text-ink">Delivery Partner</h1>
+          <p className="mt-1 text-[14px] text-body">
             {mode === "signin" && "Sign in to start delivering"}
             {mode === "signup" && "Create your rider account"}
             {mode === "forgot" && "Reset your password"}
@@ -75,7 +76,7 @@ export default function AgentLoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-[20px] border border-[#243049] bg-[#161e2e] p-6"
+          className="space-y-4 rounded-3xl border border-line bg-white p-6 shadow-float"
         >
           {mode === "signup" && (
             <Field label="Full name">
@@ -84,7 +85,7 @@ export default function AgentLoginPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoComplete="name"
-                className="agent-input"
+                className={inputCls}
                 placeholder="Your name"
               />
             </Field>
@@ -97,7 +98,7 @@ export default function AgentLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="agent-input"
+              className={inputCls}
               placeholder="you@example.com"
             />
           </Field>
@@ -111,24 +112,16 @@ export default function AgentLoginPage() {
                 required
                 minLength={6}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                className="agent-input"
+                className={inputCls}
                 placeholder="••••••••"
               />
             </Field>
           )}
 
-          {error && (
-            <p className="rounded-[10px] bg-[#3a1d1d] px-3 py-2 text-[13px] text-[#ff9b9b]">{error}</p>
-          )}
-          {notice && (
-            <p className="rounded-[10px] bg-[#16322a] px-3 py-2 text-[13px] text-[#7fe0b0]">{notice}</p>
-          )}
+          {error && <Banner kind="err">{error}</Banner>}
+          {notice && <Banner kind="ok">{notice}</Banner>}
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-[12px] bg-[#3b82f6] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[#2f6fdc] disabled:opacity-60"
-          >
+          <button type="submit" disabled={busy} className={btnPrimary}>
             {busy
               ? "…"
               : mode === "signin"
@@ -138,39 +131,36 @@ export default function AgentLoginPage() {
               : "Send reset link"}
           </button>
 
-          <div className="flex items-center justify-between pt-1 text-[12px] text-[#7c8aa5]">
+          <div className="flex items-center justify-between pt-1 text-[13px] text-soft">
             {mode === "signin" ? (
               <>
-                <button type="button" onClick={() => { setMode("forgot"); setError(null); setNotice(null); }} className="hover:text-white">
+                <button
+                  type="button"
+                  onClick={() => { setMode("forgot"); setError(null); setNotice(null); }}
+                  className="flex h-11 items-center hover:text-ink"
+                >
                   Forgot password?
                 </button>
-                <button type="button" onClick={() => { setMode("signup"); setError(null); setNotice(null); }} className="hover:text-white">
+                <button
+                  type="button"
+                  onClick={() => { setMode("signup"); setError(null); setNotice(null); }}
+                  className="flex h-11 items-center font-semibold text-ink hover:underline"
+                >
                   Create account
                 </button>
               </>
             ) : (
-              <button type="button" onClick={() => { setMode("signin"); setError(null); setNotice(null); }} className="hover:text-white">
+              <button
+                type="button"
+                onClick={() => { setMode("signin"); setError(null); setNotice(null); }}
+                className="flex h-11 items-center hover:text-ink"
+              >
                 ← Back to sign in
               </button>
             )}
           </div>
         </form>
       </div>
-
-      <style>{`
-        .agent-input {
-          width: 100%;
-          border-radius: 12px;
-          border: 1px solid #2c3a55;
-          background: #0f1522;
-          padding: 12px 14px;
-          font-size: 14px;
-          color: #fff;
-          outline: none;
-        }
-        .agent-input:focus { border-color: #3b82f6; }
-        .agent-input::placeholder { color: #54627d; }
-      `}</style>
     </main>
   );
 }
@@ -178,7 +168,7 @@ export default function AgentLoginPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[12px] font-medium text-[#9fb0cc]">{label}</span>
+      <span className="mb-1.5 block text-[13px] font-medium text-body">{label}</span>
       {children}
     </label>
   );

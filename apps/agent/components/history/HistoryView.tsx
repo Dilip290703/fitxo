@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAgent } from "@/components/AgentShell";
 import { fetchCompletedDeliveries, type CompletedDelivery } from "@/lib/agent-data";
-import { ContentWrap, PageHeader, Empty, inr } from "@/components/ui";
+import { ContentWrap, PageHeader, Empty, Skeleton, inr } from "@/components/ui";
+import { IconCheck, IconClock, IconX } from "@/components/icons";
 
 function dayLabel(iso: string | null): string {
   if (!iso) return "Earlier";
@@ -66,8 +67,10 @@ export function HistoryView() {
             key={f}
             onClick={() => setFilter(f)}
             className={[
-              "rounded-full px-4 py-1.5 text-[12px] font-semibold capitalize transition",
-              filter === f ? "bg-[#3b82f6] text-white" : "bg-[#161e2e] text-[#9fb0cc] hover:text-white",
+              "h-10 rounded-full px-4 text-[13px] font-semibold capitalize transition",
+              filter === f
+                ? "bg-ink text-white"
+                : "border border-line bg-white text-body hover:border-line-strong",
             ].join(" ")}
           >
             {f}
@@ -76,40 +79,50 @@ export function HistoryView() {
       </div>
 
       {loading ? (
-        <p className="text-[13px] text-[#7c8aa5]">Loading…</p>
+        <div className="space-y-2">
+          <Skeleton className="h-[72px]" />
+          <Skeleton className="h-[72px]" />
+          <Skeleton className="h-[72px]" />
+        </div>
       ) : filtered.length === 0 ? (
-        <Empty icon="🕘" title="No past deliveries yet" text="Completed jobs will be logged here." />
+        <Empty
+          icon={<IconClock size={22} />}
+          title="No past deliveries yet"
+          text="Completed jobs will be logged here."
+        />
       ) : (
         <div className="space-y-6">
           {groups.map(([day, items]) => (
             <section key={day}>
-              <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-[0.15em] text-[#7c8aa5]">{day}</h2>
+              <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">{day}</h2>
               <div className="space-y-2">
                 {items.map((r) => (
                   <Link
                     key={r.id}
                     href={`/deliveries/${r.id}`}
-                    className="flex items-center gap-3 rounded-[14px] border border-[#22304a] bg-[#161e2e] p-3.5 transition hover:border-[#3b82f6]"
+                    className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3.5 transition hover:border-line-strong hover:shadow-float"
                   >
                     <div
                       className={[
-                        "grid h-9 w-9 shrink-0 place-items-center rounded-full text-[14px]",
-                        r.status === "completed" ? "bg-[#16322a] text-[#7fe0b0]" : "bg-[#3a1d1d] text-[#ff9b9b]",
+                        "grid h-10 w-10 shrink-0 place-items-center rounded-full",
+                        r.status === "completed"
+                          ? "bg-success-bg text-success"
+                          : "bg-danger-bg text-danger",
                       ].join(" ")}
                     >
-                      {r.status === "completed" ? "✓" : "✕"}
+                      {r.status === "completed" ? <IconCheck size={16} /> : <IconX size={16} />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold">{r.orderNumber}</p>
-                      <p className="truncate text-[11px] text-[#7c8aa5]">
+                      <p className="truncate font-mono text-[14px] font-semibold text-ink">{r.orderNumber}</p>
+                      <p className="truncate text-[12px] text-soft">
                         {[r.city, `${r.itemCount} item${r.itemCount === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[13px] font-semibold text-[#7fe0b0]">
+                      <p className="text-[14px] font-semibold text-success">
                         {r.status === "completed" ? `+${inr(r.deliveryFee)}` : "—"}
                       </p>
-                      <p className="text-[10px] text-[#7c8aa5]">
+                      <p className="text-[11px] text-soft">
                         {r.completedAt
                           ? new Date(r.completedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
                           : ""}
