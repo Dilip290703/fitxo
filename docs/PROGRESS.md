@@ -130,6 +130,18 @@ Last updated: 2026-06-26
 > Admin is the most-built panel: 20 of 21 page components are Supabase-wired. Verified by
 > static inspection (renders + queries), **not** click-tested. Bonus routes beyond the spec
 > list also exist: Brands, Categories, Inventory/Product management (incl. bulk upload).
+>
+> **REWORK — professional ops panel (D, 2026-07-03..06, branch `feature/admin-panel-rework`):**
+> full audit (`docs/ADMIN_PANEL_AUDIT.md`) then 5 phases — security lockdown (admin-only gate +
+> `requireAdmin()` in every service-role action), approved cuts (Live Map CUT → dashboard Active
+> Deliveries list; Try-analytics merged into Analytics; Brands+Categories → one Taxonomy screen;
+> CMS parked out of nav), store-panel design tokens at ops density + grouped sidebar + **global
+> ⌘K search**, action-first dashboard (Needs-Attention queues), orders (saved views, bulk
+> actions, minutes-correct try column) + order detail (timeline, store/payment links, per-order
+> money reconciliation, confirm+reason overrides with cancel cleanup), payout double-payout
+> guard (migration **032**, applied), delivery Fail action, route-level loading/error states.
+> Dilip browser-tested the lot 2026-07-06. Still open: 2FA (below), refunds/payment-retry
+> (Razorpay, partner), server-side pagination (pre-scale).
 - [~] 1. Admin Login  *(works; no 2FA yet)*
 - [x] 2. Master Dashboard
 - [x] 3. All Orders Management
@@ -139,8 +151,8 @@ Last updated: 2026-06-26
 - [x] 7. Delivery Agent Management  *(Riders)*
 - [x] 8. Revenue & Financial Analytics
 - [T] 9. Payment Records — D  *(/admin/payments: read-only ledger over `payments` joined to orders + users; Total Captured / Successful / Failed summary cards; status tabs (success/initiated/pending/failed/refunded) + search; row → order detail. No migration — `payments_admin_all` RLS already allows admin read. Verified in browser with live data.)*
-- [~] 10. Try & Return Analytics — D  *(/admin/try-analytics: try-session lifecycle (active/completed/expired), keep-vs-return split + 30-day stacked decisions chart, returns-by-condition bars. Reads real `try_sessions` + `order_items.decision` + `returns` now that the agent loop produces them. No migration. **Built — needs a logged-in browser check with try/return data.**)*
-- [~] 11. Live Deliveries Map — D  *(/admin/live-map: realtime board of active deliveries (status≠completed/failed) + keyless Google Maps embed centred on the selected delivery's drop address — no Maps API key needed. Subscribes to `deliveries` changes (admin RLS sees all). **Built — needs a logged-in browser check.** A pin map keyed to lat/lng is a later upgrade once geocoding/Maps key exists.)*
+- [T] 10. Try & Return Analytics — D  *(**merged into /admin/analytics** as a section during the 2026-07 rework — standalone route removed; same data: session lifecycle, keep-vs-return split, 30-day chart, returns-by-condition.)*
+- [x] 11. Live Deliveries Map — **CUT (2026-07 rework, owner-approved)** *(over-engineered for 1–2 riders — it was an address-embed iframe, not live tracking. Replaced by the dashboard **Active Deliveries** list: realtime rows, tap-to-call rider/customer, per-delivery Google-Maps link. No schema cleanup was needed.)*
 - [T] 12. Notifications & Alerts Management — D  *(/admin/notifications: compose + send a notification to all users / by role / a single user (email lookup) via guarded `sendNotification` server action (bulk insert + audit-log); history list with type filter + search + read status. No migration — `notifications` table + RLS already exist. Send flow + audit-log entry verified in browser.)*
 - [T] 13. Complaints & Support Management — D  *(/admin/complaints: list + status filter + search, manage modal (status + response) via guarded `updateComplaint` (audit-logged). **Migration 012** (complaints table + RLS). Verified in browser. Customer-side submission UI separate.)*
 - [x] 14. Discount & Promo Code Manager  *(Coupons)*
