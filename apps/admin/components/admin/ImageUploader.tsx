@@ -74,7 +74,7 @@ export default function ImageUploader({
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-          dragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+          dragging ? 'border-ink bg-ink-soft/5' : 'border-line-strong hover:border-line-strong hover:bg-cream'
         }`}
       >
         {preview ? (
@@ -83,19 +83,19 @@ export default function ImageUploader({
         ) : (
           <div>
             <p className="text-2xl mb-2">📁</p>
-            <p className="text-sm text-gray-400">Drop image here or click to browse</p>
-            <p className="text-xs text-gray-600 mt-1">Max {maxSizeMB}MB</p>
+            <p className="text-sm text-soft">Drop image here or click to browse</p>
+            <p className="text-xs text-faint mt-1">Max {maxSizeMB}MB</p>
           </div>
         )}
 
         {uploading && (
-          <div className="absolute inset-0 bg-gray-900/70 rounded-xl flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+          <div className="absolute inset-0 bg-white/70 rounded-xl flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-ink border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
 
-      {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+      {error && <p className="text-xs text-danger mt-1">{error}</p>}
 
       <input
         ref={inputRef}

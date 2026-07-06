@@ -23,9 +23,9 @@ const icons: Record<ToastType, string> = {
 };
 
 const styles: Record<ToastType, string> = {
-  success: 'bg-green-900 border-green-700 text-green-200',
-  error: 'bg-red-900 border-red-700 text-red-200',
-  info: 'bg-gray-800 border-gray-700 text-gray-200',
+  success: 'bg-success-bg border-success-line text-success',
+  error: 'bg-danger-bg border-danger-line text-danger',
+  info: 'bg-white border-line text-body',
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -44,7 +44,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm font-medium shadow-lg ${styles[t.type]}`}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm font-medium shadow-float ${styles[t.type]}`}
           >
             <span className="font-bold">{icons[t.type]}</span>
             <span>{t.message}</span>

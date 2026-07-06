@@ -57,57 +57,57 @@ export default function CouponsClient({ coupons }: { coupons: Coupon[] }) {
     }
   };
 
-  const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500';
+  const inputClass = 'w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink';
 
   return (
     <div className="space-y-4">
-      <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg">
+      <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft text-white font-medium rounded-lg">
         {showForm ? '× Cancel' : '+ Create Coupon'}
       </button>
 
       {showForm && (
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">New Coupon</h3>
+        <div className="bg-white border border-line rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-ink">New Coupon</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Code *</label>
+              <label className="block text-xs text-soft mb-1">Code *</label>
               <input type="text" value={form.code} onChange={(e) => set('code', e.target.value.toUpperCase())} className={inputClass} placeholder="SUMMER20" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Discount Type</label>
+              <label className="block text-xs text-soft mb-1">Discount Type</label>
               <select value={form.discount_type} onChange={(e) => set('discount_type', e.target.value)} className={inputClass}>
                 <option value="percent">Percent (%)</option>
                 <option value="flat">Flat (₹)</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Discount Value *</label>
+              <label className="block text-xs text-soft mb-1">Discount Value *</label>
               <input type="number" value={form.discount_value} onChange={(e) => set('discount_value', e.target.value)} className={inputClass} placeholder={form.discount_type === 'percent' ? '20' : '100'} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Min Order (₹)</label>
+              <label className="block text-xs text-soft mb-1">Min Order (₹)</label>
               <input type="number" value={form.min_order_amount} onChange={(e) => set('min_order_amount', e.target.value)} className={inputClass} />
             </div>
             {form.discount_type === 'percent' && (
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Max Discount (₹)</label>
+                <label className="block text-xs text-soft mb-1">Max Discount (₹)</label>
                 <input type="number" value={form.max_discount_amount} onChange={(e) => set('max_discount_amount', e.target.value)} className={inputClass} placeholder="Optional cap" />
               </div>
             )}
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Usage Limit</label>
+              <label className="block text-xs text-soft mb-1">Usage Limit</label>
               <input type="number" value={form.usage_limit} onChange={(e) => set('usage_limit', e.target.value)} className={inputClass} placeholder="Unlimited" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Valid From</label>
+              <label className="block text-xs text-soft mb-1">Valid From</label>
               <input type="datetime-local" value={form.valid_from} onChange={(e) => set('valid_from', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Valid Until</label>
+              <label className="block text-xs text-soft mb-1">Valid Until</label>
               <input type="datetime-local" value={form.valid_until} onChange={(e) => set('valid_until', e.target.value)} className={inputClass} />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Description</label>
+              <label className="block text-xs text-soft mb-1">Description</label>
               <input type="text" value={form.description} onChange={(e) => set('description', e.target.value)} className={inputClass} />
             </div>
           </div>
@@ -118,43 +118,43 @@ export default function CouponsClient({ coupons }: { coupons: Coupon[] }) {
       )}
 
       {/* List */}
-      <div className="overflow-x-auto rounded-xl border border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-700 bg-gray-800/50">
+            <tr className="border-b border-line bg-cream/60">
               {['Code', 'Type', 'Value', 'Min Order', 'Usage', 'Validity', 'Status', ''].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {coupons.map((c) => (
-              <tr key={c.id} className="border-b border-gray-700/50 hover:bg-gray-800/30">
-                <td className="px-4 py-3 font-mono text-indigo-400 font-medium">{c.code}</td>
-                <td className="px-4 py-3 text-gray-300 capitalize">{c.discount_type}</td>
-                <td className="px-4 py-3 text-white font-medium">
+              <tr key={c.id} className="border-b border-hairline hover:bg-cream/50">
+                <td className="px-4 py-3 font-mono text-info font-medium">{c.code}</td>
+                <td className="px-4 py-3 text-body capitalize">{c.discount_type}</td>
+                <td className="px-4 py-3 text-ink font-medium">
                   {c.discount_type === 'percent' ? `${c.discount_value}%` : `₹${c.discount_value}`}
-                  {c.max_discount_amount && <span className="text-gray-500 text-xs ml-1">(max ₹{c.max_discount_amount})</span>}
+                  {c.max_discount_amount && <span className="text-muted text-xs ml-1">(max ₹{c.max_discount_amount})</span>}
                 </td>
-                <td className="px-4 py-3 text-gray-300">₹{c.min_order_amount}</td>
-                <td className="px-4 py-3 text-gray-300">
+                <td className="px-4 py-3 text-body">₹{c.min_order_amount}</td>
+                <td className="px-4 py-3 text-body">
                   {c.used_count}{c.usage_limit ? `/${c.usage_limit}` : ''}
                 </td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
+                <td className="px-4 py-3 text-muted text-xs">
                   {c.valid_until ? new Date(c.valid_until).toLocaleDateString('en-IN') : 'No expiry'}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={c.is_active ? 'active' : 'inactive'} size="sm" />
                 </td>
                 <td className="px-4 py-3">
-                  <button onClick={() => toggleActive(c)} className="text-xs text-indigo-400 hover:text-indigo-300">
+                  <button onClick={() => toggleActive(c)} className="text-xs text-info hover:text-ink">
                     {c.is_active ? 'Deactivate' : 'Activate'}
                   </button>
                 </td>
               </tr>
             ))}
             {coupons.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-500">No coupons yet</td></tr>
+              <tr><td colSpan={8} className="px-4 py-12 text-center text-muted">No coupons yet</td></tr>
             )}
           </tbody>
         </table>

@@ -6,7 +6,12 @@ function formatINR(n: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 }
 
-export default async function PaymentsPage() {
+export default async function PaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -27,8 +32,8 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-4 max-w-7xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Payment Records</h2>
-        <p className="text-sm text-gray-500">{payments.length} transactions</p>
+        <h2 className="text-xl font-bold text-ink">Payment Records</h2>
+        <p className="text-sm text-muted">{payments.length} transactions</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -37,7 +42,7 @@ export default async function PaymentsPage() {
         <StatsCard title="Failed" value={failedCount} icon="✕" color="red" />
       </div>
 
-      <PaymentsClient payments={payments} />
+      <PaymentsClient payments={payments} initialTab={status} />
     </div>
   );
 }

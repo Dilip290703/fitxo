@@ -21,8 +21,8 @@ export default async function PayoutsPage() {
   return (
     <div className="space-y-4 max-w-5xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Store Payouts</h2>
-        <p className="text-sm text-gray-500">Commission {commissionRate}% · settle kept-order revenue to stores</p>
+        <h2 className="text-xl font-bold text-ink">Store Payouts</h2>
+        <p className="text-sm text-muted">Commission {commissionRate}% · settle kept-order revenue to stores</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -97,8 +97,8 @@ export default function InventoryClient({ products, stores, brands, categories }
       sortable: true,
       render: (_, row) => (
         <div>
-          <p className="font-medium text-white text-sm">{row.name}</p>
-          <p className="text-xs text-gray-500">{row.brands?.name ?? '—'}</p>
+          <p className="font-medium text-ink text-sm">{row.name}</p>
+          <p className="text-xs text-muted">{row.brands?.name ?? '—'}</p>
         </div>
       ),
     },
@@ -112,11 +112,11 @@ export default function InventoryClient({ products, stores, brands, categories }
         <div className="text-xs">
           {row.discounted_price ? (
             <>
-              <span className="text-white font-medium">₹{row.discounted_price}</span>
-              <span className="text-gray-500 line-through ml-1">₹{row.base_price}</span>
+              <span className="text-ink font-medium">₹{row.discounted_price}</span>
+              <span className="text-muted line-through ml-1">₹{row.base_price}</span>
             </>
           ) : (
-            <span className="text-white">₹{row.base_price}</span>
+            <span className="text-ink">₹{row.base_price}</span>
           )}
         </div>
       ),
@@ -127,7 +127,7 @@ export default function InventoryClient({ products, stores, brands, categories }
       render: (_, row) => {
         const total = row.product_variants.reduce((s, v) => s + v.available_qty, 0);
         return (
-          <span className={`text-xs font-medium ${total === 0 ? 'text-red-400' : total < 5 ? 'text-amber-400' : 'text-green-400'}`}>
+          <span className={`text-xs font-medium ${total === 0 ? 'text-danger' : total < 5 ? 'text-warn' : 'text-success'}`}>
             {total === 0 ? 'Out of stock' : `${total} available`}
           </span>
         );
@@ -139,7 +139,7 @@ export default function InventoryClient({ products, stores, brands, categories }
       render: (_, row) => (
         <button
           onClick={(e) => { e.stopPropagation(); toggleActive(row.id, row.is_active); }}
-          className={`w-10 h-5 rounded-full transition-colors relative ${row.is_active ? 'bg-indigo-600' : 'bg-gray-600'}`}
+          className={`w-10 h-5 rounded-full transition-colors relative ${row.is_active ? 'bg-ink' : 'bg-knob'}`}
         >
           <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${row.is_active ? 'left-5' : 'left-0.5'}`} />
         </button>
@@ -152,13 +152,13 @@ export default function InventoryClient({ products, stores, brands, categories }
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => router.push(`/admin/inventory/${row.id}`)}
-            className="text-xs text-indigo-400 hover:text-indigo-300"
+            className="text-xs text-info hover:text-ink"
           >
             Edit
           </button>
           <button
             onClick={() => setConfirmDelete(row.id)}
-            className="text-xs text-gray-500 hover:text-red-400"
+            className="text-xs text-muted hover:text-danger"
           >
             Delete
           </button>
@@ -176,21 +176,21 @@ export default function InventoryClient({ products, stores, brands, categories }
           placeholder="Search products…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 w-60"
+          className="bg-white border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder-faint w-60"
         />
-        <select value={filterStore} onChange={(e) => setFilterStore(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300">
+        <select value={filterStore} onChange={(e) => setFilterStore(e.target.value)} className="bg-white border border-line rounded-lg px-3 py-2 text-sm text-body">
           <option value="">All Stores</option>
           {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300">
+        <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)} className="bg-white border border-line rounded-lg px-3 py-2 text-sm text-body">
           <option value="">All Brands</option>
           {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300">
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-white border border-line rounded-lg px-3 py-2 text-sm text-body">
           <option value="">All Categories</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300">
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-white border border-line rounded-lg px-3 py-2 text-sm text-body">
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
@@ -198,7 +198,7 @@ export default function InventoryClient({ products, stores, brands, categories }
         </select>
 
         {selected.length > 0 && (
-          <button onClick={bulkDeactivate} className="ml-auto px-3 py-2 text-sm bg-red-900/40 text-red-300 border border-red-700 rounded-lg hover:bg-red-900/60">
+          <button onClick={bulkDeactivate} className="ml-auto px-3 py-2 text-sm bg-danger-bg text-danger border border-danger-line rounded-lg hover:bg-danger-bg/60">
             Deactivate {selected.length} selected
           </button>
         )}

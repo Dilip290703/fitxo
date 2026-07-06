@@ -28,11 +28,13 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
-  // A logged-in user is only "an admin" if their profile role allows the panel.
-  // On localhost the Supabase session cookie is shared across ports, so a
-  // customer/rider session from :3000/:3002 leaks into the admin app — without
-  // this role check the login page bounces them to /admin and the layout bounces
-  // them back, causing an infinite redirect loop.
+  // A logged-in user is only "an admin" if their profile role is exactly
+  // `admin`. On localhost the Supabase session cookie is shared across ports,
+  // so a customer/rider session from :3000/:3002 leaks into the admin app —
+  // without this role check the login page bounces them to /admin and the
+  // layout bounces them back, causing an infinite redirect loop.
+  // `store_manager` is deliberately NOT accepted: store signup is public
+  // self-serve, so admitting it would open this panel to the internet.
   let isAdmin = false;
   if (user) {
     const { data: profile } = await supabase
@@ -40,7 +42,7 @@ export async function middleware(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single();
-    isAdmin = profile?.role === 'admin' || profile?.role === 'store_manager';
+    isAdmin = profile?.role === 'admin';
   }
 
   if (pathname.startsWith('/admin')) {

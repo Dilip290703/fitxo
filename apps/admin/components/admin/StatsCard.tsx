@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface StatsCardProps {
   title: string;
   value: string | number;
@@ -5,14 +7,16 @@ interface StatsCardProps {
   trend?: { value: number; positive: boolean };
   icon?: string;
   color?: 'indigo' | 'green' | 'amber' | 'red' | 'blue';
+  /** Make the whole card a door into its filtered destination. */
+  href?: string;
 }
 
 const colorMap = {
-  indigo: 'bg-indigo-500/10 text-indigo-400',
-  green: 'bg-green-500/10 text-green-400',
-  amber: 'bg-amber-500/10 text-amber-400',
-  red: 'bg-red-500/10 text-red-400',
-  blue: 'bg-blue-500/10 text-blue-400',
+  indigo: 'bg-info-bg text-info',
+  green: 'bg-success-bg text-success',
+  amber: 'bg-warn-bg text-warn',
+  red: 'bg-danger-bg text-danger',
+  blue: 'bg-info-bg text-info',
 };
 
 export default function StatsCard({
@@ -22,14 +26,15 @@ export default function StatsCard({
   trend,
   icon,
   color = 'indigo',
+  href,
 }: StatsCardProps) {
-  return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
+  const inner = (
+    <>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{title}</p>
-          <p className="text-2xl font-bold text-white mt-1">{value}</p>
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-xs text-soft font-medium uppercase tracking-wide">{title}</p>
+          <p className="text-[22px] font-semibold tracking-[-0.02em] text-ink mt-1">{value}</p>
+          {subtitle && <p className="text-xs text-muted mt-1">{subtitle}</p>}
         </div>
         {icon && (
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${colorMap[color]}`}>
@@ -39,12 +44,21 @@ export default function StatsCard({
       </div>
       {trend && (
         <div className="mt-3 flex items-center gap-1">
-          <span className={`text-xs font-medium ${trend.positive ? 'text-green-400' : 'text-red-400'}`}>
+          <span className={`text-xs font-medium ${trend.positive ? 'text-success' : 'text-danger'}`}>
             {trend.positive ? '↑' : '↓'} {Math.abs(trend.value)}%
           </span>
-          <span className="text-xs text-gray-500">vs last week</span>
+          <span className="text-xs text-muted">vs last week</span>
         </div>
       )}
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block bg-white border border-line rounded-xl p-4 transition hover:border-ink">
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="bg-white border border-line rounded-xl p-4">{inner}</div>;
 }

@@ -31,13 +31,13 @@ export default function RevenueChart({ data, dataKey, color = '#6366f1' }: Reven
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-        <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#ece5da" />
+        <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#958675' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#958675' }} axisLine={false} tickLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: 8 }}
-          labelStyle={{ color: '#f9fafb', fontSize: 12 }}
-          itemStyle={{ color: '#d1d5db', fontSize: 12 }}
+          contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #ece5da', borderRadius: 8 }}
+          labelStyle={{ color: '#171d2b', fontSize: 12 }}
+          itemStyle={{ color: '#5f574e', fontSize: 12 }}
         />
         <Area
           type="monotone"

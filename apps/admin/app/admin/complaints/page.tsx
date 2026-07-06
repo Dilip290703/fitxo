@@ -1,7 +1,12 @@
 import { createClient } from '@fitzo/supabase/server';
 import ComplaintsClient, { type ComplaintRow } from './ComplaintsClient';
 
-export default async function ComplaintsPage() {
+export default async function ComplaintsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -19,10 +24,10 @@ export default async function ComplaintsPage() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Complaints & Support</h2>
-        <p className="text-sm text-gray-500">{complaints.length} total · {open} open</p>
+        <h2 className="text-xl font-bold text-ink">Complaints & Support</h2>
+        <p className="text-sm text-muted">{complaints.length} total · {open} open</p>
       </div>
-      <ComplaintsClient complaints={complaints} />
+      <ComplaintsClient complaints={complaints} initialTab={status} />
     </div>
   );
 }

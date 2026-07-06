@@ -22,7 +22,7 @@ const TYPE_TABS: { label: string; value: NotifType | 'all' }[] = [
   { label: 'Order Update', value: 'order_update' },
 ];
 
-const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500';
+const inputClass = 'w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink';
 
 function formatDateTime(ts: string) {
   return new Date(ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -80,15 +80,15 @@ export default function NotificationsClient({ notifications }: { notifications: 
   return (
     <div className="space-y-6">
       {/* Compose */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-semibold text-white">Send a notification</h3>
+      <section className="bg-white border border-line rounded-xl p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-ink">Send a notification</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Title</label>
+            <label className="block text-xs font-medium text-soft mb-1.5">Title</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder="e.g. Weekend sale is live" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Type</label>
+            <label className="block text-xs font-medium text-soft mb-1.5">Type</label>
             <select value={type} onChange={(e) => setType(e.target.value as NotifType)} className={inputClass}>
               <option value="system">System</option>
               <option value="promo">Promo</option>
@@ -97,12 +97,12 @@ export default function NotificationsClient({ notifications }: { notifications: 
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">Message</label>
+          <label className="block text-xs font-medium text-soft mb-1.5">Message</label>
           <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} className={inputClass} placeholder="Notification body…" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Audience</label>
+            <label className="block text-xs font-medium text-soft mb-1.5">Audience</label>
             <select value={audience} onChange={(e) => setAudience(e.target.value as typeof audience)} className={inputClass}>
               <option value="all">All users</option>
               <option value="role">By role</option>
@@ -111,7 +111,7 @@ export default function NotificationsClient({ notifications }: { notifications: 
           </div>
           {audience === 'role' && (
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Role</label>
+              <label className="block text-xs font-medium text-soft mb-1.5">Role</label>
               <select value={role} onChange={(e) => setRole(e.target.value as SegmentRole)} className={inputClass}>
                 <option value="customer">Customers</option>
                 <option value="store_manager">Store managers</option>
@@ -122,7 +122,7 @@ export default function NotificationsClient({ notifications }: { notifications: 
           )}
           {audience === 'user' && (
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">User email</label>
+              <label className="block text-xs font-medium text-soft mb-1.5">User email</label>
               <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="user@example.com" />
             </div>
           )}
@@ -130,7 +130,7 @@ export default function NotificationsClient({ notifications }: { notifications: 
         <button
           onClick={send}
           disabled={isPending || !title.trim() || !body.trim() || (audience === 'user' && !email.trim())}
-          className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg"
+          className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg"
         >
           {isPending ? 'Sending…' : 'Send notification'}
         </button>
@@ -145,7 +145,7 @@ export default function NotificationsClient({ notifications }: { notifications: 
                 key={t.value}
                 onClick={() => setTab(t.value)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  tab === t.value ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
                 }`}
               >
                 {t.label}
@@ -157,42 +157,42 @@ export default function NotificationsClient({ notifications }: { notifications: 
             placeholder="Search title, message, recipient…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="sm:ml-auto w-full sm:w-72 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            className="sm:ml-auto w-full sm:w-72 bg-white border border-line rounded-xl px-4 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
           />
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-700">
+        <div className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-700 bg-gray-800/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Recipient</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Read</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">When</th>
+              <tr className="border-b border-line bg-cream/60">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Recipient</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Title</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Read</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">When</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-gray-500">No notifications yet.</td>
+                  <td colSpan={5} className="px-4 py-12 text-center text-muted">No notifications yet.</td>
                 </tr>
               ) : (
                 filtered.map((n) => (
-                  <tr key={n.id} className="border-b border-gray-700/50 hover:bg-gray-800/50 transition-colors">
+                  <tr key={n.id} className="border-b border-hairline hover:bg-cream transition-colors">
                     <td className="px-4 py-3">
-                      <p className="text-sm text-white">{n.user?.name ?? '—'}</p>
-                      <p className="text-xs text-gray-500">{n.user?.email ?? ''}</p>
+                      <p className="text-sm text-ink">{n.user?.name ?? '—'}</p>
+                      <p className="text-xs text-muted">{n.user?.email ?? ''}</p>
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={n.type} size="sm" /></td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-gray-200">{n.title}</p>
-                      <p className="text-xs text-gray-500 line-clamp-1 max-w-md">{n.body}</p>
+                      <p className="text-sm text-body">{n.title}</p>
+                      <p className="text-xs text-muted line-clamp-1 max-w-md">{n.body}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs ${n.is_read ? 'text-gray-500' : 'text-amber-400'}`}>{n.is_read ? 'Read' : 'Unread'}</span>
+                      <span className={`text-xs ${n.is_read ? 'text-muted' : 'text-warn'}`}>{n.is_read ? 'Read' : 'Unread'}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">{formatDateTime(n.created_at)}</td>
+                    <td className="px-4 py-3 text-xs text-soft">{formatDateTime(n.created_at)}</td>
                   </tr>
                 ))
               )}

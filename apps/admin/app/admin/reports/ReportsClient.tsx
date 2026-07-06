@@ -73,15 +73,15 @@ export default function ReportsClient() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {REPORTS.map((r) => (
-        <div key={r.key} className="bg-gray-800 border border-gray-700 rounded-xl p-5 flex flex-col gap-3">
+        <div key={r.key} className="bg-white border border-line rounded-xl p-5 flex flex-col gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-white">{r.label}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">{r.description}</p>
+            <h3 className="text-sm font-semibold text-ink">{r.label}</h3>
+            <p className="text-xs text-muted mt-0.5">{r.description}</p>
           </div>
           <button
             onClick={() => exportReport(r)}
             disabled={busy === r.key}
-            className="mt-auto w-fit px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium rounded-lg"
+            className="mt-auto w-fit px-4 py-2 text-sm bg-ink hover:bg-ink-soft disabled:opacity-50 text-white font-medium rounded-lg"
           >
             {busy === r.key ? 'Exporting…' : '↓ Export CSV'}
           </button>

@@ -40,19 +40,19 @@ export default async function DeliveriesPage() {
     <div className="space-y-4 max-w-7xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-white">Deliveries</h2>
-          <p className="text-sm text-gray-500">{deliveries?.length ?? 0} deliveries</p>
+          <h2 className="text-xl font-bold text-ink">Deliveries</h2>
+          <p className="text-sm text-muted">{deliveries?.length ?? 0} deliveries</p>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-green-400">
-            <span className="h-2 w-2 rounded-full bg-green-400" />
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-success-line bg-success-bg px-3 py-1.5 text-success">
+            <span className="h-2 w-2 rounded-full bg-success" />
             {ridersOnline} rider{ridersOnline === 1 ? '' : 's'} online
           </span>
           <span
             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 ${
               waitingForRider > 0
-                ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                : 'border-gray-700 bg-gray-800 text-gray-400'
+                ? 'border-warn-accent/40 bg-warn-bg text-warn'
+                : 'border-line bg-white text-soft'
             }`}
           >
             🛵 {waitingForRider} waiting for a rider

@@ -17,6 +17,13 @@ interface DataTableProps<T> {
   pageSize?: number;
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
+  /** Optional row selection (adds a leading checkbox column) for bulk actions. */
+  selection?: {
+    selected: Set<string>;
+    onToggle: (id: string) => void;
+    /** Called with the visible page's ids when the header checkbox flips. */
+    onToggleAll: (ids: string[], select: boolean) => void;
+  };
 }
 
 function getNestedValue<T>(obj: T, key: string): unknown {
@@ -35,6 +42,7 @@ export default function DataTable<T>({
   pageSize = 20,
   emptyMessage = 'No results found.',
   onRowClick,
+  selection,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -60,17 +68,30 @@ export default function DataTable<T>({
 
   const totalPages = Math.ceil(sorted.length / pageSize);
   const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
+  const pagedIds = paged.map((row) => String(row[keyField]));
+  const allPagedSelected = selection ? pagedIds.length > 0 && pagedIds.every((id) => selection.selected.has(id)) : false;
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-700 bg-gray-800/50">
+            <tr className="border-b border-line bg-cream/60">
+              {selection ? (
+                <th className="w-8 px-3 py-2">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on this page"
+                    checked={allPagedSelected}
+                    onChange={() => selection.onToggleAll(pagedIds, !allPagedSelected)}
+                    className="accent-ink"
+                  />
+                </th>
+              ) : null}
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
-                  className={`px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap ${col.className ?? ''} ${col.sortable ? 'cursor-pointer select-none hover:text-white' : ''}`}
+                  className={`px-3 py-2 text-left text-[11px] font-semibold text-soft uppercase tracking-wide whitespace-nowrap ${col.className ?? ''} ${col.sortable ? 'cursor-pointer select-none hover:text-ink' : ''}`}
                   onClick={() => col.sortable && handleSort(String(col.key))}
                 >
                   {col.label}
@@ -84,7 +105,7 @@ export default function DataTable<T>({
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-gray-500">
+                <td colSpan={columns.length + (selection ? 1 : 0)} className="px-4 py-12 text-center text-muted">
                   {emptyMessage}
                 </td>
               </tr>
@@ -93,12 +114,23 @@ export default function DataTable<T>({
                 <tr
                   key={String(row[keyField])}
                   onClick={() => onRowClick?.(row)}
-                  className={`border-b border-gray-700/50 hover:bg-gray-800/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`border-b border-hairline hover:bg-cream transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
+                  {selection ? (
+                    <td className="w-8 px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label="Select row"
+                        checked={selection.selected.has(String(row[keyField]))}
+                        onChange={() => selection.onToggle(String(row[keyField]))}
+                        className="accent-ink"
+                      />
+                    </td>
+                  ) : null}
                   {columns.map((col) => {
                     const value = getNestedValue(row, String(col.key));
                     return (
-                      <td key={String(col.key)} className={`px-4 py-3 text-gray-300 ${col.className ?? ''}`}>
+                      <td key={String(col.key)} className={`px-3 py-2 text-body ${col.className ?? ''}`}>
                         {col.render ? col.render(value, row) : String(value ?? '—')}
                       </td>
                     );
@@ -111,7 +143,7 @@ export default function DataTable<T>({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-gray-400">
+        <div className="flex items-center justify-between mt-4 text-sm text-soft">
           <span>
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </span>
@@ -119,7 +151,7 @@ export default function DataTable<T>({
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="px-3 py-1.5 rounded border border-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded border border-line hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ←
             </button>
@@ -130,7 +162,7 @@ export default function DataTable<T>({
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`px-3 py-1.5 rounded border ${p === page ? 'border-indigo-500 bg-indigo-600 text-white' : 'border-gray-700 hover:border-gray-500'}`}
+                  className={`px-3 py-1.5 rounded border ${p === page ? 'border-ink bg-ink text-white' : 'border-line hover:border-line-strong'}`}
                 >
                   {p + 1}
                 </button>
@@ -139,7 +171,7 @@ export default function DataTable<T>({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="px-3 py-1.5 rounded border border-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded border border-line hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
             >
               →
             </button>

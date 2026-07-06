@@ -8,10 +8,10 @@ import { logActivity } from '@/lib/activity';
 import type { StoreBusinessDetails, StoreOnboardingStatus } from '@fitzo/supabase/types';
 
 const STATUS_PILL: Record<StoreOnboardingStatus, { label: string; cls: string }> = {
-  draft: { label: 'Draft', cls: 'bg-gray-700 text-gray-300' },
-  submitted: { label: 'Awaiting review', cls: 'bg-amber-500/15 text-amber-300 border border-amber-500/30' },
-  approved: { label: 'Approved', cls: 'bg-green-500/15 text-green-300 border border-green-500/30' },
-  rejected: { label: 'Rejected', cls: 'bg-red-500/15 text-red-300 border border-red-500/30' },
+  draft: { label: 'Draft', cls: 'bg-sand text-body' },
+  submitted: { label: 'Awaiting review', cls: 'bg-warn-bg text-warn border border-warn-accent/40' },
+  approved: { label: 'Approved', cls: 'bg-success-bg text-success border border-success-line' },
+  rejected: { label: 'Rejected', cls: 'bg-danger-bg text-danger border border-danger-line' },
 };
 
 export default function OnboardingReviewClient({
@@ -110,34 +110,34 @@ export default function OnboardingReviewClient({
   ];
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mt-4 space-y-3">
+    <div className="bg-white border border-line rounded-xl p-5 mt-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Onboarding</h3>
+        <h3 className="text-xs font-semibold text-soft uppercase tracking-wide">Onboarding</h3>
         <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${pill.cls}`}>{pill.label}</span>
       </div>
 
       {submittedAt && (
-        <p className="text-xs text-gray-500">Submitted {new Date(submittedAt).toLocaleString()}</p>
+        <p className="text-xs text-muted">Submitted {new Date(submittedAt).toLocaleString()}</p>
       )}
       {status === 'rejected' && rejectionReason && (
-        <p className="text-xs text-red-300/90 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+        <p className="text-xs text-danger/90 bg-danger-bg border border-danger-line rounded-lg px-3 py-2">
           Sent back: {rejectionReason}
         </p>
       )}
 
       {/* Submitted business / KYC / payout details */}
-      <dl className="divide-y divide-gray-700/60 rounded-lg border border-gray-700">
+      <dl className="divide-y divide-line/60 rounded-lg border border-line">
         {rows.map(([k, v]) => (
           <div key={k} className="flex gap-3 px-3 py-1.5">
-            <dt className="w-28 shrink-0 text-[11px] uppercase tracking-wide text-gray-500">{k}</dt>
-            <dd className="min-w-0 flex-1 break-words text-sm text-gray-200">{v || '—'}</dd>
+            <dt className="w-28 shrink-0 text-[11px] uppercase tracking-wide text-muted">{k}</dt>
+            <dd className="min-w-0 flex-1 break-words text-sm text-body">{v || '—'}</dd>
           </div>
         ))}
       </dl>
 
       {/* Actions */}
       {status === 'draft' ? (
-        <p className="text-sm text-gray-500">Store hasn&apos;t submitted its application yet.</p>
+        <p className="text-sm text-muted">Store hasn&apos;t submitted its application yet.</p>
       ) : rejecting ? (
         <div className="space-y-2">
           <textarea
@@ -145,20 +145,20 @@ export default function OnboardingReviewClient({
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder="What does the store need to fix? (shown to the store)"
-            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-sand border border-line-strong rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
           />
           <div className="flex gap-2">
             <button
               onClick={reject}
               disabled={busy}
-              className="flex-1 py-2 text-sm bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white font-medium rounded-lg"
+              className="flex-1 py-2 text-sm bg-danger hover:bg-danger-strong disabled:opacity-60 text-white font-medium rounded-lg"
             >
               {busy ? 'Sending…' : 'Confirm reject'}
             </button>
             <button
               onClick={() => { setRejecting(false); setReason(''); }}
               disabled={busy}
-              className="px-4 py-2 text-sm border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700"
+              className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:bg-hairline"
             >
               Cancel
             </button>
@@ -177,7 +177,7 @@ export default function OnboardingReviewClient({
             <button
               onClick={() => setRejecting(true)}
               disabled={busy}
-              className="px-4 py-2 text-sm border border-red-500/40 text-red-300 rounded-lg hover:bg-red-500/10"
+              className="px-4 py-2 text-sm border border-red-500/40 text-danger rounded-lg hover:bg-danger-bg"
             >
               Reject
             </button>

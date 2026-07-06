@@ -1,16 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 import { computeAgentPayables } from './compute';
 
 export async function recordAgentPayout(riderId: string): Promise<{ count: number; amount: number }> {
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
 
@@ -31,7 +28,15 @@ export async function recordAgentPayout(riderId: string): Promise<{ count: numbe
   }));
 
   const { error } = await admin.from('agent_payouts').insert(rows);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // 23505 = unique_violation on (rider_id, order_id) — double-payout guard
+    // fired (concurrent click / stale page).
+    if (error.code === '23505') {
+      revalidatePath('/admin/agent-payouts');
+      throw new Error('Some of these jobs were already paid out — refresh to see the current outstanding amount.');
+    }
+    throw new Error(error.message);
+  }
 
   await logActivity(
     admin,
@@ -41,7 +46,7 @@ export async function recordAgentPayout(riderId: string): Promise<{ count: numbe
       entity_id: riderId,
       new_value: { jobs: rows.length, amount: rider.netOutstanding },
     },
-    actor?.id,
+    actorId,
   );
 
   revalidatePath('/admin/agent-payouts');

@@ -14,8 +14,8 @@ export default async function ContentPage() {
   return (
     <div className="space-y-4 max-w-5xl">
       <div>
-        <h2 className="text-xl font-bold text-white">Content Management</h2>
-        <p className="text-sm text-gray-500">{blocks.length} content blocks</p>
+        <h2 className="text-xl font-bold text-ink">Content Management</h2>
+        <p className="text-sm text-muted">{blocks.length} content blocks</p>
       </div>
       <ContentClient blocks={blocks} />
     </div>

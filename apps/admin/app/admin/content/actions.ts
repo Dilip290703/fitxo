@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 
 export type ContentType = 'page' | 'banner' | 'faq' | 'announcement';
@@ -21,10 +21,7 @@ export async function saveContentBlock(input: ContentInput): Promise<void> {
   const title = input.title.trim();
   if (!key || !title) throw new Error('Key and title are required');
 
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
   const payload = {
@@ -33,7 +30,7 @@ export async function saveContentBlock(input: ContentInput): Promise<void> {
     body: input.body,
     type: input.type,
     is_published: input.is_published,
-    updated_by: actor?.id ?? null,
+    updated_by: actorId,
   };
 
   let error;
@@ -47,22 +44,19 @@ export async function saveContentBlock(input: ContentInput): Promise<void> {
   await logActivity(
     admin,
     { action: input.id ? 'Updated content block' : 'Created content block', entity_type: 'content', entity_id: input.id, new_value: { key, type: input.type, is_published: input.is_published } },
-    actor?.id,
+    actorId,
   );
 
   revalidatePath('/admin/content');
 }
 
 export async function deleteContentBlock(id: string): Promise<void> {
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  const actorId = await requireAdmin();
 
   const admin = createAdminClient();
   const { error } = await admin.from('content_blocks').delete().eq('id', id);
   if (error) throw new Error(error.message);
 
-  await logActivity(admin, { action: 'Deleted content block', entity_type: 'content', entity_id: id }, actor?.id);
+  await logActivity(admin, { action: 'Deleted content block', entity_type: 'content', entity_id: id }, actorId);
   revalidatePath('/admin/content');
 }

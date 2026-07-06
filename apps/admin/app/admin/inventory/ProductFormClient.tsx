@@ -117,8 +117,8 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
     }
   };
 
-  const inputClass = 'w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors';
-  const labelClass = 'block text-xs font-medium text-gray-400 mb-1.5';
+  const inputClass = 'w-full bg-white border border-line rounded-xl px-4 py-2.5 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink transition-colors';
+  const labelClass = 'block text-xs font-medium text-soft mb-1.5';
 
   return (
     <div>
@@ -130,23 +130,23 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
               onClick={() => i < step && setStep(i)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 i === step
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-ink text-white'
                   : i < step
-                  ? 'text-indigo-400 hover:bg-indigo-600/10'
-                  : 'text-gray-600 cursor-not-allowed'
+                  ? 'text-info hover:bg-ink/10'
+                  : 'text-faint cursor-not-allowed'
               }`}
             >
-              <span className={`w-4 h-4 rounded-full text-xs flex items-center justify-center ${i <= step ? 'bg-indigo-500 text-white' : 'bg-gray-700 text-gray-500'}`}>
+              <span className={`w-4 h-4 rounded-full text-xs flex items-center justify-center ${i <= step ? 'bg-ink-soft text-white' : 'bg-sand text-muted'}`}>
                 {i < step ? '✓' : i + 1}
               </span>
               {s}
             </button>
-            {i < STEPS.length - 1 && <div className="w-4 h-px bg-gray-700" />}
+            {i < STEPS.length - 1 && <div className="w-4 h-px bg-sand" />}
           </div>
         ))}
       </div>
 
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
+      <div className="bg-white border border-line rounded-xl p-6">
         {/* Step 0: Basic Info */}
         {step === 0 && (
           <div className="space-y-4">
@@ -217,8 +217,8 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
                 <input type="text" value={form.tags} onChange={(e) => setField('tags', e.target.value)} className={inputClass} placeholder="summer, formal, cotton, casual" />
               </div>
               <div className="col-span-2 flex items-center gap-2">
-                <input type="checkbox" id="is_featured" checked={form.is_featured} onChange={(e) => setField('is_featured', e.target.checked)} className="w-4 h-4 accent-indigo-600" />
-                <label htmlFor="is_featured" className="text-sm text-gray-300">Featured product</label>
+                <input type="checkbox" id="is_featured" checked={form.is_featured} onChange={(e) => setField('is_featured', e.target.checked)} className="w-4 h-4 accent-ink" />
+                <label htmlFor="is_featured" className="text-sm text-body">Featured product</label>
               </div>
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
             </div>
             <div>
               <label className={labelClass}>Try-on Deposit (₹)</label>
-              <p className="text-xs text-gray-500 mb-1.5">Refundable deposit collected at delivery, applied to purchase</p>
+              <p className="text-xs text-muted mb-1.5">Refundable deposit collected at delivery, applied to purchase</p>
               <input type="number" value={form.deposit_amount} onChange={(e) => setField('deposit_amount', e.target.value)} min={0} className={inputClass} placeholder="0.00" />
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
         {/* Step 2: Colors & Sizes */}
         {step === 2 && (
           <div>
-            <p className="text-sm text-gray-400 mb-4">Add colors, then sizes and stock for each color.</p>
+            <p className="text-sm text-soft mb-4">Add colors, then sizes and stock for each color.</p>
             <ColorVariantBuilder value={colors} onChange={setColors} />
           </div>
         )}
@@ -254,13 +254,13 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
         {/* Step 3: Images */}
         {step === 3 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-400">Upload product images. First image will be the primary.</p>
+            <p className="text-sm text-soft">Upload product images. First image will be the primary.</p>
             <div className="grid grid-cols-3 gap-3">
               {imageUrls.map((url, i) => (
-                <div key={i} className="relative bg-gray-700 rounded-lg p-2 text-xs text-gray-400 break-all">
-                  <span className="absolute top-1 left-1 bg-indigo-600 text-white text-xs px-1 rounded">{i === 0 ? 'Primary' : `#${i + 1}`}</span>
+                <div key={i} className="relative bg-sand rounded-lg p-2 text-xs text-soft break-all">
+                  <span className="absolute top-1 left-1 bg-ink text-white text-xs px-1 rounded">{i === 0 ? 'Primary' : `#${i + 1}`}</span>
                   {url}
-                  <button onClick={() => setImageUrls((arr) => arr.filter((_, j) => j !== i))} className="absolute top-1 right-1 text-red-400 hover:text-red-300">✕</button>
+                  <button onClick={() => setImageUrls((arr) => arr.filter((_, j) => j !== i))} className="absolute top-1 right-1 text-danger hover:text-danger">✕</button>
                 </div>
               ))}
               <ImageUploader
@@ -276,7 +276,7 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
         {/* Step 4: Review */}
         {step === 4 && (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-white">Review before publishing</h3>
+            <h3 className="text-sm font-semibold text-ink">Review before publishing</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               {[
                 ['Name', form.name],
@@ -289,9 +289,9 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
                 ['Colors', `${colors.length} color(s), ${colors.reduce((s, c) => s + c.variants.length, 0)} variant(s)`],
                 ['Images', `${imageUrls.length} image(s)`],
               ].map(([label, value]) => (
-                <div key={label} className="bg-gray-700/50 rounded-lg px-3 py-2">
-                  <p className="text-xs text-gray-500">{label}</p>
-                  <p className="text-sm text-white mt-0.5">{value}</p>
+                <div key={label} className="bg-sand rounded-lg px-3 py-2">
+                  <p className="text-xs text-muted">{label}</p>
+                  <p className="text-sm text-ink mt-0.5">{value}</p>
                 </div>
               ))}
             </div>
@@ -304,7 +304,7 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
         <button
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
-          className="px-4 py-2 text-sm border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
         >
           ← Back
         </button>
@@ -312,7 +312,7 @@ export default function ProductFormClient({ stores, brands, categories, mode, pr
         {step < STEPS.length - 1 ? (
           <button
             onClick={() => setStep((s) => s + 1)}
-            className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors"
+            className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft text-white font-medium rounded-lg transition-colors"
           >
             Next →
           </button>

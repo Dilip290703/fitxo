@@ -1,22 +1,17 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 
 export type Role = 'customer' | 'admin' | 'store_manager' | 'rider';
 
 export async function changeUserRole(userId: string, newRole: Role, storeId?: string): Promise<void> {
-  // Identify the acting admin via the RLS-bound session, then write with the
-  // service-role client. Role changes are privilege-sensitive, so guard here.
-  const ssr = await createClient();
-  const {
-    data: { user: actor },
-  } = await ssr.auth.getUser();
+  // Role changes are privilege-sensitive — only a signed-in admin may call this.
+  const actorId = await requireAdmin();
 
-  if (!actor) throw new Error('Not authenticated');
-  if (actor.id === userId) throw new Error("You can't change your own role");
+  if (actorId === userId) throw new Error("You can't change your own role");
   if (newRole === 'store_manager' && !storeId) throw new Error('Select a store for the store manager');
 
   const admin = createAdminClient();
@@ -54,7 +49,7 @@ export async function changeUserRole(userId: string, newRole: Role, storeId?: st
       old_value: { role: oldRole },
       new_value: { role: newRole, ...(storeId ? { store_id: storeId } : {}) },
     },
-    actor.id,
+    actorId,
   );
 
   revalidatePath('/admin/users');
