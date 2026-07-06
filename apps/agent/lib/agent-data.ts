@@ -9,6 +9,7 @@ import type { DeliveryStatus, DropAddress, OrderStatus } from "./deliveries";
 export type CompletedDelivery = {
   id: string;
   status: DeliveryStatus;
+  orderId: string;
   orderNumber: string;
   orderStatus: OrderStatus;
   finalAmount: number;
@@ -36,7 +37,7 @@ export async function fetchCompletedDeliveries(
   const { data } = await supabase
     .from("deliveries")
     .select(
-      "id, status, completed_at, drop_address, order:orders(order_number, status, final_amount, delivery_fee, order_items(id))",
+      "id, status, completed_at, drop_address, order_id, order:orders(order_number, status, final_amount, delivery_fee, order_items(id))",
     )
     .eq("rider_id", riderId)
     .in("status", ["completed", "failed"])
@@ -49,6 +50,7 @@ export async function fetchCompletedDeliveries(
     return {
       id: d.id,
       status: d.status as DeliveryStatus,
+      orderId: d.order_id,
       orderNumber: order?.order_number ?? "Order",
       orderStatus: (order?.status ?? "completed") as OrderStatus,
       finalAmount: Number(order?.final_amount ?? 0),
@@ -174,6 +176,77 @@ export async function markAllNotificationsRead(userId: string) {
     .update({ is_read: true })
     .eq("user_id", userId)
     .eq("is_read", false);
+}
+
+// ── Payout ledger (agent_payouts, migration 020 — rider reads own rows) ──
+
+export type AgentPayoutRow = {
+  id: string;
+  orderId: string;
+  amount: number;
+  status: string;
+  paidAt: string | null;
+  createdAt: string;
+};
+
+export async function fetchAgentPayouts(riderId: string): Promise<AgentPayoutRow[]> {
+  const { data } = await createClient()
+    .from("agent_payouts")
+    .select("id, order_id, amount, status, paid_at, created_at")
+    .eq("rider_id", riderId)
+    .order("created_at", { ascending: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((p: any) => ({
+    id: p.id,
+    orderId: p.order_id,
+    amount: Number(p.amount),
+    status: p.status,
+    paidAt: p.paid_at,
+    createdAt: p.created_at,
+  }));
+}
+
+// ── Payout details (rider_payout_details, migration 034) ─────────────────
+
+export type PayoutDetails = {
+  legalName: string;
+  panNumber: string;
+  payoutMethod: "upi" | "bank";
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankIfsc: string;
+  upiId: string;
+};
+
+/** null = none saved yet (or migration 034 not applied — treat the same). */
+export async function fetchPayoutDetails(riderId: string): Promise<PayoutDetails | null> {
+  const { data, error } = await createClient()
+    .from("rider_payout_details")
+    .select("legal_name, pan_number, payout_method, bank_account_name, bank_account_number, bank_ifsc, upi_id")
+    .eq("rider_id", riderId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    legalName: data.legal_name ?? "",
+    panNumber: data.pan_number ?? "",
+    payoutMethod: data.payout_method === "bank" ? "bank" : "upi",
+    bankAccountName: data.bank_account_name ?? "",
+    bankAccountNumber: data.bank_account_number ?? "",
+    bankIfsc: data.bank_ifsc ?? "",
+    upiId: data.upi_id ?? "",
+  };
+}
+
+export async function savePayoutDetails(d: PayoutDetails) {
+  return createClient().rpc("save_rider_payout_details", {
+    p_legal_name: d.legalName,
+    p_pan_number: d.panNumber,
+    p_payout_method: d.payoutMethod,
+    p_bank_account_name: d.bankAccountName,
+    p_bank_account_number: d.bankAccountNumber,
+    p_bank_ifsc: d.bankIfsc,
+    p_upi_id: d.upiId,
+  });
 }
 
 // ── Profile update (guarded RPC, migration 014) ──────────────────────────

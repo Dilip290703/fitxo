@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAgent } from "@/components/AgentShell";
+import { fetchPayoutDetails } from "@/lib/agent-data";
 import { ContentWrap, PageHeader, Card, Label } from "@/components/ui";
 import { IconCheck } from "@/components/icons";
 
@@ -19,6 +21,16 @@ const SHORT_VEHICLE: Record<string, string> = {
 
 export function ProfileView() {
   const { rider } = useAgent();
+  const [hasPayout, setHasPayout] = useState<boolean | null>(null);
+  useEffect(() => {
+    let on = true;
+    fetchPayoutDetails(rider.riderId).then((d) => {
+      if (on) setHasPayout(!!d);
+    });
+    return () => {
+      on = false;
+    };
+  }, [rider.riderId]);
   const initials = rider.name
     .split(" ")
     .map((p) => p[0])
@@ -66,6 +78,27 @@ export function ProfileView() {
             className="flex h-10 items-center rounded-full px-3 text-[13px] font-medium text-info hover:bg-info-bg"
           >
             Edit →
+          </Link>
+        </div>
+      </Card>
+
+      <Card className="mb-5">
+        <Label>Payouts</Label>
+        <div className="mt-1 flex items-center justify-between">
+          <div>
+            <p className="text-[15px] font-semibold text-ink">Bank / UPI details</p>
+            <p className="text-[13px] text-soft">
+              {hasPayout === null ? "Checking…" : hasPayout ? "On file — Fitzo pays you here" : "Missing — add them to get paid"}
+            </p>
+          </div>
+          <Link
+            href="/settings"
+            className={[
+              "flex h-10 items-center rounded-full px-3 text-[13px] font-medium",
+              hasPayout === false ? "bg-warn-bg text-warn" : "text-info hover:bg-info-bg",
+            ].join(" ")}
+          >
+            {hasPayout === false ? "Add →" : "Edit →"}
           </Link>
         </div>
       </Card>

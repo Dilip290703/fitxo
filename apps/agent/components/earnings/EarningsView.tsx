@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAgent } from "@/components/AgentShell";
 import {
+  fetchAgentPayouts,
   fetchCompletedDeliveries,
+  fetchPayoutDetails,
   rollupEarnings,
+  type AgentPayoutRow,
   type EarningsSummary,
 } from "@/lib/agent-data";
 import { ContentWrap, PageHeader, StatCard, Card, Empty, Skeleton, inr } from "@/components/ui";
@@ -13,13 +17,21 @@ import { IconWallet } from "@/components/icons";
 export function EarningsView() {
   const { rider } = useAgent();
   const [data, setData] = useState<EarningsSummary | null>(null);
+  const [payouts, setPayouts] = useState<AgentPayoutRow[]>([]);
+  const [hasPayoutDetails, setHasPayoutDetails] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let on = true;
-    fetchCompletedDeliveries(rider.riderId).then((rows) => {
+    Promise.all([
+      fetchCompletedDeliveries(rider.riderId),
+      fetchAgentPayouts(rider.riderId),
+      fetchPayoutDetails(rider.riderId),
+    ]).then(([rows, payoutRows, details]) => {
       if (!on) return;
       setData(rollupEarnings(rows));
+      setPayouts(payoutRows);
+      setHasPayoutDetails(!!details);
       setLoading(false);
     });
     return () => {
@@ -45,12 +57,32 @@ export function EarningsView() {
   const completed = data.rows.filter((r) => r.status === "completed");
   const maxDay = Math.max(1, ...weeklyBars(completed).map((b) => b.amount));
 
+  // Settled money: what Admin has recorded into the agent_payouts ledger.
+  const paidTotal = payouts.reduce((s, p) => s + p.amount, 0);
+  const outstanding = Math.max(0, Math.round((data.allTime - paidTotal) * 100) / 100);
+  const paidOrderIds = new Set(payouts.map((p) => p.orderId));
+
   return (
     <ContentWrap>
       <PageHeader
         title="Earnings"
         subtitle="Your pay is the delivery fee on each completed job."
       />
+
+      {hasPayoutDetails === false && (
+        <Link
+          href="/settings"
+          className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-warn-accent/50 bg-warn-bg p-4"
+        >
+          <div>
+            <p className="text-[14px] font-semibold text-warn">Add your bank / UPI details</p>
+            <p className="text-[13px] text-body">
+              Fitzo has nowhere to send your money yet — add payout details in Settings.
+            </p>
+          </div>
+          <span className="shrink-0 text-[13px] font-semibold text-warn">Add →</span>
+        </Link>
+      )}
 
       {/* This-week hero */}
       <div className="mb-5 rounded-2xl bg-ink p-5">
@@ -77,9 +109,9 @@ export function EarningsView() {
       {/* Rollups */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Today" value={inr(data.today)} accent="green" hint={`${data.todayCount} jobs`} />
-        <StatCard label="This month" value={inr(data.month)} accent="blue" />
-        <StatCard label="All time" value={inr(data.allTime)} accent="amber" hint={`${data.totalCount} jobs`} />
-        <StatCard label="Avg / job" value={inr(data.avgPerJob)} accent="plain" />
+        <StatCard label="All time" value={inr(data.allTime)} accent="blue" hint={`${data.totalCount} jobs`} />
+        <StatCard label="Paid out" value={inr(paidTotal)} accent="plain" hint={`${payouts.length} payout${payouts.length === 1 ? "" : "s"}`} />
+        <StatCard label="To be paid" value={inr(outstanding)} accent="amber" hint="earned − paid" />
       </div>
 
       <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -94,9 +126,9 @@ export function EarningsView() {
       ) : (
         <Card className="divide-y divide-hairline p-0">
           {completed.slice(0, 25).map((r) => (
-            <div key={r.id} className="flex items-center justify-between px-4 py-3.5">
-              <div>
-                <p className="font-mono text-[14px] font-medium text-ink">{r.orderNumber}</p>
+            <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="truncate font-mono text-[14px] font-medium text-ink">{r.orderNumber}</p>
                 <p className="text-[12px] text-soft">
                   {r.completedAt
                     ? new Date(r.completedAt).toLocaleDateString("en-IN", {
@@ -107,15 +139,59 @@ export function EarningsView() {
                   {r.city ? ` · ${r.city}` : ""}
                 </p>
               </div>
-              <span className="text-[15px] font-semibold text-success">+{inr(r.deliveryFee)}</span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span
+                  className={[
+                    "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                    paidOrderIds.has(r.orderId)
+                      ? "border-success-line bg-success-bg text-success"
+                      : "border-warn-bg bg-warn-bg text-warn",
+                  ].join(" ")}
+                >
+                  {paidOrderIds.has(r.orderId) ? "Paid" : "Due"}
+                </span>
+                <span className="text-[15px] font-semibold text-success">+{inr(r.deliveryFee)}</span>
+              </div>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {/* Payout history — what actually landed in your account */}
+      <h2 className="mb-3 mt-6 text-[13px] font-semibold uppercase tracking-[0.12em] text-muted">
+        Payout history
+      </h2>
+      {payouts.length === 0 ? (
+        <Card>
+          <p className="text-[14px] text-body">
+            No payouts yet. Fitzo settles your earned delivery fees to your bank/UPI —
+            each settlement shows up here.
+          </p>
+        </Card>
+      ) : (
+        <Card className="divide-y divide-hairline p-0">
+          {payouts.slice(0, 25).map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+              <div>
+                <p className="text-[14px] font-medium text-ink">Payout · {p.status}</p>
+                <p className="text-[12px] text-soft">
+                  {new Date(p.paidAt ?? p.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+              <span className="text-[15px] font-semibold text-ink">{inr(p.amount)}</span>
             </div>
           ))}
         </Card>
       )}
 
       <p className="mt-4 text-[12px] leading-5 text-faint">
-        Payouts are settled through Razorpay (coming soon). Amounts shown reflect the
-        delivery fee earned on each completed order.
+        Payouts are recorded by Fitzo per completed order; Razorpay bank disbursement is
+        being wired. &ldquo;To be paid&rdquo; = everything you&rsquo;ve earned minus what&rsquo;s
+        already been settled.
       </p>
     </ContentWrap>
   );

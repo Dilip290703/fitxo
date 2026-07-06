@@ -11,6 +11,7 @@ export interface AgentPayableRow {
   grossEarned: number;
   netOutstanding: number;
   totalPaid: number;
+  destination: string | null;
   unpaidCount: number;
 }
 
@@ -42,6 +43,7 @@ export default function AgentPayoutsClient({ rows }: { rows: AgentPayableRow[] }
           <thead>
             <tr className="border-b border-line bg-cream/60">
               <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Rider</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-soft uppercase tracking-wide">Pay to</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-soft uppercase tracking-wide">Jobs</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-soft uppercase tracking-wide">Earned</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-soft uppercase tracking-wide">Paid</th>
@@ -51,11 +53,20 @@ export default function AgentPayoutsClient({ rows }: { rows: AgentPayableRow[] }
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted">No verified riders.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-muted">No verified riders.</td></tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.riderId} className="border-b border-hairline hover:bg-cream transition-colors">
                   <td className="px-4 py-3 text-ink">{r.riderName}</td>
+                  <td className="px-4 py-3">
+                    {r.destination ? (
+                      <span className="font-mono text-xs text-body">{r.destination}</span>
+                    ) : (
+                      <span className="inline-block rounded-full bg-warn-bg px-2 py-0.5 text-xs font-medium text-warn">
+                        No payout details
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right text-soft">{r.completedJobs}</td>
                   <td className="px-4 py-3 text-right text-body">{formatINR(r.grossEarned)}</td>
                   <td className="px-4 py-3 text-right text-soft">{formatINR(r.totalPaid)}</td>
@@ -86,6 +97,16 @@ export default function AgentPayoutsClient({ rows }: { rows: AgentPayableRow[] }
               Settle <span className="text-ink font-medium">{formatINR(confirm.netOutstanding)}</span> to{' '}
               <span className="text-ink">{confirm.riderName}</span> across {confirm.unpaidCount} completed job(s)?
             </p>
+            {confirm.destination ? (
+              <p className="text-xs text-body bg-cream border border-line rounded-lg px-3 py-2 font-mono">
+                Pay to: {confirm.destination}
+              </p>
+            ) : (
+              <p className="text-xs text-danger bg-danger-bg border border-danger-line rounded-lg px-3 py-2">
+                This rider has NOT added bank/UPI details — there is nowhere to send the money.
+                Recording anyway marks these jobs as settled in the ledger.
+              </p>
+            )}
             <p className="text-xs text-warn bg-warn-bg border border-warn-accent/40 rounded-lg px-3 py-2">
               Records the payout in the ledger. Actual Razorpay disbursement is wired separately.
             </p>

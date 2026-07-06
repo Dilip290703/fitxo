@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@fitzo/supabase/client";
 import { useAgent } from "@/components/AgentShell";
-import { riderUpdateProfile } from "@/lib/agent-data";
+import {
+  fetchPayoutDetails,
+  riderUpdateProfile,
+  savePayoutDetails,
+  type PayoutDetails,
+} from "@/lib/agent-data";
 import { Banner, Card, ContentWrap, Label, PageHeader, btnPrimary, inputCls } from "@/components/ui";
 
 // Must match the `vehicle_type` enum in schema.sql: ('bike', 'cycle', 'scooter').
@@ -140,6 +145,9 @@ export function SettingsView() {
         </form>
       </Card>
 
+      {/* Payout details (migration 034) */}
+      <PayoutDetailsCard riderId={rider.riderId} />
+
       {/* Password */}
       <Card>
         <Label>Change password</Label>
@@ -171,5 +179,182 @@ export function SettingsView() {
         </form>
       </Card>
     </ContentWrap>
+  );
+}
+
+const EMPTY_PAYOUT: PayoutDetails = {
+  legalName: "",
+  panNumber: "",
+  payoutMethod: "upi",
+  bankAccountName: "",
+  bankAccountNumber: "",
+  bankIfsc: "",
+  upiId: "",
+};
+
+/**
+ * Bank/UPI + PAN so Admin > Agent Payouts has somewhere to pay (migration 034).
+ * Saved through the guarded save_rider_payout_details RPC — formats are
+ * validated in-DB, so this form just relays the server's message on error.
+ */
+function PayoutDetailsCard({ riderId }: { riderId: string }) {
+  const [form, setForm] = useState<PayoutDetails>(EMPTY_PAYOUT);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<Msg>(null);
+  const [hasSaved, setHasSaved] = useState(false);
+
+  useEffect(() => {
+    let on = true;
+    fetchPayoutDetails(riderId).then((d) => {
+      if (!on) return;
+      if (d) {
+        setForm(d);
+        setHasSaved(true);
+      }
+      setLoading(false);
+    });
+    return () => {
+      on = false;
+    };
+  }, [riderId]);
+
+  const set = (k: keyof PayoutDetails) => (v: string) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setMsg(null);
+    const { error } = await savePayoutDetails(form);
+    setSaving(false);
+    if (error) {
+      setMsg({
+        kind: "err",
+        text: error.message.includes("Could not find the function")
+          ? "Payouts setup isn't live yet (migration 034 pending) — try again later."
+          : error.message,
+      });
+      return;
+    }
+    setHasSaved(true);
+    setMsg({ kind: "ok", text: "Payout details saved. Fitzo pays your earnings here." });
+  }
+
+  return (
+    <Card className="mb-5">
+      <div className="flex items-center justify-between">
+        <Label>Payout details</Label>
+        {!loading && (
+          <span
+            className={[
+              "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+              hasSaved
+                ? "border-success-line bg-success-bg text-success"
+                : "border-warn-bg bg-warn-bg text-warn",
+            ].join(" ")}
+          >
+            {hasSaved ? "On file" : "Missing"}
+          </span>
+        )}
+      </div>
+      <p className="text-[13px] text-body">
+        Where Fitzo sends your delivery earnings. Kept private — only you and Fitzo can see this.
+      </p>
+
+      {loading ? (
+        <p className="mt-3 text-[13px] text-soft">Loading…</p>
+      ) : (
+        <form onSubmit={save} className="mt-3 space-y-3">
+          <div>
+            <span className="mb-1.5 block text-[13px] text-body">Full name (as on PAN / bank)</span>
+            <input
+              value={form.legalName}
+              onChange={(e) => set("legalName")(e.target.value)}
+              placeholder="Your legal name"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-[13px] text-body">PAN</span>
+            <input
+              value={form.panNumber}
+              onChange={(e) => set("panNumber")(e.target.value.toUpperCase().slice(0, 10))}
+              placeholder="ABCDE1234F"
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <span className="mb-1.5 block text-[13px] text-body">Get paid via</span>
+            <div className="grid grid-cols-2 gap-2">
+              {(["upi", "bank"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => set("payoutMethod")(m)}
+                  className={[
+                    "h-11 rounded-xl border px-3 text-[13px] font-medium transition",
+                    form.payoutMethod === m
+                      ? "border-ink bg-ink text-white"
+                      : "border-line-strong bg-white text-body hover:border-ink",
+                  ].join(" ")}
+                >
+                  {m === "upi" ? "UPI" : "Bank transfer"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {form.payoutMethod === "upi" ? (
+            <div>
+              <span className="mb-1.5 block text-[13px] text-body">UPI ID</span>
+              <input
+                value={form.upiId}
+                onChange={(e) => set("upiId")(e.target.value.toLowerCase())}
+                placeholder="name@bank"
+                className={inputCls}
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <span className="mb-1.5 block text-[13px] text-body">Account holder name</span>
+                <input
+                  value={form.bankAccountName}
+                  onChange={(e) => set("bankAccountName")(e.target.value)}
+                  placeholder="As per the bank"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <span className="mb-1.5 block text-[13px] text-body">Account number</span>
+                <input
+                  inputMode="numeric"
+                  value={form.bankAccountNumber}
+                  onChange={(e) => set("bankAccountNumber")(e.target.value.replace(/\D/g, "").slice(0, 18))}
+                  placeholder="9–18 digits"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <span className="mb-1.5 block text-[13px] text-body">IFSC</span>
+                <input
+                  value={form.bankIfsc}
+                  onChange={(e) => set("bankIfsc")(e.target.value.toUpperCase().slice(0, 11))}
+                  placeholder="HDFC0001234"
+                  className={inputCls}
+                />
+              </div>
+            </>
+          )}
+
+          {msg && <Banner kind={msg.kind}>{msg.text}</Banner>}
+          <button type="submit" disabled={saving} className={btnPrimary}>
+            {saving ? "Saving…" : "Save payout details"}
+          </button>
+        </form>
+      )}
+    </Card>
   );
 }

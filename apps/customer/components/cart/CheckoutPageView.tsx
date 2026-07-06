@@ -14,7 +14,11 @@ import { useCart } from "@/components/cart/CartProvider";
 import { useLocation } from "@/store/locationStore";
 import { placeOrder } from "@/app/checkout/actions";
 
-const PAYMENT_METHODS = ["UPI", "Card", "Pay Later", "Cash on Delivery"] as const;
+// COD hidden 2026-07 (agent rework Phase 3, owner-approved): the keep-payment
+// flow is Razorpay-only and riders have no cash-collection step, so a COD order
+// could never settle. Re-add "Cash on Delivery" only alongside a rider cash
+// ledger. (checkout/actions.ts keeps the 'cod' mapping for old orders.)
+const PAYMENT_METHODS = ["UPI", "Card", "Pay Later"] as const;
 
 export function CheckoutPageView() {
   const router = useRouter();

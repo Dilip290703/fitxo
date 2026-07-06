@@ -7,8 +7,24 @@ export interface AgentPayable {
   grossEarned: number;
   netOutstanding: number;
   totalPaid: number;
+  /** Where to send the money (rider_payout_details, migration 034); null = rider hasn't added bank/UPI yet. */
+  destination: string | null;
   /** delivery_fee for completed jobs not yet settled into agent_payouts. */
   unpaid: { orderId: string; amount: number }[];
+}
+
+/** "UPI name@bank" / "A/c ····1234 · HDFC0001234" — compact, mask the account number. */
+function formatDestination(d: {
+  payout_method: string | null;
+  upi_id: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
+}): string | null {
+  if (d.payout_method === 'upi' && d.upi_id) return `UPI ${d.upi_id}`;
+  if (d.bank_account_number && d.bank_ifsc) {
+    return `A/c ····${d.bank_account_number.slice(-4)} · ${d.bank_ifsc}`;
+  }
+  return null;
 }
 
 /**
@@ -19,14 +35,30 @@ export interface AgentPayable {
  * math is identical.
  */
 export async function computeAgentPayables(supabase: SupabaseClient): Promise<AgentPayable[]> {
-  const [{ data: riders }, { data: deliveries }, { data: payouts }] = await Promise.all([
+  const [{ data: riders }, { data: deliveries }, { data: payouts }, { data: payoutDetails }] = await Promise.all([
     supabase.from('riders').select('id, users(name)').eq('is_verified', true),
     supabase
       .from('deliveries')
       .select('rider_id, order_id, order:orders(delivery_fee)')
       .eq('status', 'completed'),
     supabase.from('agent_payouts').select('rider_id, order_id, amount'),
+    // Pre-034 this table doesn't exist — data comes back null and every
+    // destination renders as missing, which is also the truth.
+    supabase
+      .from('rider_payout_details')
+      .select('rider_id, payout_method, upi_id, bank_account_number, bank_ifsc'),
   ]);
+
+  const destByRider = new Map<string, string | null>();
+  for (const d of (payoutDetails ?? []) as unknown as {
+    rider_id: string;
+    payout_method: string | null;
+    upi_id: string | null;
+    bank_account_number: string | null;
+    bank_ifsc: string | null;
+  }[]) {
+    destByRider.set(d.rider_id, formatDestination(d));
+  }
 
   // rider -> (order -> delivery_fee earned)
   const earnedByRiderOrder = new Map<string, Map<string, number>>();
@@ -72,6 +104,7 @@ export async function computeAgentPayables(supabase: SupabaseClient): Promise<Ag
         grossEarned: round(grossEarned),
         netOutstanding: round(unpaid.reduce((s, u) => s + u.amount, 0)),
         totalPaid: round(paidTotal.get(r.id) ?? 0),
+        destination: destByRider.get(r.id) ?? null,
         unpaid,
       };
     },
