@@ -73,6 +73,12 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
   const playChime = useCallback(() => {
     if (mutedRef.current) return;
+    // Vibrate too — audio needs a tap-to-unlock and dies in a pocket (audit M2).
+    try {
+      navigator.vibrate?.(180);
+    } catch {
+      /* unsupported */
+    }
     const ctx = audioRef.current;
     if (!ctx || ctx.state !== "running") return;
     [0, 0.16].forEach((delay, i) => {

@@ -6,15 +6,29 @@ import Link from "next/link";
 import { createClient } from "@fitzo/supabase/client";
 import {
   fetchDeliveryDetail,
+  fileDeliveryIssue,
   riderAccept,
-  riderPickedUp,
-  riderDelivered,
+  riderArrived,
   riderComplete,
+  riderDelivered,
+  riderFail,
+  riderPickedUp,
   riderRelease,
   type DeliveryDetail,
+  type DeliveryItem,
 } from "@/lib/deliveries";
 import { Banner, btnPrimary, inr } from "@/components/ui";
-import { IconArrowLeft, IconMapPin, IconPhone } from "@/components/icons";
+import {
+  IconArrowLeft,
+  IconCheck,
+  IconLifebuoy,
+  IconMapPin,
+  IconPackage,
+  IconPhone,
+  IconX,
+} from "@/components/icons";
+
+const SUPPORT_PHONE = "+918000000000"; // rider helpline (matches /support)
 
 function useCountdown(deadline: string | null, active: boolean) {
   const [left, setLeft] = useState<number>(0);
@@ -30,6 +44,55 @@ function useCountdown(deadline: string | null, active: boolean) {
   return { ms: left, label: `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`, expired: left <= 0 };
 }
 
+/** Keep the screen awake during an active delivery — the rider's phone must not
+ *  sleep mid try-window (audit B12). Best-effort: unsupported browsers no-op. */
+function useWakeLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wl = (navigator as any).wakeLock;
+    if (!wl?.request) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let sentinel: any = null;
+    let stopped = false;
+    const acquire = async () => {
+      try {
+        sentinel = await wl.request("screen");
+      } catch {
+        /* denied (low battery etc.) — fine */
+      }
+    };
+    const onVisible = () => {
+      if (!stopped && document.visibilityState === "visible") acquire();
+    };
+    acquire();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      stopped = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      sentinel?.release?.().catch(() => {});
+    };
+  }, [active]);
+}
+
+type ProblemMode = "menu" | "report" | "fail";
+
+const REPORT_PRESETS = [
+  "Store delayed / order not ready",
+  "Wrong or missing item",
+  "Item damaged",
+  "Address hard to find",
+  "Other",
+];
+
+const FAIL_PRESETS = [
+  "Customer unreachable at the door",
+  "Customer refused the delivery",
+  "Wrong address — can't locate customer",
+  "Safety concern at the location",
+  "Other",
+];
+
 export default function DeliveryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -37,6 +100,10 @@ export default function DeliveryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [otp, setOtp] = useState("");
+  const [collected, setCollected] = useState<Set<string>>(new Set());
+  const [problem, setProblem] = useState<ProblemMode | null>(null);
   const orderIdRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -83,9 +150,11 @@ export default function DeliveryDetailPage() {
   }
 
   // Hooks must run unconditionally — compute these before any early return.
+  const isActive = !!detail && detail.status !== "completed" && detail.status !== "failed";
   const orderStatus = detail?.order?.status;
   const windowActive = orderStatus === "try_window_active";
   const timer = useCountdown(detail?.trySession?.deadline_at ?? null, windowActive);
+  useWakeLock(isActive);
 
   if (loading) return <Centered>Loading…</Centered>;
   if (!detail) return <Centered>Delivery not found.</Centered>;
@@ -95,9 +164,22 @@ export default function DeliveryDetailPage() {
   const pending = detail.items.filter((i) => i.decision === "pending");
   const allDecided = pending.length === 0;
   const addr = detail.drop_address;
+  const pickup = detail.pickup_address;
+
+  const beforePickup = detail.status === "assigned" || detail.status === "accepted";
+  const enRoute = detail.status === "picked_up" || detail.status === "en_route";
+  const atDoorAwaitingHandover = detail.status === "arrived" && orderStatus === "out_for_delivery";
+
+  // Everything the rider must physically take back before completing.
+  const collectables: DeliveryItem[] = windowActive
+    ? [...returned, ...(timer.expired ? pending : [])]
+    : [];
+  const allCollected = collectables.every((i) => collected.has(i.id));
+
+  const canProblemFail = enRoute || detail.status === "arrived";
 
   return (
-    <main className="min-h-screen bg-paper pb-32 text-ink">
+    <main className="min-h-screen bg-paper pb-36 text-ink">
       <header className="sticky top-0 z-10 border-b border-line bg-paper/95 px-5 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-[640px] items-center gap-3">
           <Link
@@ -107,15 +189,72 @@ export default function DeliveryDetailPage() {
           >
             <IconArrowLeft size={20} />
           </Link>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Delivery</p>
             <p className="font-mono text-[15px] font-semibold">{detail.order?.order_number}</p>
           </div>
+          {isActive && (
+            <button
+              type="button"
+              onClick={() => { setProblem("menu"); setNotice(null); }}
+              className="flex h-11 items-center gap-1.5 rounded-full border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-body hover:bg-cream"
+            >
+              <IconLifebuoy size={15} /> Problem?
+            </button>
+          )}
         </div>
       </header>
 
       <div className="mx-auto max-w-[640px] space-y-5 px-5 pt-6">
-        {/* Customer / address */}
+        {/* Pickup — where to collect, front and center until picked up */}
+        {beforePickup && (
+          <Card className={detail.status === "accepted" ? "border-line-strong" : ""}>
+            <Label>Pick up from</Label>
+            {pickup.store_name ? (
+              <>
+                <p className="text-[16px] font-semibold">
+                  {pickup.store_name}
+                  {(pickup.store_count ?? 1) > 1 && (
+                    <span className="ml-2 rounded-full bg-warn-bg px-2 py-0.5 text-[11px] font-semibold text-warn">
+                      +{(pickup.store_count ?? 1) - 1} more store{(pickup.store_count ?? 1) > 2 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
+                <p className="mt-1 text-[14px] leading-6 text-body">
+                  {[pickup.address, pickup.city, pickup.pincode].filter(Boolean).join(", ") || "Address with the store"}
+                </p>
+                {(pickup.store_count ?? 1) > 1 && (
+                  <p className="mt-1 text-[12px] text-warn">
+                    This order has items from more than one store — check items below and call support if a pickup is unclear.
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {pickup.phone && (
+                    <a href={`tel:${pickup.phone}`} className="flex h-11 items-center gap-2 rounded-xl bg-success-bg px-4 text-[14px] font-semibold text-success">
+                      <IconPhone size={16} /> Call store
+                    </a>
+                  )}
+                  {(pickup.address || pickup.pincode) && (
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([pickup.store_name, pickup.address, pickup.city, pickup.pincode].filter(Boolean).join(" "))}`}
+                      className="flex h-11 items-center gap-2 rounded-xl bg-info-bg px-4 text-[14px] font-semibold text-info"
+                    >
+                      <IconMapPin size={16} /> Store on Maps
+                    </a>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-[14px] leading-6 text-body">
+                Store details missing on this job (created before migration 033) — check the items below and call support if you're unsure where to collect.
+              </p>
+            )}
+          </Card>
+        )}
+
+        {/* Customer / drop address */}
         <Card>
           <Label>Deliver to</Label>
           <p className="text-[16px] font-semibold">{addr.full_name ?? "Customer"}</p>
@@ -124,11 +263,8 @@ export default function DeliveryDetailPage() {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {addr.phone && (
-              <a
-                href={`tel:${addr.phone}`}
-                className="flex h-11 items-center gap-2 rounded-xl bg-success-bg px-4 text-[14px] font-semibold text-success"
-              >
-                <IconPhone size={16} /> Call {addr.phone}
+              <a href={`tel:${addr.phone}`} className="flex h-11 items-center gap-2 rounded-xl bg-success-bg px-4 text-[14px] font-semibold text-success">
+                <IconPhone size={16} /> Call {addr.full_name?.split(" ")[0] ?? "customer"}
               </a>
             )}
             {(addr.line1 || addr.pincode) && (
@@ -144,7 +280,30 @@ export default function DeliveryDetailPage() {
           </div>
         </Card>
 
-        {/* Live try window */}
+        {/* Handover — enter the customer's code */}
+        {atDoorAwaitingHandover && (
+          <Card className="border-ink">
+            <Label>Handover code</Label>
+            <p className="text-[14px] leading-6 text-body">
+              Ask the customer for the <strong className="text-ink">4-digit code</strong> on their
+              order-tracking page, then confirm the handover below.
+            </p>
+            <input
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="• • • •"
+              className="mt-3 h-14 w-full rounded-xl border border-line-strong bg-white text-center font-mono text-[28px] font-bold tracking-[0.5em] text-ink outline-none placeholder:text-faint focus:border-ink"
+            />
+            <p className="mt-2 text-[12px] text-soft">
+              Older orders without a code: leave blank and confirm.
+            </p>
+          </Card>
+        )}
+
+        {/* Live try window — the rider's waiting room */}
         {windowActive && (
           <Card className="border-ink bg-ink">
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent">
@@ -154,8 +313,18 @@ export default function DeliveryDetailPage() {
               {timer.expired ? "00:00" : timer.label}
             </p>
             <p className="mt-2 text-[13px] text-white/70">
-              {timer.expired ? "Time's up — collect any returns and complete." : "Wait at the door while the customer tries on and decides."}
+              {timer.expired
+                ? "Time's up — collect the items below and complete."
+                : "Wait at the door. Decisions appear live below as the customer makes them."}
             </p>
+            {addr.phone && !timer.expired && (
+              <a
+                href={`tel:${addr.phone}`}
+                className="mt-4 flex h-11 items-center justify-center gap-2 rounded-xl bg-white/10 text-[14px] font-semibold text-white"
+              >
+                <IconPhone size={16} /> Call customer
+              </a>
+            )}
           </Card>
         )}
 
@@ -163,7 +332,7 @@ export default function DeliveryDetailPage() {
           <Card className="border-accent-soft bg-accent-pale">
             <p className="text-[14px] leading-6 text-warn">
               Handed over. Waiting for the customer to tap <strong>Start try-on</strong> on their phone — the timer
-              begins then (live here).
+              begins then (live here). Not starting? Ask them to open their order-tracking page.
             </p>
           </Card>
         )}
@@ -194,13 +363,59 @@ export default function DeliveryDetailPage() {
               <span className="text-success">Keeping {kept.length}</span>
               <span className="text-warn">Returning {returned.length}</span>
               {pending.length > 0 && <span className="text-soft">Undecided {pending.length}</span>}
-              <span className="ml-auto text-ink">
-                Collect: <strong>{returned.length + (timer.expired ? pending.length : 0)}</strong> item(s)
-              </span>
             </div>
           )}
         </Card>
 
+        {/* Collect-returns checklist — tick each item you physically take back */}
+        {windowActive && collectables.length > 0 && (timer.expired || allDecided) && (
+          <Card className="border-warn-accent/40">
+            <Label>Collect before you leave ({collectables.length})</Label>
+            <p className="mb-2 text-[13px] text-body">Tick each item as the customer hands it back.</p>
+            <ul className="space-y-2">
+              {collectables.map((it) => {
+                const done = collected.has(it.id);
+                return (
+                  <li key={it.id}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollected((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(it.id)) next.delete(it.id);
+                          else next.add(it.id);
+                          return next;
+                        })
+                      }
+                      className={[
+                        "flex min-h-[52px] w-full items-center gap-3 rounded-xl border p-3 text-left transition",
+                        done ? "border-success-line bg-success-bg" : "border-line bg-white",
+                      ].join(" ")}
+                    >
+                      <span
+                        className={[
+                          "grid h-7 w-7 shrink-0 place-items-center rounded-full border",
+                          done ? "border-success bg-success text-white" : "border-line-strong bg-white text-transparent",
+                        ].join(" ")}
+                      >
+                        <IconCheck size={14} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={["block truncate text-[14px] font-medium", done ? "text-success" : "text-ink"].join(" ")}>
+                          {it.product_name}
+                        </span>
+                        <span className="block text-[12px] text-soft">{it.color_name} · {it.size}</span>
+                      </span>
+                      <IconPackage size={16} className={done ? "text-success" : "text-muted"} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        )}
+
+        {notice && <Banner kind="ok">{notice}</Banner>}
         {error && <Banner kind="err">{error}</Banner>}
       </div>
 
@@ -229,8 +444,26 @@ export default function DeliveryDetailPage() {
               </button>
             </div>
           )}
-          {(detail.status === "picked_up" || detail.status === "en_route") && (
-            <ActionButton busy={busy} onClick={() => run(() => riderDelivered(id))}>Mark delivered (at door)</ActionButton>
+          {enRoute && (
+            <ActionButton
+              busy={busy}
+              onClick={() =>
+                run(async () => {
+                  const res = await riderArrived(id);
+                  // Pre-033 fallback: no arrival RPC yet → the old direct
+                  // "delivered" call still moves the flow forward.
+                  if (res.error?.code === "PGRST202") return riderDelivered(id, "");
+                  return res;
+                })
+              }
+            >
+              I've arrived at the door
+            </ActionButton>
+          )}
+          {atDoorAwaitingHandover && (
+            <ActionButton busy={busy} onClick={() => run(() => riderDelivered(id, otp))}>
+              Confirm handover{otp ? ` · ${otp}` : ""}
+            </ActionButton>
           )}
           {detail.status === "arrived" && orderStatus === "delivered" && (
             <ActionButton disabled busy={false} onClick={() => {}}>Waiting for customer to start…</ActionButton>
@@ -238,13 +471,17 @@ export default function DeliveryDetailPage() {
           {windowActive && (
             <ActionButton
               busy={busy}
-              disabled={!timer.expired && !allDecided}
+              disabled={(!timer.expired && !allDecided) || !allCollected}
               onClick={() => run(() => riderComplete(id))}
             >
-              {timer.expired || allDecided ? "Collect returns & complete" : "Waiting for customer to decide…"}
+              {!timer.expired && !allDecided
+                ? "Waiting for customer to decide…"
+                : !allCollected
+                ? `Tick off ${collectables.length} item${collectables.length === 1 ? "" : "s"} to collect`
+                : "Collect returns & complete"}
             </ActionButton>
           )}
-          {(detail.status === "completed" || orderStatus === "completed") && (
+          {(detail.status === "completed" || orderStatus === "completed") && detail.status !== "failed" && (
             <button
               onClick={() => router.push("/")}
               className="flex h-14 w-full items-center justify-center rounded-2xl border border-success-line bg-success-bg text-[15px] font-semibold text-success"
@@ -252,9 +489,194 @@ export default function DeliveryDetailPage() {
               Delivery complete ✓ — back to dashboard
             </button>
           )}
+          {detail.status === "failed" && (
+            <button
+              onClick={() => router.push("/")}
+              className="flex h-14 w-full items-center justify-center rounded-2xl border border-danger-line bg-danger-bg text-[15px] font-semibold text-danger"
+            >
+              Delivery failed — reported to Fitzo. Back to dashboard
+            </button>
+          )}
         </div>
       </div>
+
+      {problem && (
+        <ProblemSheet
+          mode={problem}
+          setMode={setProblem}
+          canFail={canProblemFail}
+          customerPhone={addr.phone ?? null}
+          onClose={() => setProblem(null)}
+          onReported={() => {
+            setProblem(null);
+            setNotice("Issue reported — Fitzo support can see it now. Carry on when you can.");
+          }}
+          detail={detail}
+          onFailed={() => load()}
+        />
+      )}
     </main>
+  );
+}
+
+// ── Problem bottom sheet: report an issue / can't deliver ─────────────────
+
+function ProblemSheet({
+  mode,
+  setMode,
+  canFail,
+  customerPhone,
+  onClose,
+  onReported,
+  onFailed,
+  detail,
+}: {
+  mode: ProblemMode;
+  setMode: (m: ProblemMode) => void;
+  canFail: boolean;
+  customerPhone: string | null;
+  onClose: () => void;
+  onReported: () => void;
+  onFailed: () => void;
+  detail: DeliveryDetail;
+}) {
+  const [preset, setPreset] = useState<string | null>(null);
+  const [note, setNote] = useState("");
+  const [sending, setSending] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const reason = [preset && preset !== "Other" ? preset : null, note.trim() || null]
+    .filter(Boolean)
+    .join(" — ");
+
+  async function submitReport() {
+    if (!reason) { setErr("Pick a reason or write a note."); return; }
+    setSending(true);
+    setErr(null);
+    const { data: userData } = await createClient().auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) { setErr("Session expired — sign in again."); setSending(false); return; }
+    const { error } = await fileDeliveryIssue({
+      userId,
+      orderId: detail.order_id,
+      orderNumber: detail.order?.order_number ?? "order",
+      subject: preset && preset !== "Other" ? preset : "Delivery problem",
+      message: reason,
+    });
+    setSending(false);
+    if (error) { setErr(error.message); return; }
+    onReported();
+  }
+
+  async function submitFail() {
+    if (!reason || reason.length < 5) { setErr("Pick a reason (add a note if it's 'Other')."); return; }
+    setSending(true);
+    setErr(null);
+    const { error } = await riderFail(detail.id, reason);
+    setSending(false);
+    if (error) { setErr(error.message); return; }
+    onFailed();
+    onClose();
+  }
+
+  const presets = mode === "fail" ? FAIL_PRESETS : REPORT_PRESETS;
+
+  return (
+    <div className="fixed inset-0 z-[80]">
+      <div className="absolute inset-0 bg-ink/40" onClick={onClose} />
+      <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white pb-[max(env(safe-area-inset-bottom),16px)] shadow-pop">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <p className="text-[16px] font-semibold text-ink">
+            {mode === "menu" && "Having a problem?"}
+            {mode === "report" && "Report an issue"}
+            {mode === "fail" && "Can't complete this delivery"}
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-11 w-11 place-items-center rounded-full text-soft hover:bg-cream hover:text-ink"
+          >
+            <IconX size={20} />
+          </button>
+        </div>
+
+        {mode === "menu" && (
+          <div className="space-y-2 p-4">
+            {customerPhone && (
+              <a href={`tel:${customerPhone}`} className="flex h-13 min-h-[52px] items-center gap-3 rounded-xl border border-line bg-white px-4 text-[15px] font-medium text-ink hover:bg-cream">
+                <IconPhone size={18} className="text-success" /> Call the customer
+              </a>
+            )}
+            <a href={`tel:${SUPPORT_PHONE}`} className="flex min-h-[52px] items-center gap-3 rounded-xl border border-line bg-white px-4 text-[15px] font-medium text-ink hover:bg-cream">
+              <IconPhone size={18} className="text-info" /> Call Fitzo support
+            </a>
+            <button
+              type="button"
+              onClick={() => { setMode("report"); setPreset(null); setNote(""); setErr(null); }}
+              className="flex min-h-[52px] w-full items-center gap-3 rounded-xl border border-line bg-white px-4 text-left text-[15px] font-medium text-ink hover:bg-cream"
+            >
+              <IconLifebuoy size={18} className="text-warn" /> Report an issue (keep going)
+            </button>
+            {canFail && (
+              <button
+                type="button"
+                onClick={() => { setMode("fail"); setPreset(null); setNote(""); setErr(null); }}
+                className="flex min-h-[52px] w-full items-center gap-3 rounded-xl border border-danger-line bg-white px-4 text-left text-[15px] font-medium text-danger hover:bg-danger-bg"
+              >
+                <IconX size={18} /> Can't deliver — end this job
+              </button>
+            )}
+          </div>
+        )}
+
+        {(mode === "report" || mode === "fail") && (
+          <div className="space-y-3 p-4">
+            {mode === "fail" && (
+              <Banner kind="err">
+                This ends the job: the order is cancelled, support is notified, and you must
+                return the items to the store. Call the customer first if you haven't.
+              </Banner>
+            )}
+            <div className="space-y-2">
+              {presets.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPreset(p)}
+                  className={[
+                    "flex min-h-[48px] w-full items-center rounded-xl border px-4 text-left text-[14px] font-medium transition",
+                    preset === p ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:bg-cream",
+                  ].join(" ")}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder={mode === "fail" ? "Anything support should know (required for 'Other')" : "Add details (optional)"}
+              className="w-full rounded-xl border border-line-strong bg-white p-3.5 text-[15px] text-ink outline-none placeholder:text-faint focus:border-ink"
+            />
+            {err && <Banner kind="err">{err}</Banner>}
+            <button
+              type="button"
+              disabled={sending}
+              onClick={mode === "fail" ? submitFail : submitReport}
+              className={
+                mode === "fail"
+                  ? "flex h-14 w-full items-center justify-center rounded-2xl bg-danger px-4 text-[16px] font-semibold text-white transition hover:bg-danger-strong disabled:opacity-60"
+                  : btnPrimary
+              }
+            >
+              {sending ? "Sending…" : mode === "fail" ? "End job & notify support" : "Send report"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

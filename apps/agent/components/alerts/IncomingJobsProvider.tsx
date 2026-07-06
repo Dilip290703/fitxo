@@ -18,8 +18,15 @@ function formatCurrency(n: number) {
   }).format(n);
 }
 
-function areaOf(a: AvailableJob["dropAddress"]) {
-  return [a.city, a.pincode].filter(Boolean).join(" · ") || "Address on accept";
+function areaOf(a: AvailableJob["dropArea"]) {
+  return [a.landmark, a.city, a.pincode].filter(Boolean).join(" · ") || "Area on accept";
+}
+
+/** "just now" / "waiting 4 min" — how long the order has been waiting for a rider. */
+function waitingLabel(createdAt: string, now: number) {
+  const m = Math.floor((now - new Date(createdAt).getTime()) / 60000);
+  if (!Number.isFinite(m) || m < 1) return "just now";
+  return `waiting ${m} min`;
 }
 
 /**
@@ -48,6 +55,12 @@ export function IncomingJobsProvider() {
 
   const playChime = useCallback(() => {
     if (mutedRef.current) return;
+    // Vibrate too — audio needs a tap-to-unlock and dies in a pocket (audit M2).
+    try {
+      navigator.vibrate?.([200, 100, 200]);
+    } catch {
+      /* unsupported */
+    }
     const ctx = audioRef.current;
     if (!ctx || ctx.state !== "running") return;
     // Three urgent rising notes — a "new order" ring.
@@ -188,14 +201,28 @@ export function IncomingJobsProvider() {
             </button>
           </div>
           <div className="px-4 py-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <p className="font-mono text-[14px] font-semibold text-ink">{job.orderNumber}</p>
-              <p className="text-[16px] font-bold text-success">
+              <p className="text-[18px] font-bold text-success">
                 +{formatCurrency(job.deliveryFee)}
               </p>
             </div>
-            <p className="mt-1 text-[13px] text-body">
-              {job.itemCount} item{job.itemCount === 1 ? "" : "s"} · {areaOf(job.dropAddress)}
+            <div className="mt-2 space-y-1 text-[13px]">
+              <p className="flex gap-1.5 text-ink">
+                <span className="w-11 shrink-0 font-semibold uppercase text-[11px] leading-5 tracking-wide text-muted">Pickup</span>
+                <span className="min-w-0 font-medium">
+                  {job.storeName ?? "Store on accept"}
+                  {job.storeCount > 1 ? ` +${job.storeCount - 1} more` : ""}
+                  {job.storeArea ? <span className="font-normal text-body"> · {job.storeArea}</span> : null}
+                </span>
+              </p>
+              <p className="flex gap-1.5 text-ink">
+                <span className="w-11 shrink-0 font-semibold uppercase text-[11px] leading-5 tracking-wide text-muted">Drop</span>
+                <span className="min-w-0 font-medium">{areaOf(job.dropArea)}</span>
+              </p>
+            </div>
+            <p className="mt-1.5 text-[12px] text-soft">
+              {job.itemCount} item{job.itemCount === 1 ? "" : "s"} · {waitingLabel(job.createdAt, Date.now())}
             </p>
             <div className="mt-3 flex gap-2">
               <button
