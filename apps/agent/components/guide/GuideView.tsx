@@ -6,27 +6,27 @@ import { ContentWrap, PageHeader, Card } from "@/components/ui";
 const STEPS: { title: string; body: string }[] = [
   {
     title: "Go online",
-    body: "Toggle yourself online from the top of the screen. Delivery offers only come to you while you're online.",
+    body: "Toggle yourself online from the top of the screen. Delivery offers only come to you while you're online, and you carry one job at a time.",
   },
   {
     title: "Accept & pick up",
-    body: "When a store confirms an order, an offer pops up with a ring. Accept it fast — the first rider to accept gets the job — then head to the store and tap 'Picked up from store'.",
+    body: "When a store confirms an order, an offer pops up with a ring — pickup store, area and your fee are on the card. Accept fast (first rider wins), head to the store shown, and tap 'Picked up from store' once the staff hand you the order.",
   },
   {
-    title: "Deliver to the door",
-    body: "Navigate to the customer using the Maps link. When you hand over the bag, tap 'Mark delivered'.",
+    title: "Arrive & confirm handover",
+    body: "Navigate with the Maps link. At the door tap 'I've arrived', then ask the customer for the 4-digit code on their tracking page and confirm the handover.",
   },
   {
     title: "Wait during the try-on",
-    body: "The customer tries everything on (about 7 minutes). A live timer shows on the delivery screen — please wait at the door.",
+    body: "The customer tries everything on (about 7 minutes). A live timer runs on the delivery screen and your screen stays awake — please wait at the door.",
   },
   {
     title: "Collect returns",
-    body: "The screen shows exactly which items they're returning. Collect those items before you leave.",
+    body: "The screen lists exactly which items they're returning — tick each one off as it's handed back.",
   },
   {
     title: "Complete & get paid",
-    body: "Tap 'Collect returns & complete'. The delivery fee is added to your earnings instantly.",
+    body: "Tap 'Collect returns & complete'. The delivery fee is added to your earnings instantly. Stuck at any point? Tap 'Problem?' on the delivery screen.",
   },
 ];
 

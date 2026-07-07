@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAgent } from "@/components/AgentShell";
 import { fetchCompletedDeliveries, type CompletedDelivery } from "@/lib/agent-data";
-import { ContentWrap, PageHeader, Empty, Skeleton, inr } from "@/components/ui";
+import { ContentWrap, PageHeader, Empty, ErrorCard, Skeleton, inr } from "@/components/ui";
 import { IconCheck, IconClock, IconX } from "@/components/icons";
 
 function dayLabel(iso: string | null): string {
@@ -23,19 +23,22 @@ export function HistoryView() {
   const { rider } = useAgent();
   const [rows, setRows] = useState<CompletedDelivery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState<"all" | "completed" | "failed">("all");
 
   useEffect(() => {
     let on = true;
     fetchCompletedDeliveries(rider.riderId).then((r) => {
       if (!on) return;
-      setRows(r);
+      setRows(r.rows);
+      setLoadError(r.error);
       setLoading(false);
     });
     return () => {
       on = false;
     };
-  }, [rider.riderId]);
+  }, [rider.riderId, reloadKey]);
 
   const filtered = useMemo(
     () => (filter === "all" ? rows : rows.filter((r) => r.status === filter)),
@@ -84,6 +87,8 @@ export function HistoryView() {
           <Skeleton className="h-[72px]" />
           <Skeleton className="h-[72px]" />
         </div>
+      ) : loadError ? (
+        <ErrorCard onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
       ) : filtered.length === 0 ? (
         <Empty
           icon={<IconClock size={22} />}

@@ -11,7 +11,7 @@ import {
   type AgentPayoutRow,
   type EarningsSummary,
 } from "@/lib/agent-data";
-import { ContentWrap, PageHeader, StatCard, Card, Empty, Skeleton, inr } from "@/components/ui";
+import { ContentWrap, PageHeader, StatCard, Card, Empty, ErrorCard, Skeleton, inr } from "@/components/ui";
 import { IconWallet } from "@/components/icons";
 
 export function EarningsView() {
@@ -20,6 +20,8 @@ export function EarningsView() {
   const [payouts, setPayouts] = useState<AgentPayoutRow[]>([]);
   const [hasPayoutDetails, setHasPayoutDetails] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let on = true;
@@ -27,19 +29,22 @@ export function EarningsView() {
       fetchCompletedDeliveries(rider.riderId),
       fetchAgentPayouts(rider.riderId),
       fetchPayoutDetails(rider.riderId),
-    ]).then(([rows, payoutRows, details]) => {
+    ]).then(([completed, payoutRes, details]) => {
       if (!on) return;
-      setData(rollupEarnings(rows));
-      setPayouts(payoutRows);
+      setData(rollupEarnings(completed.rows));
+      setPayouts(payoutRes.rows);
       setHasPayoutDetails(!!details);
+      // The payout ledger predates migration 020 in some envs — a missing
+      // table shouldn't brick the whole earnings screen, jobs data should.
+      setLoadError(completed.error);
       setLoading(false);
     });
     return () => {
       on = false;
     };
-  }, [rider.riderId]);
+  }, [rider.riderId, reloadKey]);
 
-  if (loading || !data) {
+  if (loading || (!data && !loadError)) {
     return (
       <ContentWrap>
         <PageHeader title="Earnings" />
@@ -50,6 +55,15 @@ export function EarningsView() {
           <Skeleton className="h-[96px]" />
           <Skeleton className="h-[96px]" />
         </div>
+      </ContentWrap>
+    );
+  }
+
+  if (loadError || !data) {
+    return (
+      <ContentWrap>
+        <PageHeader title="Earnings" />
+        <ErrorCard onRetry={() => { setLoading(true); setLoadError(null); setReloadKey((k) => k + 1); }} />
       </ContentWrap>
     );
   }

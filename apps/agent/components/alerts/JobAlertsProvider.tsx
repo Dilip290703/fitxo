@@ -107,6 +107,9 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
   useEffect(() => {
     setMuted(typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1");
+    // Shared mute with IncomingJobsProvider (one switch for the whole app).
+    const onMute = (e: Event) => setMuted(!!(e as CustomEvent).detail);
+    window.addEventListener("fitzo-mute-change", onMute);
 
     const unlock = () => {
       if (!audioRef.current) {
@@ -197,6 +200,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
     return () => {
       window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("fitzo-mute-change", onMute);
       supabase.removeChannel(channel);
     };
   }, [pushAlert, userId]);
@@ -209,6 +213,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
       } catch {
         /* ignore */
       }
+      window.dispatchEvent(new CustomEvent("fitzo-mute-change", { detail: next }));
       return next;
     });
   };

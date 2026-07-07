@@ -11,7 +11,7 @@ import {
 } from "@/lib/agent-data";
 import { isActiveDelivery } from "@/components/status";
 import { DeliveryCard } from "@/components/DeliveryCard";
-import { ContentWrap, StatCard, Empty, Skeleton, inr } from "@/components/ui";
+import { ContentWrap, StatCard, Empty, ErrorCard, Skeleton, inr } from "@/components/ui";
 import { IconChevronRight, IconScooter } from "@/components/icons";
 
 export function AgentDashboard() {
@@ -19,6 +19,8 @@ export function AgentDashboard() {
   const [deliveries, setDeliveries] = useState<DeliveryListItem[]>([]);
   const [earnings, setEarnings] = useState<EarningsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -27,14 +29,15 @@ export function AgentDashboard() {
       fetchCompletedDeliveries(rider.riderId),
     ]).then(([dels, completed]) => {
       if (!active) return;
-      setDeliveries(dels);
-      setEarnings(rollupEarnings(completed));
+      setDeliveries(dels.rows);
+      setEarnings(rollupEarnings(completed.rows));
+      setLoadError(dels.error ?? completed.error);
       setLoading(false);
     });
     return () => {
       active = false;
     };
-  }, [rider.riderId]);
+  }, [rider.riderId, reloadKey]);
 
   const active = deliveries.filter((d) => isActiveDelivery(d.status));
   const newJobs = active.filter((d) => d.status === "assigned");
@@ -115,6 +118,8 @@ export function AgentDashboard() {
             <Skeleton className="h-[104px]" />
             <Skeleton className="h-[104px]" />
           </div>
+        ) : loadError ? (
+          <ErrorCard onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
         ) : active.length === 0 ? (
           <Empty
             icon={<IconScooter size={22} />}

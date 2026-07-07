@@ -120,3 +120,25 @@ export function Banner({ kind, children }: { kind: "ok" | "err"; children: React
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={["animate-pulse rounded-xl bg-sand", className].join(" ")} />;
 }
+
+/**
+ * Honest failure state (audit M4): a network/RLS error must never render as a
+ * cheerful empty list on a flaky connection — say it failed and offer Retry.
+ */
+export function ErrorCard({ text, onRetry }: { text?: string; onRetry: () => void }) {
+  return (
+    <div className="rounded-2xl border border-danger-line bg-danger-bg p-5 text-center">
+      <p className="text-[15px] font-semibold text-danger">Couldn&rsquo;t load this</p>
+      <p className="mt-1 text-[13px] text-body">
+        {text ?? "Check your connection and try again."}
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-3 h-11 rounded-full bg-ink px-6 text-[14px] font-semibold text-white transition hover:bg-ink-soft"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}

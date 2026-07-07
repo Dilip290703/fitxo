@@ -32,9 +32,9 @@ type OrderRel = {
 
 export async function fetchCompletedDeliveries(
   riderId: string,
-): Promise<CompletedDelivery[]> {
+): Promise<{ rows: CompletedDelivery[]; error: string | null }> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("deliveries")
     .select(
       "id, status, completed_at, drop_address, order_id, order:orders(order_number, status, final_amount, delivery_fee, order_items(id))",
@@ -44,7 +44,7 @@ export async function fetchCompletedDeliveries(
     .order("completed_at", { ascending: false, nullsFirst: false });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((d: any) => {
+  const rows = (data ?? []).map((d: any) => {
     const order = single(d.order) as OrderRel & { order_items?: unknown[] };
     const addr = (d.drop_address ?? {}) as DropAddress;
     return {
@@ -60,6 +60,7 @@ export async function fetchCompletedDeliveries(
       itemCount: Array.isArray(order?.order_items) ? order!.order_items.length : 0,
     };
   });
+  return { rows, error: error?.message ?? null };
 }
 
 // ── Earnings rollups ─────────────────────────────────────────────────────
@@ -146,24 +147,27 @@ export type RiderNotification = {
 
 export async function fetchNotifications(
   userId: string,
-): Promise<RiderNotification[]> {
+): Promise<{ rows: RiderNotification[]; error: string | null }> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("notifications")
     .select("id, type, title, body, is_read, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((n: any) => ({
-    id: n.id,
-    type: n.type,
-    title: n.title,
-    body: n.body,
-    isRead: n.is_read,
-    createdAt: n.created_at,
-  }));
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rows: (data ?? []).map((n: any) => ({
+      id: n.id,
+      type: n.type,
+      title: n.title,
+      body: n.body,
+      isRead: n.is_read,
+      createdAt: n.created_at,
+    })),
+    error: error?.message ?? null,
+  };
 }
 
 export async function markNotificationRead(id: string) {
@@ -178,6 +182,56 @@ export async function markAllNotificationsRead(userId: string) {
     .eq("is_read", false);
 }
 
+// ── Support tickets — ride the existing complaints table (migration 012). ──
+// A rider is a users row, so complaints_insert_own / _select_own already cover
+// filing + reading; admin triages in Admin > Complaints. Same pattern the
+// store panel uses; subjects are prefixed for triage (no rider_id column).
+
+export type SupportTicket = {
+  id: string;
+  subject: string;
+  message: string;
+  status: string;
+  adminResponse: string | null;
+  createdAt: string;
+};
+
+export async function fileSupportTicket(input: {
+  userId: string;
+  riderName: string;
+  subject: string;
+  message: string;
+}) {
+  return createClient().from("complaints").insert({
+    user_id: input.userId,
+    subject: `[Rider: ${input.riderName}] ${input.subject}`.slice(0, 255),
+    message: input.message,
+  });
+}
+
+export async function fetchMyTickets(
+  userId: string,
+): Promise<{ rows: SupportTicket[]; error: string | null }> {
+  const { data, error } = await createClient()
+    .from("complaints")
+    .select("id, subject, message, status, admin_response, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rows: (data ?? []).map((c: any) => ({
+      id: c.id,
+      subject: c.subject,
+      message: c.message,
+      status: c.status,
+      adminResponse: c.admin_response,
+      createdAt: c.created_at,
+    })),
+    error: error?.message ?? null,
+  };
+}
+
 // ── Payout ledger (agent_payouts, migration 020 — rider reads own rows) ──
 
 export type AgentPayoutRow = {
@@ -189,21 +243,26 @@ export type AgentPayoutRow = {
   createdAt: string;
 };
 
-export async function fetchAgentPayouts(riderId: string): Promise<AgentPayoutRow[]> {
-  const { data } = await createClient()
+export async function fetchAgentPayouts(
+  riderId: string,
+): Promise<{ rows: AgentPayoutRow[]; error: string | null }> {
+  const { data, error } = await createClient()
     .from("agent_payouts")
     .select("id, order_id, amount, status, paid_at, created_at")
     .eq("rider_id", riderId)
     .order("created_at", { ascending: false });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((p: any) => ({
-    id: p.id,
-    orderId: p.order_id,
-    amount: Number(p.amount),
-    status: p.status,
-    paidAt: p.paid_at,
-    createdAt: p.created_at,
-  }));
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rows: (data ?? []).map((p: any) => ({
+      id: p.id,
+      orderId: p.order_id,
+      amount: Number(p.amount),
+      status: p.status,
+      paidAt: p.paid_at,
+      createdAt: p.created_at,
+    })),
+    error: error?.message ?? null,
+  };
 }
 
 // ── Payout details (rider_payout_details, migration 034) ─────────────────

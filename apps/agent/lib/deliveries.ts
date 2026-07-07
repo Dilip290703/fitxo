@@ -51,21 +51,26 @@ function single<T>(rel: T | T[] | null): T | null {
   return Array.isArray(rel) ? (rel[0] ?? null) : rel;
 }
 
-export async function fetchMyDeliveries(riderId: string): Promise<DeliveryListItem[]> {
+export async function fetchMyDeliveries(
+  riderId: string,
+): Promise<{ rows: DeliveryListItem[]; error: string | null }> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("deliveries")
     .select("id, status, order_id, drop_address, order:orders(order_number, status, final_amount)")
     .eq("rider_id", riderId)
     .order("assigned_at", { ascending: false, nullsFirst: false });
 
-  return (data ?? []).map((d) => ({
-    id: d.id,
-    status: d.status,
-    order_id: d.order_id,
-    drop_address: (d.drop_address ?? {}) as DropAddress,
-    order: single(d.order) as DeliveryListItem["order"],
-  }));
+  return {
+    rows: (data ?? []).map((d) => ({
+      id: d.id,
+      status: d.status,
+      order_id: d.order_id,
+      drop_address: (d.drop_address ?? {}) as DropAddress,
+      order: single(d.order) as DeliveryListItem["order"],
+    })),
+    error: error?.message ?? null,
+  };
 }
 
 export async function fetchDeliveryDetail(deliveryId: string): Promise<DeliveryDetail | null> {

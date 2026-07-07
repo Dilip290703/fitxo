@@ -8,7 +8,7 @@ import {
   markNotificationRead,
   type RiderNotification,
 } from "@/lib/agent-data";
-import { ContentWrap, PageHeader, Empty, Skeleton } from "@/components/ui";
+import { ContentWrap, PageHeader, Empty, ErrorCard, Skeleton } from "@/components/ui";
 import {
   IconBell,
   IconPackage,
@@ -40,18 +40,21 @@ export function NotificationsView() {
   const { rider } = useAgent();
   const [rows, setRows] = useState<RiderNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let on = true;
     fetchNotifications(rider.userId).then((r) => {
       if (!on) return;
-      setRows(r);
+      setRows(r.rows);
+      setLoadError(r.error);
       setLoading(false);
     });
     return () => {
       on = false;
     };
-  }, [rider.userId]);
+  }, [rider.userId, reloadKey]);
 
   const unread = rows.filter((r) => !r.isRead).length;
 
@@ -89,6 +92,8 @@ export function NotificationsView() {
           <Skeleton className="h-[76px]" />
           <Skeleton className="h-[76px]" />
         </div>
+      ) : loadError ? (
+        <ErrorCard onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
       ) : rows.length === 0 ? (
         <Empty
           icon={<IconBell size={22} />}

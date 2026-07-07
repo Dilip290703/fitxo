@@ -8,7 +8,9 @@ import { IconBell, IconBellOff, IconScooter } from "@/components/icons";
 
 const POLL_MS = 7000; // how often we refresh the offer feed while online
 const RING_MS = 3500; // gap between repeat chimes while an offer is pending
-const MUTE_KEY = "fitzo-agent-offers-muted";
+// ONE mute for the whole app (shared with JobAlertsProvider) — two separate
+// switches meant a rider could mute one and believe both were off (audit M7).
+const MUTE_KEY = "fitzo-agent-alerts-muted";
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -78,9 +80,12 @@ export function IncomingJobsProvider() {
     });
   }, []);
 
-  // Unlock audio + read mute preference once.
+  // Unlock audio + read mute preference once (and stay in sync when the other
+  // alert surface toggles it — same-tab localStorage writes don't fire events).
   useEffect(() => {
     setMuted(typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1");
+    const onMute = (e: Event) => setMuted(!!(e as CustomEvent).detail);
+    window.addEventListener("fitzo-mute-change", onMute);
     const unlock = () => {
       if (!audioRef.current) {
         try {
@@ -94,7 +99,10 @@ export function IncomingJobsProvider() {
       audioRef.current?.resume().catch(() => {});
     };
     window.addEventListener("pointerdown", unlock);
-    return () => window.removeEventListener("pointerdown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("fitzo-mute-change", onMute);
+    };
   }, []);
 
   // Poll the offer feed while online.
@@ -138,6 +146,7 @@ export function IncomingJobsProvider() {
       } catch {
         /* ignore */
       }
+      window.dispatchEvent(new CustomEvent("fitzo-mute-change", { detail: next }));
       return next;
     });
   };

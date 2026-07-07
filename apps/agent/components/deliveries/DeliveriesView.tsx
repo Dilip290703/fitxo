@@ -5,25 +5,28 @@ import { useAgent } from "@/components/AgentShell";
 import { fetchMyDeliveries, type DeliveryListItem } from "@/lib/deliveries";
 import { isActiveDelivery } from "@/components/status";
 import { DeliveryCard } from "@/components/DeliveryCard";
-import { ContentWrap, PageHeader, Empty, Skeleton } from "@/components/ui";
+import { ContentWrap, PageHeader, Empty, ErrorCard, Skeleton } from "@/components/ui";
 import { IconScooter } from "@/components/icons";
 
 export function DeliveriesView() {
   const { rider, available } = useAgent();
   const [deliveries, setDeliveries] = useState<DeliveryListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let on = true;
     fetchMyDeliveries(rider.riderId).then((d) => {
       if (!on) return;
-      setDeliveries(d);
+      setDeliveries(d.rows);
+      setLoadError(d.error);
       setLoading(false);
     });
     return () => {
       on = false;
     };
-  }, [rider.riderId]);
+  }, [rider.riderId, reloadKey]);
 
   const active = deliveries.filter((d) => isActiveDelivery(d.status));
   const newJobs = active.filter((d) => d.status === "assigned");
@@ -42,6 +45,8 @@ export function DeliveriesView() {
           <Skeleton className="h-[104px]" />
           <Skeleton className="h-[104px]" />
         </div>
+      ) : loadError ? (
+        <ErrorCard onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
       ) : active.length === 0 ? (
         <Empty
           icon={<IconScooter size={22} />}
