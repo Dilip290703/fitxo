@@ -169,10 +169,16 @@ export default function DeliveryDetailPage() {
   const beforePickup = detail.status === "assigned" || detail.status === "accepted";
   const enRoute = detail.status === "picked_up" || detail.status === "en_route";
   const atDoorAwaitingHandover = detail.status === "arrived" && orderStatus === "out_for_delivery";
+  // finalize_order_if_decided (019) completed the order on the customer's last
+  // decision, but the rider still has to collect the returns and close out the
+  // DELIVERY (migration 035) — the delivery, not the order, is his job.
+  const awaitingCollect = detail.status === "arrived" && orderStatus === "completed";
 
   // Everything the rider must physically take back before completing.
   const collectables: DeliveryItem[] = windowActive
     ? [...returned, ...(timer.expired ? pending : [])]
+    : awaitingCollect
+    ? returned
     : [];
   const allCollected = collectables.every((i) => collected.has(i.id));
 
@@ -303,9 +309,11 @@ export default function DeliveryDetailPage() {
           </Card>
         )}
 
-        {/* Live try window — the rider's waiting room */}
+        {/* Live try window — the rider's waiting room. Plain div, not <Card>:
+            Card's own bg-white ties with bg-ink (equal Tailwind specificity,
+            stylesheet order decides) and can leave white text invisible. */}
         {windowActive && (
-          <Card className="border-ink bg-ink">
+          <div className="rounded-2xl bg-ink p-4">
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent">
               Try-on window — customer is deciding
             </p>
@@ -325,7 +333,7 @@ export default function DeliveryDetailPage() {
                 <IconPhone size={16} /> Call customer
               </a>
             )}
-          </Card>
+          </div>
         )}
 
         {orderStatus === "delivered" && (
@@ -368,7 +376,7 @@ export default function DeliveryDetailPage() {
         </Card>
 
         {/* Collect-returns checklist — tick each item you physically take back */}
-        {windowActive && collectables.length > 0 && (timer.expired || allDecided) && (
+        {((windowActive && (timer.expired || allDecided)) || awaitingCollect) && collectables.length > 0 && (
           <Card className="border-warn-accent/40">
             <Label>Collect before you leave ({collectables.length})</Label>
             <p className="mb-2 text-[13px] text-body">Tick each item as the customer hands it back.</p>
@@ -481,7 +489,20 @@ export default function DeliveryDetailPage() {
                 : "Collect returns & complete"}
             </ActionButton>
           )}
-          {(detail.status === "completed" || orderStatus === "completed") && detail.status !== "failed" && (
+          {awaitingCollect && (
+            <ActionButton
+              busy={busy}
+              disabled={!allCollected}
+              onClick={() => run(() => riderComplete(id))}
+            >
+              {!allCollected
+                ? `Tick off ${collectables.length} item${collectables.length === 1 ? "" : "s"} to collect`
+                : collectables.length > 0
+                ? "Collect returns & complete"
+                : "All kept — complete delivery"}
+            </ActionButton>
+          )}
+          {detail.status === "completed" && (
             <button
               onClick={() => router.push("/")}
               className="flex h-14 w-full items-center justify-center rounded-2xl border border-success-line bg-success-bg text-[15px] font-semibold text-success"
