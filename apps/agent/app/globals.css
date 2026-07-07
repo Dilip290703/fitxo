@@ -1,1 +1,65 @@
 @import "tailwindcss";
+
+/*
+ * Agent-panel design tokens — the same semantic palette as the Store/Admin
+ * panels (one product family), tuned for a rider: this app is used with one
+ * hand, on a bike, in sunlight. Every color must reference a semantic name
+ * (text-ink, bg-paper, border-line, …) — never a raw hex.
+ *
+ * Rider-specific conventions (enforced by review, not the compiler):
+ *  - tap targets: min h-11 (44px); the primary action per screen is h-14
+ *  - type: 12px labels · 14px body · 15px emphasis · 24–28px page titles
+ *    (one step larger than store/admin — glanceable outdoors)
+ *  - radius: rounded-xl (inputs/small controls) / rounded-2xl (cards, primary
+ *    buttons) / rounded-full (pills)
+ *  - shadows: borders first; shadow-float for floating chrome, shadow-pop for
+ *    overlays. Nothing else.
+ *  - status colors carry state (success=go/keep, warn=waiting, danger=failed,
+ *    info=in-transit) and always pair text with a -bg tone for contrast.
+ */
+@theme {
+  /* brand */
+  --color-ink: #171d2b;
+  --color-ink-soft: #1f2a3c;
+  --color-accent: #ffd233;
+  --color-accent-soft: #f2e2a8;
+  --color-accent-pale: #fff4cc;
+
+  /* surfaces & lines */
+  --color-paper: #fbfaf7;
+  --color-cream: #f6f1e8;
+  --color-sand: #f4efe7;
+  --color-hairline: #f0ebe3;
+  --color-line: #ece5da;
+  --color-line-strong: #ded3c6;
+  --color-knob: #d8d0c4;
+
+  /* text */
+  --color-body: #5f574e;
+  --color-soft: #7f7469;
+  --color-muted: #958675;
+  --color-faint: #a79e92;
+
+  /* status */
+  --color-success: #2f7d46;
+  --color-success-bg: #e8f3ea;
+  --color-success-line: #cfe3d4;
+  --color-danger: #b83c24;
+  --color-danger-strong: #a3331d;
+  --color-danger-bg: #fbeeea;
+  --color-danger-line: #e6c4bb;
+  --color-warn: #9a6a12;
+  --color-warn-bg: #fbeed0;
+  --color-warn-accent: #d9890f;
+  --color-info: #2d5e8f;
+  --color-info-bg: #e3ecf6;
+
+  /* elevation */
+  --shadow-float: 0 8px 24px rgba(32, 26, 19, 0.12);
+  --shadow-pop: 0 24px 60px rgba(32, 26, 19, 0.18);
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}

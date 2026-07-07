@@ -1,8 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@fitzo/supabase/client";
+import {
+  IconBell,
+  IconBellOff,
+  IconCheck,
+  IconPackage,
+  IconScooter,
+  IconShirt,
+  IconX,
+} from "@/components/icons";
 
 type AlertKind = "job" | "try" | "return" | "keep";
 
@@ -17,11 +26,14 @@ type AlertItem = {
 
 const MUTE_KEY = "fitzo-agent-alerts-muted";
 
-const KIND_META: Record<AlertKind, { label: string; icon: string; accent: string }> = {
-  job: { label: "New job", icon: "🛵", accent: "#3b82f6" },
-  try: { label: "Try-on started", icon: "👕", accent: "#34d399" },
-  return: { label: "Item to collect", icon: "↩️", accent: "#f59e0b" },
-  keep: { label: "Item kept", icon: "✅", accent: "#a78bfa" },
+const KIND_META: Record<
+  AlertKind,
+  { label: string; icon: ComponentType<{ size?: number }>; chip: string; iconChip: string }
+> = {
+  job: { label: "New job", icon: IconScooter, chip: "bg-ink text-accent", iconChip: "bg-accent-pale text-ink" },
+  try: { label: "Try-on started", icon: IconShirt, chip: "bg-success text-white", iconChip: "bg-success-bg text-success" },
+  return: { label: "Item to collect", icon: IconPackage, chip: "bg-warn-accent text-white", iconChip: "bg-warn-bg text-warn" },
+  keep: { label: "Item kept", icon: IconCheck, chip: "bg-info text-white", iconChip: "bg-info-bg text-info" },
 };
 
 function timeAgo(at: number) {
@@ -61,6 +73,12 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
   const playChime = useCallback(() => {
     if (mutedRef.current) return;
+    // Vibrate too — audio needs a tap-to-unlock and dies in a pocket (audit M2).
+    try {
+      navigator.vibrate?.(180);
+    } catch {
+      /* unsupported */
+    }
     const ctx = audioRef.current;
     if (!ctx || ctx.state !== "running") return;
     [0, 0.16].forEach((delay, i) => {
@@ -89,6 +107,9 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
   useEffect(() => {
     setMuted(typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1");
+    // Shared mute with IncomingJobsProvider (one switch for the whole app).
+    const onMute = (e: Event) => setMuted(!!(e as CustomEvent).detail);
+    window.addEventListener("fitzo-mute-change", onMute);
 
     const unlock = () => {
       if (!audioRef.current) {
@@ -179,6 +200,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
     return () => {
       window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("fitzo-mute-change", onMute);
       supabase.removeChannel(channel);
     };
   }, [pushAlert, userId]);
@@ -191,6 +213,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
       } catch {
         /* ignore */
       }
+      window.dispatchEvent(new CustomEvent("fitzo-mute-change", { detail: next }));
       return next;
     });
   };
@@ -209,7 +232,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
   return (
     <>
-      {/* Bell — floats top-right, clear of the mobile top bar's menu button */}
+      {/* Bell — floats top-right; the mobile header reserves space for it */}
       <div className="fixed right-3 top-3 z-[60] lg:right-5 lg:top-4">
         <button
           type="button"
@@ -218,52 +241,61 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
             setUnread(0);
           }}
           aria-label="Job alerts"
-          className="relative grid h-10 w-10 place-items-center rounded-full border border-[#243049] bg-[#161e2e] text-[16px] text-white shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+          className="relative grid h-11 w-11 place-items-center rounded-full border border-line bg-white text-ink shadow-float"
         >
-          🔔
+          <IconBell size={19} />
           {unread > 0 ? (
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
+            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
               {unread > 9 ? "9+" : unread}
             </span>
           ) : null}
         </button>
 
         {bellOpen ? (
-          <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl border border-[#243049] bg-[#161e2e] shadow-[0_24px_60px_rgba(0,0,0,0.5)]">
-            <div className="flex items-center justify-between border-b border-[#243049] px-4 py-3">
-              <p className="text-[13px] font-semibold text-white">Job alerts</p>
+          <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-white shadow-pop">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
+              <p className="text-[14px] font-semibold text-ink">Job alerts</p>
               <button
                 type="button"
                 onClick={toggleMute}
-                className="text-[11px] font-semibold text-[#7c8aa5] hover:text-white"
+                className="flex h-9 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold text-soft hover:bg-cream hover:text-ink"
               >
-                {muted ? "🔇 Unmute" : "🔔 Mute"}
+                {muted ? <IconBellOff size={14} /> : <IconBell size={14} />}
+                {muted ? "Unmute" : "Mute"}
               </button>
             </div>
             {alerts.length === 0 ? (
-              <p className="px-4 py-6 text-center text-[13px] text-[#7c8aa5]">
+              <p className="px-4 py-6 text-center text-[13px] text-soft">
                 No alerts yet. New jobs land here.
               </p>
             ) : (
               <ul className="max-h-[320px] overflow-y-auto">
-                {alerts.map((a) => (
-                  <li key={a.id}>
-                    <button
-                      type="button"
-                      onClick={() => open(a)}
-                      className="flex w-full items-start gap-3 border-b border-[#1e293b] px-4 py-3 text-left last:border-0 hover:bg-white/5"
-                    >
-                      <span className="text-[16px] leading-none">{KIND_META[a.kind].icon}</span>
-                      <div className="min-w-0">
-                        <p className="truncate text-[12px] font-semibold text-white">
-                          {KIND_META[a.kind].label} · {a.orderNumber}
-                        </p>
-                        <p className="truncate text-[11px] text-[#7c8aa5]">{a.detail}</p>
-                        <p className="text-[10px] text-[#5a6781]">{timeAgo(a.at)}</p>
-                      </div>
-                    </button>
-                  </li>
-                ))}
+                {alerts.map((a) => {
+                  const Meta = KIND_META[a.kind];
+                  const Icon = Meta.icon;
+                  return (
+                    <li key={a.id}>
+                      <button
+                        type="button"
+                        onClick={() => open(a)}
+                        className="flex w-full items-start gap-3 border-b border-hairline px-4 py-3 text-left last:border-0 hover:bg-cream"
+                      >
+                        <span
+                          className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${Meta.iconChip}`}
+                        >
+                          <Icon size={15} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-semibold text-ink">
+                            {Meta.label} · {a.orderNumber}
+                          </p>
+                          <p className="truncate text-[12px] text-body">{a.detail}</p>
+                          <p className="text-[11px] text-faint">{timeAgo(a.at)}</p>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -271,39 +303,36 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
       </div>
 
       {/* Pop-up stack */}
-      <div className="fixed bottom-20 right-3 z-[55] flex w-[290px] flex-col gap-3 lg:bottom-5 lg:right-5">
+      <div className="fixed bottom-24 right-3 z-[55] flex w-[290px] flex-col gap-3 lg:bottom-5 lg:right-5">
         {activeAlerts.map((a) => {
           const meta = KIND_META[a.kind];
+          const Icon = meta.icon;
           return (
             <div
               key={a.id}
-              className="overflow-hidden rounded-2xl border bg-[#161e2e] shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
-              style={{ borderColor: `${meta.accent}66` }}
+              className="overflow-hidden rounded-2xl border border-line bg-white shadow-pop"
             >
-              <div
-                className="flex items-start justify-between gap-2 px-4 py-2"
-                style={{ backgroundColor: meta.accent }}
-              >
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#0f1522]">
-                  {meta.icon} {meta.label}
+              <div className={`flex items-center justify-between gap-2 px-4 py-2 ${meta.chip}`}>
+                <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em]">
+                  <Icon size={14} /> {meta.label}
                 </p>
                 <button
                   type="button"
                   onClick={() => dismiss(a.id)}
                   aria-label="Dismiss"
-                  className="text-[14px] leading-none text-[#0f1522]/70 hover:text-[#0f1522]"
+                  className="grid h-7 w-7 place-items-center rounded-full opacity-75 hover:opacity-100"
                 >
-                  ✕
+                  <IconX size={14} />
                 </button>
               </div>
               <div className="px-4 py-3">
-                <p className="text-[13px] font-semibold text-white">{a.orderNumber}</p>
-                <p className="mt-0.5 text-[12px] text-[#9fb0cc]">{a.detail}</p>
+                <p className="text-[14px] font-semibold text-ink">{a.orderNumber}</p>
+                <p className="mt-0.5 text-[13px] text-body">{a.detail}</p>
                 {a.deliveryId ? (
                   <button
                     type="button"
                     onClick={() => open(a)}
-                    className="mt-3 w-full rounded-full bg-[#3b82f6] py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[#2f6fe0]"
+                    className="mt-3 h-11 w-full rounded-full bg-ink text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft"
                   >
                     {a.kind === "job" ? "View job →" : "Open delivery →"}
                   </button>

@@ -5,24 +5,28 @@ import { useAgent } from "@/components/AgentShell";
 import { fetchMyDeliveries, type DeliveryListItem } from "@/lib/deliveries";
 import { isActiveDelivery } from "@/components/status";
 import { DeliveryCard } from "@/components/DeliveryCard";
-import { ContentWrap, PageHeader, Empty } from "@/components/ui";
+import { ContentWrap, PageHeader, Empty, ErrorCard, Skeleton } from "@/components/ui";
+import { IconScooter } from "@/components/icons";
 
 export function DeliveriesView() {
   const { rider, available } = useAgent();
   const [deliveries, setDeliveries] = useState<DeliveryListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let on = true;
     fetchMyDeliveries(rider.riderId).then((d) => {
       if (!on) return;
-      setDeliveries(d);
+      setDeliveries(d.rows);
+      setLoadError(d.error);
       setLoading(false);
     });
     return () => {
       on = false;
     };
-  }, [rider.riderId]);
+  }, [rider.riderId, reloadKey]);
 
   const active = deliveries.filter((d) => isActiveDelivery(d.status));
   const newJobs = active.filter((d) => d.status === "assigned");
@@ -32,19 +36,25 @@ export function DeliveriesView() {
     <ContentWrap>
       <PageHeader
         title="Deliveries"
-        subtitle="Jobs assigned to you. Accept a new job, then follow the steps at the door."
+        subtitle="Your current jobs. Accept an offer, then follow the steps at the door."
       />
 
       {loading ? (
-        <p className="text-[13px] text-[#7c8aa5]">Loading…</p>
+        <div className="space-y-3">
+          <Skeleton className="h-[104px]" />
+          <Skeleton className="h-[104px]" />
+          <Skeleton className="h-[104px]" />
+        </div>
+      ) : loadError ? (
+        <ErrorCard onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
       ) : active.length === 0 ? (
         <Empty
-          icon="🛵"
+          icon={<IconScooter size={22} />}
           title="No deliveries right now"
           text={
             available
-              ? "When an admin assigns you a job, it shows up here."
-              : "You're offline — go online (top of the screen) to receive jobs."
+              ? "You're online — new delivery offers pop up on screen the moment a store confirms an order."
+              : "You're offline — go online (top of the screen) to receive offers."
           }
         />
       ) : (
@@ -70,8 +80,8 @@ function Group({ title, accent, children }: { title: string; accent?: boolean; c
     <section>
       <h2
         className={[
-          "mb-3 text-[13px] font-semibold uppercase tracking-[0.15em]",
-          accent ? "text-[#ffd27f]" : "text-[#7c8aa5]",
+          "mb-3 text-[13px] font-semibold uppercase tracking-[0.12em]",
+          accent ? "text-warn" : "text-muted",
         ].join(" ")}
       >
         {title}

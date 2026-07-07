@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@fitzo/supabase/client";
+import { Banner, btnPrimary, inputCls } from "@/components/ui";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -28,33 +29,30 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0f1522] px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-[400px] space-y-4 rounded-[20px] border border-[#243049] bg-[#161e2e] p-6">
-        <h1 className="text-[22px] font-semibold text-white">Set a new password</h1>
+    <main className="flex min-h-screen items-center justify-center bg-paper px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-[400px] space-y-4 rounded-3xl border border-line bg-white p-6 shadow-float"
+      >
+        <h1 className="text-[22px] font-semibold tracking-tight text-ink">Set a new password</h1>
         {done ? (
-          <p className="rounded-[10px] bg-[#16322a] px-3 py-2 text-[13px] text-[#7fe0b0]">
-            Password updated — taking you in…
-          </p>
+          <Banner kind="ok">Password updated — taking you in…</Banner>
         ) : (
           <>
             <label className="block">
-              <span className="mb-1.5 block text-[12px] font-medium text-[#9fb0cc]">New password</span>
+              <span className="mb-1.5 block text-[13px] font-medium text-body">New password</span>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full rounded-[12px] border border-[#2c3a55] bg-[#0f1522] px-3.5 py-3 text-[14px] text-white outline-none focus:border-[#3b82f6]"
+                className={inputCls}
                 placeholder="••••••••"
               />
             </label>
-            {error && <p className="rounded-[10px] bg-[#3a1d1d] px-3 py-2 text-[13px] text-[#ff9b9b]">{error}</p>}
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded-[12px] bg-[#3b82f6] px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-[#2f6fdc] disabled:opacity-60"
-            >
+            {error && <Banner kind="err">{error}</Banner>}
+            <button type="submit" disabled={busy} className={btnPrimary}>
               {busy ? "…" : "Update password"}
             </button>
           </>

@@ -211,6 +211,26 @@ export function OrderTrackingView({
     }
   }, [order.status, timeLeft?.expired, order.id, router]);
 
+  // Handover code (migration 033): shown while the rider is on the way so the
+  // customer can read it out at the door. Fetched via an owner-gated RPC
+  // (customers can't SELECT deliveries under RLS). Silently absent pre-033.
+  const [handoverOtp, setHandoverOtp] = useState<string | null>(null);
+  useEffect(() => {
+    if (order.status !== "out_for_delivery") {
+      setHandoverOtp(null);
+      return;
+    }
+    let on = true;
+    createClient()
+      .rpc("get_delivery_handover", { p_order_id: order.id })
+      .then(({ data }) => {
+        if (on && typeof data === "string" && data) setHandoverOtp(data);
+      });
+    return () => {
+      on = false;
+    };
+  }, [order.status, order.id]);
+
   // The rider has delivered; the customer hasn't started the window yet.
   const awaitingTryStart = order.status === "delivered" && !windowDismissed;
 
@@ -506,6 +526,22 @@ export function OrderTrackingView({
                 </p>
               </>
             )}
+          </div>
+        )}
+
+        {/* Handover code — read it out to the rider at the door */}
+        {order.status === "out_for_delivery" && handoverOtp && (
+          <div className="mt-4 rounded-[14px] border border-[#ece4da] bg-white px-5 py-4">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8b7058]">
+              Your handover code
+            </p>
+            <p className="mt-1 font-mono text-[34px] font-bold tracking-[0.4em] text-[#171717]">
+              {handoverOtp}
+            </p>
+            <p className="text-[13px] text-[#8b7058]">
+              Share this 4-digit code with your rider at the door — it confirms your order
+              reached the right hands.
+            </p>
           </div>
         )}
 

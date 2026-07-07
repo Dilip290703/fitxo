@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useAgent } from "@/components/AgentShell";
 import {
   fetchNotifications,
@@ -8,14 +8,20 @@ import {
   markNotificationRead,
   type RiderNotification,
 } from "@/lib/agent-data";
-import { ContentWrap, PageHeader, Empty } from "@/components/ui";
+import { ContentWrap, PageHeader, Empty, ErrorCard, Skeleton } from "@/components/ui";
+import {
+  IconBell,
+  IconPackage,
+  IconScooter,
+  IconWallet,
+} from "@/components/icons";
 
-const ICONS: Record<string, string> = {
-  order: "📦",
-  delivery: "🛵",
-  payment: "💰",
-  promo: "🎁",
-  system: "🔔",
+const ICONS: Record<string, ComponentType<{ size?: number }>> = {
+  order: IconPackage,
+  delivery: IconScooter,
+  payment: IconWallet,
+  promo: IconBell,
+  system: IconBell,
 };
 
 function timeAgo(iso: string): string {
@@ -34,18 +40,21 @@ export function NotificationsView() {
   const { rider } = useAgent();
   const [rows, setRows] = useState<RiderNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let on = true;
     fetchNotifications(rider.userId).then((r) => {
       if (!on) return;
-      setRows(r);
+      setRows(r.rows);
+      setLoadError(r.error);
       setLoading(false);
     });
     return () => {
       on = false;
     };
-  }, [rider.userId]);
+  }, [rider.userId, reloadKey]);
 
   const unread = rows.filter((r) => !r.isRead).length;
 
@@ -69,7 +78,7 @@ export function NotificationsView() {
           unread > 0 ? (
             <button
               onClick={readAll}
-              className="rounded-full border border-[#243049] px-4 py-1.5 text-[12px] font-semibold text-[#9fc0ff] transition hover:bg-[#1e2a45]"
+              className="h-10 rounded-full border border-line-strong bg-white px-4 text-[13px] font-semibold text-ink transition hover:bg-cream"
             >
               Mark all read
             </button>
@@ -78,35 +87,46 @@ export function NotificationsView() {
       />
 
       {loading ? (
-        <p className="text-[13px] text-[#7c8aa5]">Loading…</p>
+        <div className="space-y-2">
+          <Skeleton className="h-[76px]" />
+          <Skeleton className="h-[76px]" />
+          <Skeleton className="h-[76px]" />
+        </div>
+      ) : loadError ? (
+        <ErrorCard onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
       ) : rows.length === 0 ? (
-        <Empty icon="🔔" title="No notifications" text="Job assignments and updates will show up here." />
+        <Empty
+          icon={<IconBell size={22} />}
+          title="No notifications"
+          text="Job assignments and updates will show up here."
+        />
       ) : (
         <div className="space-y-2">
-          {rows.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => open(n)}
-              className={[
-                "flex w-full items-start gap-3 rounded-[14px] border p-3.5 text-left transition",
-                n.isRead
-                  ? "border-[#22304a] bg-[#161e2e]"
-                  : "border-[#3b82f6]/40 bg-[#10203f]",
-              ].join(" ")}
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#0f1522] text-[16px]">
-                {ICONS[n.type] ?? "🔔"}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-[13px] font-semibold">{n.title}</p>
-                  <span className="shrink-0 text-[11px] text-[#7c8aa5]">{timeAgo(n.createdAt)}</span>
+          {rows.map((n) => {
+            const Icon = ICONS[n.type] ?? IconBell;
+            return (
+              <button
+                key={n.id}
+                onClick={() => open(n)}
+                className={[
+                  "flex w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition",
+                  n.isRead ? "border-line bg-white" : "border-line-strong bg-accent-pale/60",
+                ].join(" ")}
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sand text-body">
+                  <Icon size={17} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-[14px] font-semibold text-ink">{n.title}</p>
+                    <span className="shrink-0 text-[12px] text-soft">{timeAgo(n.createdAt)}</span>
+                  </div>
+                  <p className="mt-0.5 text-[13px] leading-5 text-body">{n.body}</p>
                 </div>
-                <p className="mt-0.5 text-[12px] leading-5 text-[#9fb0cc]">{n.body}</p>
-              </div>
-              {!n.isRead && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#3b82f6]" />}
-            </button>
-          ))}
+                {!n.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-warn-accent" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </ContentWrap>

@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAgent } from "@/components/AgentShell";
+import { fetchPayoutDetails } from "@/lib/agent-data";
 import { ContentWrap, PageHeader, Card, Label } from "@/components/ui";
+import { IconCheck } from "@/components/icons";
 
 const VEHICLE_LABEL: Record<string, string> = {
   bike: "Motorbike",
@@ -10,8 +13,24 @@ const VEHICLE_LABEL: Record<string, string> = {
   cycle: "Cycle",
 };
 
+const SHORT_VEHICLE: Record<string, string> = {
+  bike: "Bike",
+  scooter: "Scooter",
+  cycle: "Cycle",
+};
+
 export function ProfileView() {
   const { rider } = useAgent();
+  const [hasPayout, setHasPayout] = useState<boolean | null>(null);
+  useEffect(() => {
+    let on = true;
+    fetchPayoutDetails(rider.riderId).then((d) => {
+      if (on) setHasPayout(!!d);
+    });
+    return () => {
+      on = false;
+    };
+  }, [rider.riderId]);
   const initials = rider.name
     .split(" ")
     .map((p) => p[0])
@@ -25,33 +44,61 @@ export function ProfileView() {
       <PageHeader title="Profile" subtitle="Your rider account at a glance." />
 
       <Card className="mb-5 flex items-center gap-4">
-        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[#1e2a45] text-[22px] font-semibold text-[#9fc0ff]">
-          {initials || "🛵"}
+        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-ink text-[22px] font-semibold text-accent">
+          {initials || "R"}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-[18px] font-semibold">{rider.name}</p>
-          <p className="truncate text-[13px] text-[#9fb0cc]">{rider.email}</p>
-          <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-[#16322a] px-2.5 py-0.5 text-[11px] font-semibold text-[#7fe0b0]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#34d399]" /> Verified rider
+          <p className="truncate text-[18px] font-semibold text-ink">{rider.name}</p>
+          <p className="truncate text-[13px] text-body">{rider.email}</p>
+          <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-success-line bg-success-bg px-2.5 py-0.5 text-[12px] font-semibold text-success">
+            <IconCheck size={12} /> Verified rider
           </span>
         </div>
       </Card>
 
+      {/* Rating deliberately not shown — nothing writes riders.rating yet, so
+          every rider would see a fake 5.00. Bring it back with a real source. */}
       <div className="mb-5 grid grid-cols-3 gap-3">
-        <Stat label="Rating" value={(rider.rating ?? 5).toFixed(2)} sub="★" />
         <Stat label="Deliveries" value={String(rider.totalDeliveries)} sub="all-time" />
         <Stat label="Status" value={rider.isAvailable ? "Online" : "Offline"} sub="now" />
+        <Stat label="Vehicle" value={SHORT_VEHICLE[rider.vehicleType] ?? rider.vehicleType} sub="on file" />
       </div>
 
       <Card className="mb-5">
         <Label>Vehicle</Label>
         <div className="mt-1 flex items-center justify-between">
           <div>
-            <p className="text-[15px] font-semibold">{VEHICLE_LABEL[rider.vehicleType] ?? rider.vehicleType}</p>
-            <p className="text-[12px] text-[#7c8aa5]">{rider.vehicleNumber ?? "No number on file"}</p>
+            <p className="text-[15px] font-semibold text-ink">
+              {VEHICLE_LABEL[rider.vehicleType] ?? rider.vehicleType}
+            </p>
+            <p className="text-[13px] text-soft">{rider.vehicleNumber ?? "No number on file"}</p>
           </div>
-          <Link href="/settings" className="text-[12px] font-medium text-[#9fc0ff] hover:text-white">
+          <Link
+            href="/settings"
+            className="flex h-10 items-center rounded-full px-3 text-[13px] font-medium text-info hover:bg-info-bg"
+          >
             Edit →
+          </Link>
+        </div>
+      </Card>
+
+      <Card className="mb-5">
+        <Label>Payouts</Label>
+        <div className="mt-1 flex items-center justify-between">
+          <div>
+            <p className="text-[15px] font-semibold text-ink">Bank / UPI details</p>
+            <p className="text-[13px] text-soft">
+              {hasPayout === null ? "Checking…" : hasPayout ? "On file — Fitzo pays you here" : "Missing — add them to get paid"}
+            </p>
+          </div>
+          <Link
+            href="/settings"
+            className={[
+              "flex h-10 items-center rounded-full px-3 text-[13px] font-medium",
+              hasPayout === false ? "bg-warn-bg text-warn" : "text-info hover:bg-info-bg",
+            ].join(" ")}
+          >
+            {hasPayout === false ? "Add →" : "Edit →"}
           </Link>
         </div>
       </Card>
@@ -59,20 +106,19 @@ export function ProfileView() {
       <Card>
         <Label>Account</Label>
         <Row label="Email" value={rider.email} />
-        <Row label="Role" value="Delivery partner" />
-        <Row label="Rider ID" value={rider.riderId.slice(0, 8) + "…"} last />
+        <Row label="Role" value="Delivery partner" last />
       </Card>
 
       <div className="mt-5 flex gap-3">
         <Link
           href="/settings"
-          className="flex-1 rounded-[12px] bg-[#1e2a45] py-3 text-center text-[13px] font-semibold text-[#9fc0ff] transition hover:bg-[#243b66]"
+          className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-ink text-[14px] font-semibold text-white transition hover:bg-ink-soft"
         >
           Settings
         </Link>
         <Link
           href="/support"
-          className="flex-1 rounded-[12px] border border-[#243049] py-3 text-center text-[13px] font-semibold text-white transition hover:bg-[#161e2e]"
+          className="flex h-12 flex-1 items-center justify-center rounded-2xl border border-line-strong bg-white text-[14px] font-semibold text-ink transition hover:bg-cream"
         >
           Get help
         </Link>
@@ -83,10 +129,10 @@ export function ProfileView() {
 
 function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="rounded-[14px] border border-[#22304a] bg-[#161e2e] p-3 text-center">
-      <p className="text-[20px] font-bold">{value}</p>
-      <p className="text-[11px] text-[#7c8aa5]">
-        {label} <span className="text-[#54627d]">{sub}</span>
+    <div className="rounded-2xl border border-line bg-white p-3 text-center">
+      <p className="truncate text-[17px] font-bold text-ink">{value}</p>
+      <p className="text-[11px] text-soft">
+        {label} <span className="text-faint">{sub}</span>
       </p>
     </div>
   );
@@ -94,9 +140,9 @@ function Stat({ label, value, sub }: { label: string; value: string; sub: string
 
 function Row({ label, value, last }: { label: string; value: string; last?: boolean }) {
   return (
-    <div className={["flex items-center justify-between py-2.5", last ? "" : "border-b border-[#22304a]"].join(" ")}>
-      <span className="text-[13px] text-[#7c8aa5]">{label}</span>
-      <span className="text-[13px] font-medium">{value}</span>
+    <div className={["flex items-center justify-between gap-3 py-2.5", last ? "" : "border-b border-hairline"].join(" ")}>
+      <span className="text-[13px] text-soft">{label}</span>
+      <span className="truncate text-[13px] font-medium text-ink">{value}</span>
     </div>
   );
 }
