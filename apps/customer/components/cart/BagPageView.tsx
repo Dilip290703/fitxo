@@ -7,37 +7,27 @@ import { Navbar } from "@/components/Navbar";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
 import { CheckoutButton } from "@/components/cart/CheckoutButton";
-import { CouponCard } from "@/components/cart/CouponCard";
 import { PriceSummary } from "@/components/cart/PriceSummary";
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { useCart } from "@/components/cart/CartProvider";
+import { useLiveRecommendations } from "@/components/cart/useLiveRecommendations";
 import { PincodeModal } from "@/components/PincodeModal";
 import { useLocation } from "@/store/locationStore";
-import { catalogProducts, products } from "@/lib/mockData";
 
 export function BagPageView() {
   const router = useRouter();
   const { items, subtotal } = useCart();
   const { selectedPincode, setPincode, deliveryStatus, hasChecked } = useLocation();
-  const [couponApplied, setCouponApplied] = useState(false);
   const [isPincodeOpen, setIsPincodeOpen] = useState(false);
 
-  const recommendedProducts = useMemo(() => {
-    const source = [...catalogProducts, ...products];
-    return source.slice(2, 8).map((product) => ({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      image: product.image,
-      oldPrice:
-        "oldPrice" in product && typeof product.oldPrice === "number"
-          ? product.oldPrice
-          : product.price * 1.12,
-    }));
-  }, []);
+  const bagIds = useMemo(() => items.map((item) => item.id), [items]);
+  const recommendedProducts = useLiveRecommendations(6, bagIds);
 
-  const discount = couponApplied ? 300 : 0;
-  const finalTotal = Math.max(0, subtotal - discount);
+  // The old CouponCard was a fake: one tap knocked a flat ₹300 off this page's
+  // display while the server-side order ignored it — the customer would see
+  // one price here and be charged another. No coupon UI until redemption is
+  // actually wired to the coupons table.
+  const finalTotal = subtotal;
 
   // A pincode has been saved but it's not in Pune
   const deliveryBlocked = hasChecked && !deliveryStatus.available;
@@ -136,14 +126,9 @@ export function BagPageView() {
                   </div>
                 </div>
 
-                <CouponCard
-                  applied={couponApplied}
-                  onToggle={() => setCouponApplied((current) => !current)}
-                />
-
                 <CartDeliveryInfo />
 
-                <PriceSummary subtotal={subtotal} discount={discount} />
+                <PriceSummary subtotal={subtotal} discount={0} />
 
                 {/* Checkout CTA — disabled if pincode is set but not serviceable */}
                 {deliveryBlocked ? (
@@ -168,13 +153,15 @@ export function BagPageView() {
           )}
         </section>
 
-        <section className="mx-auto w-full max-w-[1440px] px-4 pb-16 sm:px-6 lg:px-8 xl:px-10">
-          <RecommendedProducts
-            title="Worth Adding"
-            products={recommendedProducts}
-            layout="carousel"
-          />
-        </section>
+        {recommendedProducts.length > 0 ? (
+          <section className="mx-auto w-full max-w-[1440px] px-4 pb-16 sm:px-6 lg:px-8 xl:px-10">
+            <RecommendedProducts
+              title="Worth Adding"
+              products={recommendedProducts}
+              layout="carousel"
+            />
+          </section>
+        ) : null}
 
         <Footer />
       </main>

@@ -58,19 +58,12 @@ export function SummerBanner() {
             </button>
           </div>
 
-          <div className="absolute bottom-6 left-6 flex gap-6 sm:left-16 sm:gap-10">
-            {[
-              { value: "07", label: "Days" },
-              { value: "08", label: "Hours" },
-              { value: "04", label: "Minutes" },
-              { value: "05", label: "Seconds" },
-            ].map((item) => (
-              <div key={item.label}>
-                <p className="text-lg font-semibold text-white">{item.value}</p>
-                <p className="mt-1 text-xs text-gray-200">{item.label}</p>
-              </div>
-            ))}
-          </div>
+          {/* The old countdown here was hardcoded (07:08:04:05, never ticked,
+              never ended) — fake urgency. No sale-end date exists in config;
+              re-add a timer only when the banner CMS carries a real one. */}
+          <p className="absolute bottom-6 left-6 text-[13px] uppercase tracking-[0.18em] text-white/90 sm:left-16">
+            Doorstep try-on · Pay only for keeps
+          </p>
         </div>
       </div>
     </section>

@@ -416,7 +416,7 @@ export const testimonials = [
     image:
       "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
     quote:
-      "I picked three denim fits, tried them in my room, and only kept the pair that actually worked. The return pickup happened before I finished coffee.",
+      "I picked three denim fits, tried them at my door while the rider waited, and kept the one that actually worked. The rest went straight back with him.",
   },
   {
     id: "aadhira-nair",

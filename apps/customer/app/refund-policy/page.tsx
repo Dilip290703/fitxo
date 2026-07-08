@@ -57,7 +57,6 @@ const sections = [
       { method: "Credit / Debit Card", timeline: "5–7 business days" },
       { method: "Net Banking", timeline: "5–7 business days" },
       { method: "Digital Wallets", timeline: "1–2 business days" },
-      { method: "Cash on Delivery (COD)", timeline: "Bank transfer in 5–7 business days" },
     ],
     afterTable: [
       "Note: Timelines are estimates and may vary depending on your bank or payment provider. FitZo initiates the refund within 48 hours of return approval.",

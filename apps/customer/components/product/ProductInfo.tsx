@@ -72,7 +72,9 @@ export function ProductInfo({ product }: { product: ProductDetailData }) {
           </div>
         </div>
 
-        <OfferCards offers={product.offers} />
+        {product.offers.length > 0 ? (
+          <OfferCards offers={product.offers} />
+        ) : null}
       </div>
 
       <ColorSelector

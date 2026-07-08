@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import { catalogProducts, products } from "@/lib/mockData";
 import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
 import { CartItem } from "@/components/cart/CartItem";
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { useCart } from "@/components/cart/CartProvider";
+import { useLiveRecommendations } from "@/components/cart/useLiveRecommendations";
 
 export function AddToBagDrawer() {
   const { isDrawerOpen, closeDrawer, items, latestItem } = useCart();
@@ -22,19 +22,8 @@ export function AddToBagDrawer() {
     };
   }, [isDrawerOpen]);
 
-  const recommendedProducts = useMemo(() => {
-    const source = [...catalogProducts, ...products];
-    return source.slice(0, 4).map((product) => ({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      image: product.image,
-      oldPrice:
-        "oldPrice" in product && typeof product.oldPrice === "number"
-          ? product.oldPrice
-          : product.price * 1.15,
-    }));
-  }, []);
+  const bagIds = useMemo(() => items.map((item) => item.id), [items]);
+  const recommendedProducts = useLiveRecommendations(4, bagIds);
 
   return (
     <div
@@ -89,13 +78,15 @@ export function AddToBagDrawer() {
             )}
           </div>
 
-          <div className="mt-6">
-            <RecommendedProducts
-              title="You May Also Like"
-              products={recommendedProducts}
-              layout="grid"
-            />
-          </div>
+          {recommendedProducts.length > 0 ? (
+            <div className="mt-6">
+              <RecommendedProducts
+                title="You May Also Like"
+                products={recommendedProducts}
+                layout="grid"
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="border-t border-[#ece4da] px-5 py-4">

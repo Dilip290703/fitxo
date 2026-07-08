@@ -27,17 +27,28 @@ export async function FeaturedStores() {
   const supabase = await createClient();
   const [featuredProducts, brandsRes] = await Promise.all([
     queryFeaturedProducts(supabase, 4),
-    supabase.from("brands").select("name, slug").eq("is_active", true).order("name").limit(6),
+    supabase
+      .from("brands")
+      .select("name, slug, logo_url")
+      .eq("is_active", true)
+      .order("name")
+      .limit(10),
   ]);
 
-  const brands = (brandsRes.data ?? []) as { name: string; slug: string }[];
+  const brands = (brandsRes.data ?? []) as {
+    name: string;
+    slug: string;
+    logo_url: string | null;
+  }[];
   const products = featuredProducts.map(toHomepageProduct);
 
   return (
     <section id="featured-stores">
-      <div className="bg-[#f8f6f3] px-10 py-20">
-        <BrandCarousel />
-      </div>
+      {brands.length > 0 ? (
+        <div className="bg-[#f8f6f3] px-10 py-20">
+          <BrandCarousel brands={brands} />
+        </div>
+      ) : null}
 
       <ProductGrid
         eyebrow="Trending this week"
@@ -48,7 +59,13 @@ export async function FeaturedStores() {
       />
 
       <ExperiencePreview />
-      <BrandsForYou brands={brands.length > 0 ? brands : undefined} />
+      <BrandsForYou
+        brands={
+          brands.length > 0
+            ? brands.map(({ name, slug }) => ({ name, slug }))
+            : undefined
+        }
+      />
     </section>
   );
 }

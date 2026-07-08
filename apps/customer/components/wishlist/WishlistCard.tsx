@@ -65,7 +65,9 @@ export function WishlistCard({ item }: { item: WishlistItem }) {
             href="#"
             label="Move to Bag"
             onClick={() => {
-              addItem({
+              // addItem returns false for a guest (login modal opens) — the
+              // item must then STAY in the wishlist, not vanish into nothing.
+              const added = addItem({
                 id: item.id,
                 title: item.title,
                 brand: item.brand,
@@ -77,6 +79,7 @@ export function WishlistCard({ item }: { item: WishlistItem }) {
                 size: item.size ?? "M",
                 quantity: 1,
               });
+              if (!added) return;
               removeFromWishlist(item.id);
               openDrawer();
             }}

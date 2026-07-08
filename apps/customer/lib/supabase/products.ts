@@ -329,15 +329,12 @@ export async function queryProductDetail(
     gallery,
     colors,
     sizes,
-    offers: [
-      { code: 'SHOP10', title: 'SHOP10', description: 'Enjoy 10% off on orders above ₹2700' },
-      { code: 'SHOP15', title: 'SHOP15', description: 'Enjoy 15% off on 2 or more styles' },
-    ],
-    nearbyStores: [
-      { name: 'Hinjawadi Phase 1', distance: '1.9 km', eta: '18 min' },
-      { name: 'Phoenix Marketcity', distance: '4.2 km', eta: '29 min' },
-      { name: 'Aundh High Street', distance: '5.6 km', eta: '34 min' },
-    ],
+    // No live coupon system is wired yet — advertising invented codes
+    // (SHOP10/15) that fail at payment is worse than showing none.
+    offers: [],
+    // The store that actually fulfils this product. No geo data exists in the
+    // DB, so no invented distances/ETAs — same call as the agent panel.
+    nearbyStores: row.stores?.name ? [{ name: row.stores.name }] : [],
     reviews: [],
     details,
     delivery: [

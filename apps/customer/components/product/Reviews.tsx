@@ -14,6 +14,20 @@ function StarRow({ rating }: { rating: number }) {
 }
 
 export function Reviews({ reviews }: { reviews: ProductReview[] }) {
+  // Honest empty state — 0/0 would render "NaN" as the average.
+  if (reviews.length === 0) {
+    return (
+      <div className="rounded-[18px] bg-[#fbf7f1] p-5 text-center">
+        <p className="text-[15px] font-medium text-[#171717]">
+          No reviews yet
+        </p>
+        <p className="mt-2 text-[13px] leading-6 text-[#7b736b]">
+          Be the first — order a doorstep try-on and tell us how the fit felt.
+        </p>
+      </div>
+    );
+  }
+
   const averageRating =
     reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
 

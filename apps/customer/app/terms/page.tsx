@@ -56,7 +56,7 @@ const sections = [
     title: "6. Pricing & Payments",
     paragraphs: [
       "All prices displayed on FitZo are in Indian Rupees (₹) and include applicable GST unless otherwise stated. Prices are set by our partner stores and may change without notice.",
-      "Payment is collected only for items you choose to keep after your try-on. Accepted payment methods include UPI, credit/debit cards, net banking, digital wallets, and cash on delivery (COD) where available.",
+      "Payment is collected only for items you choose to keep after your try-on. Accepted payment methods include UPI, credit/debit cards, net banking, and digital wallets.",
       "In the event of a payment failure or dispute, FitZo will work with you and our payment partners to resolve the issue. Refunds for returned items are processed within 5–7 business days to the original payment method.",
     ],
   },

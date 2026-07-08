@@ -1,33 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
-import { brands } from "@/lib/mockData";
 
-function BrandBanner({
-  name,
-  logo,
-  containerClass,
-  logoClass,
-}: {
+type Brand = {
   name: string;
-  logo: string;
-  containerClass: string;
-  logoClass: string;
-}) {
-  return (
-    <div
-      className={`mt-4 flex h-[70px] w-full items-center justify-center overflow-hidden rounded-xl ${containerClass}`}
-    >
-      <img src={logo} alt={`${name} logo`} className={logoClass} />
-    </div>
-  );
-}
+  slug: string;
+  logo_url: string | null;
+};
 
 /**
- * "Shop by brand" — a responsive grid (was a horizontal carousel; brands are a
- * browse surface, not a reel, so every brand should be reachable without
- * scrubbing sideways).
+ * "Shop by brand" — a responsive grid of the brands that actually exist in
+ * the catalogue. This used to render 10 hardcoded mock brands, 9 of whose
+ * `/brand/<slug>` links 404'd; every tile here now comes from the DB, so a
+ * tile can only link to a brand page that resolves. The section is hidden by
+ * FeaturedStores when the DB has no active brands.
  */
-export function BrandCarousel() {
+export function BrandCarousel({ brands }: { brands: Brand[] }) {
   return (
     <div className="mx-auto max-w-[1240px]">
       <div className="mb-12 text-center">
@@ -44,28 +31,26 @@ export function BrandCarousel() {
           <Link
             key={brand.slug}
             href={`/brand/${brand.slug}`}
-            className="group rounded-2xl bg-white p-4 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_-18px_rgba(24,24,28,0.28)] focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20"
+            className="group flex flex-col items-center justify-center gap-4 rounded-2xl bg-white px-4 py-10 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_-18px_rgba(24,24,28,0.28)] focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20"
           >
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-[#f2efe9]">
-              <Image
-                src={brand.image}
-                alt={brand.name}
-                fill
-                className="object-cover transition duration-500 group-hover:scale-[1.06]"
-                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, (max-width: 1280px) 23vw, 220px"
-              />
-              {/* Wash that lifts on hover — keeps the logo legible over busy shots. */}
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent opacity-0 transition duration-300 group-hover:opacity-100"
-              />
-            </div>
-            <BrandBanner
-              name={brand.name}
-              logo={brand.logo}
-              containerClass={brand.containerClass}
-              logoClass={brand.logoClass}
-            />
+            {brand.logo_url ? (
+              <span className="relative h-16 w-28">
+                <Image
+                  src={brand.logo_url}
+                  alt={`${brand.name} logo`}
+                  fill
+                  className="object-contain transition duration-300 group-hover:scale-[1.06]"
+                  sizes="112px"
+                />
+              </span>
+            ) : (
+              <span className="font-display text-[26px] font-semibold tracking-[-0.03em] text-black transition duration-300 group-hover:scale-[1.06]">
+                {brand.name}
+              </span>
+            )}
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b8378] transition duration-200 group-hover:text-[#1f2a3c]">
+              Shop {brand.name}
+            </span>
           </Link>
         ))}
       </div>

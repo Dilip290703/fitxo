@@ -18,8 +18,9 @@ export type ProductColor = {
 
 export type NearbyStore = {
   name: string;
-  distance: string;
-  eta: string;
+  /** Optional — no geo data exists in the DB yet, so usually absent. */
+  distance?: string;
+  eta?: string;
 };
 
 export type ProductReview = {

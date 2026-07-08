@@ -5,11 +5,11 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { createClient } from "@fitzo/supabase/client";
 import { AddToBagDrawer } from "@/components/cart/AddToBagDrawer";
+import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
 
 /**
  * The bag is persisted PER SIGNED-IN USER, never globally.
@@ -46,7 +46,12 @@ type CartContextValue = {
   items: CartItem[];
   isDrawerOpen: boolean;
   latestItem: CartItem | null;
-  addItem: (item: AddCartItemInput) => void;
+  /**
+   * Adds to the bag. Returns false (and opens the login modal) when there is
+   * no session — the bag requires an account, so callers must not run their
+   * "added!" side effects unless this returns true.
+   */
+  addItem: (item: AddCartItemInput) => boolean;
   removeItem: (key: string) => void;
   moveToWishlist: (key: string) => void;
   updateQuantity: (key: string, quantity: number) => void;
@@ -74,12 +79,8 @@ export function CartProvider({
   /** `undefined` = auth not resolved yet, `null` = signed out. */
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
 
-  /** Read the live bag inside auth callbacks without re-subscribing on it. */
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
-
-  /** Who the bag belonged to on the previous render of the effect below. */
-  const previousUserId = useRef<string | null | undefined>(undefined);
+  /** Opens when a guest tries to add to the bag. */
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   function readStoredCart(id: string): CartItem[] {
     try {
@@ -93,8 +94,8 @@ export function CartProvider({
     }
   }
 
-  // Track the session. Sign-in adopts whatever the guest added this session;
-  // sign-out empties the bag.
+  // Track the session. addItem refuses without one, so a guest can never
+  // hold a bag: signed out means empty, signed in means that user's bag.
   useEffect(() => {
     window.localStorage.removeItem(LEGACY_CART_KEY);
 
@@ -113,40 +114,10 @@ export function CartProvider({
     return () => subscription.unsubscribe();
   }, []);
 
-  // React to who the bag now belongs to.
+  // Load the owner's bag; empty it the moment there is no owner.
   useEffect(() => {
     if (userId === undefined) return; // still resolving
-
-    const wasSignedIn = typeof previousUserId.current === "string";
-    previousUserId.current = userId;
-
-    if (userId === null) {
-      // Only a real sign-out empties the bag. The first resolve to `null` is
-      // just "we now know you're a guest" — it must not wipe a bag the guest
-      // added while auth was still in flight.
-      if (wasSignedIn) setItems([]);
-      return;
-    }
-
-    const stored = readStoredCart(userId);
-    const guestItems = itemsRef.current;
-
-    if (guestItems.length === 0) {
-      setItems(stored);
-      return;
-    }
-
-    // Merge the in-session guest bag into the user's stored bag.
-    const merged = [...stored];
-    for (const guestItem of guestItems) {
-      const existing = merged.find((item) => item.key === guestItem.key);
-      if (existing) {
-        existing.quantity += guestItem.quantity;
-      } else {
-        merged.push(guestItem);
-      }
-    }
-    setItems(merged);
+    setItems(userId === null ? [] : readStoredCart(userId));
   }, [userId]);
 
   // Persist only for a signed-in user.
@@ -190,6 +161,13 @@ export function CartProvider({
       latestItem,
 
       addItem: (item) => {
+        // The bag requires an account. No session (or auth still resolving):
+        // don't add — ask the guest to log in instead.
+        if (typeof userId !== "string") {
+          setShowLoginModal(true);
+          return false;
+        }
+
         const key = buildCartKey(item);
 
         setItems((current) => {
@@ -218,6 +196,7 @@ export function CartProvider({
 
         setLatestItemKey(key);
         setIsDrawerOpen(true);
+        return true;
       },
 
       removeItem: (key) => {
@@ -271,13 +250,18 @@ export function CartProvider({
       subtotal,
       totalItems,
     }),
-    [items, isDrawerOpen, latestItem, subtotal, totalItems],
+    [items, isDrawerOpen, latestItem, subtotal, totalItems, userId],
   );
 
   return (
     <CartContext.Provider value={value}>
       {children}
       <AddToBagDrawer />
+      <LoginRequiredModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Log in or create an account to add items to your bag — try-at-home orders need an account."
+      />
     </CartContext.Provider>
   );
 }

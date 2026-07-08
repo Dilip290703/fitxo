@@ -21,7 +21,7 @@ const footerColumns = [
       { label: "Shipping Info", href: "/contact" },
       { label: "Returns", href: "/refund-policy" },
       { label: "How to Order", href: "/how-it-works" },
-      { label: "How to Track", href: "/reviews" },
+      { label: "How to Track", href: "/how-it-works" },
       { label: "Size Chart", href: "/size-guide" },
     ],
   },
@@ -48,7 +48,9 @@ const legalLinksBottom = [
   { label: "Imprint", href: "/contact" },
 ];
 
-const paymentItems = ["G Pay", "Phonepe", "Paytm", "Amazon Pay", "COD"];
+// COD was removed from checkout (agent rework Phase 3, owner-approved) —
+// the keep-flow is Razorpay-only, so the footer must not advertise cash.
+const paymentItems = ["UPI", "G Pay", "Phonepe", "Paytm", "Cards"];
 
 function FacebookIcon() {
   return (
@@ -325,7 +327,7 @@ export function Footer() {
           <div className="mt-14 grid grid-cols-1 gap-y-10 xl:grid-cols-[1fr_480px] xl:gap-x-12">
             <div>
               <p className="text-[13px] text-[#767d89]">
-                ©2010-2026 Fitzo All Rights Reserved
+                ©2026 Fitzo All Rights Reserved
               </p>
 
               <div className="mt-8 flex flex-wrap items-center text-[13px] text-[#767d89]">

@@ -26,7 +26,9 @@ export function AddToBag({ product, selectedSize, isSoldOutSize = false }: AddTo
 
   const handleAdd = () => {
     if (!selectedSize) return;
-    addItem({
+    // addItem returns false for a guest (it opens the login modal itself) —
+    // don't flash "Added to Bag ✓" over a bag that got nothing.
+    const added = addItem({
       id: product.id,
       title: product.title,
       brand: product.brand,
@@ -38,6 +40,7 @@ export function AddToBag({ product, selectedSize, isSoldOutSize = false }: AddTo
       size: selectedSize,
       quantity,
     });
+    if (!added) return;
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   };

@@ -3,7 +3,15 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export function LoginRequiredModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function LoginRequiredModal({
+  open,
+  onClose,
+  message = "Log in or create an account to place your try-at-home order. Your bag is saved — you'll come right back to it.",
+}: {
+  open: boolean;
+  onClose: () => void;
+  message?: string;
+}) {
   const router = useRouter();
 
   // Close on Escape + lock body scroll while open.
@@ -66,8 +74,7 @@ export function LoginRequiredModal({ open, onClose }: { open: boolean; onClose: 
             One step before you order
           </h2>
           <p className="mx-auto mt-2 max-w-[320px] text-[14px] leading-6 text-[#5f5851]">
-            Log in or create an account to place your try-at-home order. Your bag is
-            saved — you&apos;ll come right back to it.
+            {message}
           </p>
 
           <button
