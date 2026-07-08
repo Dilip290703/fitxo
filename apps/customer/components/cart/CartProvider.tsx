@@ -5,11 +5,26 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { createClient } from "@fitzo/supabase/client";
 import { AddToBagDrawer } from "@/components/cart/AddToBagDrawer";
 
-const CART_STORAGE_KEY = "fitzo-cart";
+/**
+ * The bag is persisted PER SIGNED-IN USER, never globally.
+ *
+ * A logged-out visitor can still add to the bag, but that bag lives in memory
+ * only: it is never written to storage and does not survive a reload. Signing
+ * out empties the bag on the spot.
+ *
+ * Before this, a single global `fitzo-cart` key meant one browser's bag was
+ * shared by every account that ever signed in on it, and it outlived sign-out.
+ */
+const cartStorageKey = (userId: string) => `fitzo-cart:${userId}`;
+
+/** The old global key. Removed on first load so stale bags don't linger. */
+const LEGACY_CART_KEY = "fitzo-cart";
 
 export type CartItem = {
   key: string;
@@ -56,40 +71,89 @@ export function CartProvider({
   const [items, setItems] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [latestItemKey, setLatestItemKey] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  /** `undefined` = auth not resolved yet, `null` = signed out. */
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
 
-  // Load cart from localStorage
-  useEffect(() => {
-    setMounted(true);
+  /** Read the live bag inside auth callbacks without re-subscribing on it. */
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
-    const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+  /** Who the bag belonged to on the previous render of the effect below. */
+  const previousUserId = useRef<string | null | undefined>(undefined);
 
-    if (storedCart) {
-      try {
-        const parsed = JSON.parse(storedCart);
-
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-        } else {
-          setItems([]);
-          window.localStorage.removeItem(CART_STORAGE_KEY);
-        }
-      } catch {
-        setItems([]);
-        window.localStorage.removeItem(CART_STORAGE_KEY);
-      }
+  function readStoredCart(id: string): CartItem[] {
+    try {
+      const raw = window.localStorage.getItem(cartStorageKey(id));
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      window.localStorage.removeItem(cartStorageKey(id));
+      return [];
     }
+  }
+
+  // Track the session. Sign-in adopts whatever the guest added this session;
+  // sign-out empties the bag.
+  useEffect(() => {
+    window.localStorage.removeItem(LEGACY_CART_KEY);
+
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Save cart to localStorage
+  // React to who the bag now belongs to.
   useEffect(() => {
-    if (!mounted) return;
+    if (userId === undefined) return; // still resolving
 
-    window.localStorage.setItem(
-      CART_STORAGE_KEY,
-      JSON.stringify(items),
-    );
-  }, [items, mounted]);
+    const wasSignedIn = typeof previousUserId.current === "string";
+    previousUserId.current = userId;
+
+    if (userId === null) {
+      // Only a real sign-out empties the bag. The first resolve to `null` is
+      // just "we now know you're a guest" — it must not wipe a bag the guest
+      // added while auth was still in flight.
+      if (wasSignedIn) setItems([]);
+      return;
+    }
+
+    const stored = readStoredCart(userId);
+    const guestItems = itemsRef.current;
+
+    if (guestItems.length === 0) {
+      setItems(stored);
+      return;
+    }
+
+    // Merge the in-session guest bag into the user's stored bag.
+    const merged = [...stored];
+    for (const guestItem of guestItems) {
+      const existing = merged.find((item) => item.key === guestItem.key);
+      if (existing) {
+        existing.quantity += guestItem.quantity;
+      } else {
+        merged.push(guestItem);
+      }
+    }
+    setItems(merged);
+  }, [userId]);
+
+  // Persist only for a signed-in user.
+  useEffect(() => {
+    if (!userId) return;
+    window.localStorage.setItem(cartStorageKey(userId), JSON.stringify(items));
+  }, [items, userId]);
 
   const latestItem = useMemo(() => {
     if (!Array.isArray(items)) return null;

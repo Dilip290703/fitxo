@@ -1,7 +1,33 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { getDeliveryStatus, MOCK_DETECTED_PINCODE } from "@/lib/pincode";
+import { getDeliveryStatus } from "@/lib/pincode";
+
+/** Promisified geolocation — the callback API doesn't compose with async/await. */
+function getPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 5 * 60 * 1000,
+    });
+  });
+}
+
+function geoErrorMessage(error: unknown) {
+  if (typeof GeolocationPositionError !== "undefined" && error instanceof GeolocationPositionError) {
+    if (error.code === error.PERMISSION_DENIED) {
+      return "Location permission denied. Allow it in your browser, or enter your pincode below.";
+    }
+    if (error.code === error.POSITION_UNAVAILABLE) {
+      return "Your location isn't available right now. Enter your pincode below.";
+    }
+    if (error.code === error.TIMEOUT) {
+      return "Locating took too long. Try again, or enter your pincode below.";
+    }
+  }
+  return "Couldn't detect your location. Enter your pincode below.";
+}
 
 type PincodeModalProps = {
   isOpen: boolean;
@@ -35,14 +61,51 @@ export function PincodeModal({
       ? getDeliveryStatus(manualPincode.trim())
       : null;
 
-  // Detect location — mocks a Pune pincode (real geo-detection deferred)
+  /**
+   * Real detection: browser geolocation -> our reverse-geocode route -> pincode.
+   * A detected pincode we don't serve is NOT saved silently — we drop it into
+   * the field so the red serviceability line explains why nothing happened.
+   */
   const handleDetect = async () => {
-    setLoading(true);
     setError("");
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    onSave(MOCK_DETECTED_PINCODE);
-    setLoading(false);
-    onClose();
+
+    if (!("geolocation" in navigator)) {
+      setError("This browser can't share your location. Enter your pincode below.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const position = await getPosition();
+      const { latitude, longitude } = position.coords;
+
+      const response = await fetch(
+        `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`,
+      );
+      const payload = (await response.json()) as {
+        pincode?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.pincode) {
+        setError(payload.error ?? "Couldn't find your pincode. Enter it below.");
+        return;
+      }
+
+      setManualPincode(payload.pincode);
+
+      if (!getDeliveryStatus(payload.pincode).available) {
+        // Serviceability message renders under the field; keep the modal open.
+        return;
+      }
+
+      onSave(payload.pincode);
+      onClose();
+    } catch (caught) {
+      setError(geoErrorMessage(caught));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {

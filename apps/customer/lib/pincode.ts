@@ -73,6 +73,3 @@ export function getDeliveryStatus(pincode: string): DeliveryStatus {
     message: "FitZo is currently available only in Pune.",
   };
 }
-
-/** A pincode to use when the user clicks "Detect my location" (Pune mock). */
-export const MOCK_DETECTED_PINCODE = "411021";

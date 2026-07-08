@@ -8,6 +8,9 @@ type ProductNavbarProps = {
 };
 
 const categories = [
+  // "" = no gender filter. Without this the user can never get back to the
+  // unfiltered list after picking a category.
+  { label: "All", value: "" },
   { label: "Men", value: "men" },
   { label: "Women", value: "women" },
   { label: "Child", value: "kids" },
@@ -45,11 +48,13 @@ export function ProductNavbar({
                 type="button"
                 onClick={() => onCategoryChange(item.value)}
                 className={`flex items-center gap-2 transition duration-200 hover:text-black ${
-                  activeCategory === item.value ? "text-black" : ""
+                  activeCategory === item.value
+                    ? "font-semibold text-black"
+                    : ""
                 }`}
               >
                 <span>{item.label}</span>
-                <ChevronDown />
+                {item.value ? <ChevronDown /> : null}
               </button>
             ))}
           </nav>

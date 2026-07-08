@@ -35,8 +35,9 @@ const CATEGORY_MAP: Record<string, string> = {
   child: "kids",
 };
 
+/** No category in the URL means "everything" — not Women. */
 function normalizeCategory(category?: string) {
-  if (!category) return "women";
+  if (!category) return "";
   return CATEGORY_MAP[category] ?? category;
 }
 
@@ -226,14 +227,20 @@ export function ProductsCatalogPage({
             />
           </div>
 
-          <div>
+          {/* Desktop: the grid owns its scroll. Wheeling with the cursor over
+              the products moves the grid; `overscroll-contain` keeps that
+              gesture from chaining into the page once the grid bottoms out.
+              Cursor anywhere else (banner, header, footer) scrolls the page.
+              Mobile keeps a single, normal page scroll — an inner scroll
+              region on a phone is a trap. */}
+          <div className="lg:sticky lg:top-[88px] lg:h-[calc(100vh-104px)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 [scrollbar-width:thin]">
             {loading ? (
               <LoadingSkeleton />
             ) : (
               <ProductGrid products={products} />
             )}
             {!loading && totalPages > 1 ? (
-              <div className="mt-8">
+              <div className="mt-8 pb-2">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
