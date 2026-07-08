@@ -40,8 +40,10 @@ export async function FeaturedStores() {
       </div>
 
       <ProductGrid
-        title="This week's hot picks are HOT hot"
-        description="From festive edits to streetwear staples, browse the styles nearby and schedule a doorstep fitting."
+        eyebrow="Trending this week"
+        title="This week's hot picks"
+        description="From festive edits to streetwear staples — browse the styles nearby and book a doorstep fitting."
+        viewAllHref="/products"
         products={products}
       />
 

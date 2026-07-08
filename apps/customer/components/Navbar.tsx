@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@fitzo/supabase/client";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
+import { SearchBar } from "@/components/SearchBar";
 import { useWishlist } from "@/store/wishlistStore";
 import { useLocation } from "@/store/locationStore";
 
@@ -37,24 +38,6 @@ const megaCategories = [
       { label: "Easy returns", href: "/products?category=kids" },
     ],
   },
-  {
-    title: "HOME",
-    href: "/products?category=home",
-    links: [
-      { label: "Lounge sets", href: "/products?category=home" },
-      { label: "Soft essentials", href: "/products?category=home" },
-      { label: "Nearby delivery", href: "/products?category=home" },
-    ],
-  },
-  {
-    title: "ACCESSORIES",
-    href: "/products?category=accessories",
-    links: [
-      { label: "Weekend add-ons", href: "/products?category=accessories" },
-      { label: "Event-ready extras", href: "/products?category=accessories" },
-      { label: "Trending now", href: "/products?category=accessories" },
-    ],
-  },
 ];
 
 const topLinks = [
@@ -69,24 +52,8 @@ const categoryLinks = [
   { label: "MEN", href: "/products?category=men" },
   { label: "WOMEN", href: "/products?category=women" },
   { label: "KIDS", href: "/products?category=kids" },
-  { label: "HOME", href: "/products?category=home" },
   { label: "COLLECTIONS", href: "/products?collection=summer" },
 ];
-
-function SearchIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
-      <path
-        d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
 
 function HeartIcon() {
   return (
@@ -374,46 +341,16 @@ export function Navbar({
 
               {searchMode === "field" ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/search")}
-                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:hidden ${
-                      isSearchActive ? "text-[#1f2a3c]" : "text-[#6f6860]"
-                    }`}
-                    aria-label="Search"
-                  >
-                    <SearchIcon />
-                    <span
-                      className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
-                        isSearchActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-                      }`}
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/search")}
-                    className={`group relative hidden h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:-translate-y-0.5 hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex ${
-                      isSearchActive ? "text-[#1f2a3c]" : "text-[#78726a]"
-                    }`}
-                    aria-label="Search"
-                  >
-                    <span>Search</span>
-                    <SearchIcon />
-                    <span
-                      className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
-                        isSearchActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-                      }`}
-                    />
-                  </button>
+                  {/* Icon on phones, full pill from md up — both expand in place. */}
+                  <div className="md:hidden">
+                    <SearchBar variant="icon" active={isSearchActive} />
+                  </div>
+                  <div className="hidden md:block">
+                    <SearchBar variant="field" active={isSearchActive} />
+                  </div>
                 </>
               ) : (
-                <NavIconButton
-                  label="Search"
-                  active={isSearchActive}
-                  onClick={() => router.push("/search")}
-                >
-                  <SearchIcon />
-                </NavIconButton>
+                <SearchBar variant="icon" active={isSearchActive} />
               )}
 
               <NavIconButton

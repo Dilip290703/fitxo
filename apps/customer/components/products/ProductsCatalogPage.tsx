@@ -25,7 +25,8 @@ type ProductsCatalogPageProps = {
 
 type SortOption = "new-arrivals" | "popular" | "price-low" | "price-high";
 
-const PRODUCTS_PER_PAGE = 9;
+// 4 across × 4 down on xl — a full, unragged grid per page.
+const PRODUCTS_PER_PAGE = 16;
 
 const CATEGORY_MAP: Record<string, string> = {
   men: "men",
@@ -41,8 +42,8 @@ function normalizeCategory(category?: string) {
 
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 9 }).map((_, i) => (
+    <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
         <div key={i} className="overflow-hidden border border-[#eee7de] bg-white">
           <div className="h-[262px] animate-pulse bg-[#f0ece4] sm:h-[298px]" />
           <div className="px-3 pb-4 pt-3 space-y-2">
@@ -206,8 +207,11 @@ export function ProductsCatalogPage({
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <div className="hidden lg:block">
+        <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+          {/* Filter rail pins itself under the sticky navbar and scrolls its own
+              overflow. `overscroll-contain` stops a filter-list scroll from
+              chaining into the page once the rail bottoms out. */}
+          <div className="hidden lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1 [scrollbar-width:thin]">
             <FilterSidebar
               filters={filters}
               brands={filterOptions.brands}
