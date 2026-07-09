@@ -30,6 +30,7 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
     try_window_minutes: String(initial.try_window_minutes),
     delivery_fee: String(initial.delivery_fee),
     free_delivery_above: String(initial.free_delivery_above),
+    offer_expiry_minutes: String(initial.offer_expiry_minutes),
   });
 
   const [commission, setCommission] = useState({
@@ -89,12 +90,20 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
           <label className={labelClass}>Free Delivery Above (₹)</label>
           <input type="number" value={delivery.free_delivery_above} min={0} onChange={(e) => setDelivery((f) => ({ ...f, free_delivery_above: e.target.value }))} className={inputClass} />
         </div>
+        <div>
+          <label className={labelClass}>
+            Offer Expiry (minutes) <span className="text-muted">{humanizeMinutes(Number(delivery.offer_expiry_minutes))}</span>
+          </label>
+          <p className="text-xs text-muted mb-1.5">How long a confirmed order keeps ringing riders before it&apos;s cancelled as unfulfillable</p>
+          <input type="number" value={delivery.offer_expiry_minutes} min={5} onChange={(e) => setDelivery((f) => ({ ...f, offer_expiry_minutes: e.target.value }))} className={inputClass} />
+        </div>
         <button
           onClick={() =>
             save('Delivery settings', {
               try_window_minutes: Number(delivery.try_window_minutes),
               delivery_fee: Number(delivery.delivery_fee),
               free_delivery_above: Number(delivery.free_delivery_above),
+              offer_expiry_minutes: Number(delivery.offer_expiry_minutes),
             })
           }
           disabled={isPending}
