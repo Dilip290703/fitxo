@@ -8,7 +8,7 @@ export default function NotFound() {
       <Navbar showSecondaryNav={false} />
 
       <section className="mx-auto flex w-full max-w-[640px] flex-col items-center px-5 py-24 text-center sm:px-6">
-        <p className="font-display text-[96px] font-bold leading-none tracking-tight text-[#e9e2d8]">
+        <p className="font-display text-[96px] font-bold leading-none tracking-tight text-[#e6dac8]">
           404
         </p>
         <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#958675]">
@@ -25,13 +25,13 @@ export default function NotFound() {
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/products"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-[#1f2a3c] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
           >
             Browse products
           </Link>
           <Link
             href="/"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-[#d9ccbd] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+            className="inline-flex h-12 items-center justify-center rounded-full border border-[#d9ccbd] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
           >
             Back to home
           </Link>

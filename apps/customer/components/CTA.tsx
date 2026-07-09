@@ -12,7 +12,7 @@ export function CTA() {
             <h2 className="mt-4 font-display text-[38px] leading-[0.95] font-medium tracking-[-0.04em] text-black sm:text-[52px]">
               Your next outfit is already nearby.
             </h2>
-            <p className="mt-4 max-w-[520px] text-[14px] leading-7 text-[#5f5750]">
+            <p className="mt-4 max-w-[520px] text-[14px] leading-7 text-[#6f6050]">
               Start with live recommendations, try on at your door while the
               rider waits, and only pay for the pieces you keep. No guesswork.
             </p>

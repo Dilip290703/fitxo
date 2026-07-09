@@ -48,7 +48,7 @@ function CheckboxRow({
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="h-[15px] w-[15px] rounded-none border border-[#8f8a84] accent-[#1b2230]"
+        className="h-[15px] w-[15px] rounded-none border border-[#cbb9a4] accent-[#221b13]"
       />
       <span>{label}</span>
     </label>
@@ -67,7 +67,7 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-t border-[#f0ebe4] pt-6 first:border-t-0 first:pt-0">
+    <div className="border-t border-[#e6dac8] pt-6 first:border-t-0 first:pt-0">
       <button
         type="button"
         onClick={onToggle}
@@ -113,14 +113,14 @@ export function FilterSidebar({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="text-[12px] font-medium text-[#5f5750]"
+            className="text-[12px] font-medium text-[#6f6050]"
           >
             Close
           </button>
         ) : null}
       </div>
 
-      <div className="border border-[#f0ebe4] bg-white p-5">
+      <div className="border border-[#e6dac8] bg-white p-5">
         <AccordionSection
           title="Prices"
           open={openSections.prices}

@@ -18,10 +18,10 @@ export function BrandCarousel({ brands }: { brands: Brand[] }) {
   return (
     <div className="mx-auto max-w-[1240px]">
       <div className="mb-12 text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8b8378]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
           Stores near you
         </p>
-        <h2 className="mt-3 font-serif text-3xl text-gray-900 sm:text-4xl">
+        <h2 className="mt-3 font-display text-3xl text-[#221b13] sm:text-4xl">
           Shop by brand
         </h2>
       </div>
@@ -31,7 +31,7 @@ export function BrandCarousel({ brands }: { brands: Brand[] }) {
           <Link
             key={brand.slug}
             href={`/brand/${brand.slug}`}
-            className="group flex flex-col items-center justify-center gap-4 rounded-2xl bg-white px-4 py-10 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_-18px_rgba(24,24,28,0.28)] focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20"
+            className="group flex flex-col items-center justify-center gap-4 rounded-2xl bg-white px-4 py-10 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_-18px_rgba(24,24,28,0.28)] focus:outline-none focus:ring-2 focus:ring-[#221b13]/20"
           >
             {brand.logo_url ? (
               <span className="relative h-16 w-28">
@@ -48,7 +48,7 @@ export function BrandCarousel({ brands }: { brands: Brand[] }) {
                 {brand.name}
               </span>
             )}
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b8378] transition duration-200 group-hover:text-[#1f2a3c]">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a48d78] transition duration-200 group-hover:text-[#221b13]">
               Shop {brand.name}
             </span>
           </Link>
@@ -58,7 +58,7 @@ export function BrandCarousel({ brands }: { brands: Brand[] }) {
       <div className="mt-12 flex justify-center">
         <Link
           href="/brands"
-          className="inline-flex rounded-md bg-yellow-400 px-6 py-3 text-xs uppercase tracking-widest text-black transition duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#111111]/20"
+          className="inline-flex rounded-full bg-[#221b13] px-7 py-3 text-xs uppercase tracking-widest text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22] focus:outline-none focus:ring-2 focus:ring-[#221b13]/20"
         >
           See more brands
         </Link>

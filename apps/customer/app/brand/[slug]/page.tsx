@@ -37,7 +37,7 @@ export default async function BrandPage({
       <section className="mx-auto w-full max-w-[1100px] px-5 py-12 sm:px-6">
         <Link
           href="/brands"
-          className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#8b7058] hover:text-[#1f2a3c]"
+          className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#8b7058] hover:text-[#221b13]"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -89,7 +89,7 @@ export default async function BrandPage({
           </>
         ) : (
           <div className="rounded-[22px] border border-[#eadfd4] bg-white p-12 text-center shadow-[0_14px_34px_rgba(34,28,20,0.05)]">
-            <p className="text-[15px] font-semibold text-[#1f2a3c]">
+            <p className="text-[15px] font-semibold text-[#221b13]">
               No products from {brand.name} yet
             </p>
             <p className="mt-2 text-[14px] text-[#6b6258]">
@@ -97,7 +97,7 @@ export default async function BrandPage({
             </p>
             <Link
               href="/products"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
             >
               Browse all products
             </Link>

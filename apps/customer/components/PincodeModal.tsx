@@ -198,7 +198,7 @@ export function PincodeModal({
 
             <button
               type="submit"
-              className="mt-4 inline-flex h-11 items-center rounded-full bg-[#1f2a3c] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#141d2b]"
+              className="mt-4 inline-flex h-11 items-center rounded-full bg-[#221b13] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#141d2b]"
             >
               Save pincode
             </button>

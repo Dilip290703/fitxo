@@ -17,7 +17,7 @@ export function Reviews({ reviews }: { reviews: ProductReview[] }) {
   // Honest empty state — 0/0 would render "NaN" as the average.
   if (reviews.length === 0) {
     return (
-      <div className="rounded-[18px] bg-[#fbf7f1] p-5 text-center">
+      <div className="rounded-[18px] bg-[#f4f1ea] p-5 text-center">
         <p className="text-[15px] font-medium text-[#171717]">
           No reviews yet
         </p>
@@ -33,7 +33,7 @@ export function Reviews({ reviews }: { reviews: ProductReview[] }) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[18px] bg-[#fbf7f1] p-4">
+      <div className="rounded-[18px] bg-[#f4f1ea] p-4">
         <p className="text-[28px] font-medium text-[#171717]">
           {averageRating.toFixed(1)}
         </p>

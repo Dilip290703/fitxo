@@ -1,20 +1,31 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Fitzo palette — warm neutral, luxury-editorial.
+     Feather White  #faf9f6  page background
+     Porcelain Mist #f4f1ea  section / tile background
+     Creamed Oat    #e6dac8  borders, soft fills
+     Soft Sandstone #cbb9a4  strong borders, secondary accents
+     Desert Rock    #a48d78  primary accent, eyebrows, muted text
+   Text tones (#221b13 ink / #6f6050 warm grey) extend the palette
+   for readability — the swatch set itself has no dark value.
+   Fonts (--font-display / --font-sans) are injected on <html> by
+   next/font in app/layout.tsx (Playfair Display + Jost).
+   ============================================================ */
 :root {
-  --background: #fbfaf7;
-  --foreground: #141414;
-  --muted: #6f6f70;
+  --background: #faf9f6;
+  --foreground: #221b13;
+  --muted: #6f6050;
   --panel: #ffffff;
-  --nav-border: #e9e2d8;
-  --warm: #f5c29d;
-  --accent: #ffd233;
-  --soft-yellow: #ffe04c;
-  --hero-deep: #1d2637;
-  --hero-deeper: #162030;
-  --beige: #f6f1e8;
-  --sky: #b6dcfb;
-  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-  --font-sans: "Avenir Next", "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  --nav-border: #e6dac8;
+  --warm: #cbb9a4;
+  --accent: #a48d78;
+  --soft-yellow: #e6dac8;
+  --hero-deep: #221b13;
+  --hero-deeper: #191309;
+  --beige: #f4f1ea;
+  --sky: #e6dac8;
+  --ink: #221b13;
 }
 
 /* Base element resets live in @layer base so Tailwind utilities
@@ -77,7 +88,37 @@
 }
 
 .button-shadow {
-  box-shadow: 0 12px 25px rgba(255, 210, 51, 0.28);
+  box-shadow: 0 12px 25px rgba(164, 141, 120, 0.28);
+}
+
+/* ============================================================
+   Testimonials auto-marquee — the track holds the card list twice;
+   sliding -50% then looping reads as an endless belt. Hovering
+   anywhere on the track (i.e. on a card) freezes it.
+   ============================================================ */
+.marquee-track {
+  animation: marqueeScroll 38s linear infinite;
+}
+
+.marquee-track:hover,
+.marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
 }
 
 .soft-panel {
@@ -206,11 +247,11 @@
 }
 
 .hero-bloom--gold {
-  background: #ffd233;
+  background: #cbb9a4;
 }
 
 .hero-bloom--blue {
-  background: #4c7fbf;
+  background: #a48d78;
   animation-duration: 22s;
   animation-direction: alternate-reverse;
 }
@@ -234,12 +275,12 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(255, 210, 51, 0.5);
+    box-shadow: 0 0 0 0 rgba(164, 141, 120, 0.5);
   }
 
   50% {
     opacity: 0.75;
-    box-shadow: 0 0 0 5px rgba(255, 210, 51, 0);
+    box-shadow: 0 0 0 5px rgba(164, 141, 120, 0);
   }
 }
 

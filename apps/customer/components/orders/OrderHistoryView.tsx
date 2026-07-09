@@ -117,7 +117,7 @@ export function OrderHistoryView() {
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="font-semibold text-[#1f2a3c]">{order.orderNumber}</h2>
+                    <h2 className="font-semibold text-[#221b13]">{order.orderNumber}</h2>
                     <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.13em] text-[#7b6f63]">
                       {order.status}
                     </span>
@@ -128,7 +128,7 @@ export function OrderHistoryView() {
                 </div>
                 <Link
                   href={`/order-tracking/${order.id}`}
-                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-5 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-5 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
                 >
                   Track order
                 </Link>
@@ -137,13 +137,13 @@ export function OrderHistoryView() {
           </div>
         ) : (
           <div className="rounded-[22px] border border-[#eadfd4] bg-white p-10 text-center shadow-[0_14px_34px_rgba(34,28,20,0.05)]">
-            <p className="text-[15px] font-semibold text-[#1f2a3c]">No orders yet</p>
+            <p className="text-[15px] font-semibold text-[#221b13]">No orders yet</p>
             <p className="mx-auto mt-2 max-w-sm text-[14px] leading-6 text-[#6b6258]">
               Your try-on orders will show up here once you place your first one.
             </p>
             <Link
               href="/products"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
             >
               Browse products
             </Link>

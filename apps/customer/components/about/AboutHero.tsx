@@ -1,6 +1,6 @@
 export function AboutHero() {
   return (
-    <section className="bg-[#f8f6f3] px-6 py-24 sm:px-10 sm:py-28">
+    <section className="bg-[#f4f1ea] px-6 py-24 sm:px-10 sm:py-28">
       <div className="section-frame">
         <div className="mx-auto max-w-[760px] text-center">
           <p className="fade-up text-[11px] font-extrabold uppercase tracking-[0.28em] text-[#8b7b69]">

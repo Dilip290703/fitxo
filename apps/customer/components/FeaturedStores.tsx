@@ -1,6 +1,5 @@
 import { BrandCarousel } from "@/components/BrandCarousel";
-import { BrandsForYou } from "@/components/BrandsForYou";
-import { ExperiencePreview } from "@/components/ExperiencePreview";
+import { PromoBanners } from "@/components/PromoBanners";
 import { ProductGrid } from "@/components/ProductGrid";
 import { createClient } from "@fitzo/supabase/server";
 import { queryFeaturedProducts, type FrontendProduct } from "@/lib/supabase/products";
@@ -26,7 +25,7 @@ function toHomepageProduct(p: FrontendProduct) {
 export async function FeaturedStores() {
   const supabase = await createClient();
   const [featuredProducts, brandsRes] = await Promise.all([
-    queryFeaturedProducts(supabase, 4),
+    queryFeaturedProducts(supabase, 6),
     supabase
       .from("brands")
       .select("name, slug, logo_url")
@@ -45,7 +44,7 @@ export async function FeaturedStores() {
   return (
     <section id="featured-stores">
       {brands.length > 0 ? (
-        <div className="bg-[#f8f6f3] px-10 py-20">
+        <div className="bg-[#f4f1ea] px-10 py-20">
           <BrandCarousel brands={brands} />
         </div>
       ) : null}
@@ -58,14 +57,7 @@ export async function FeaturedStores() {
         products={products}
       />
 
-      <ExperiencePreview />
-      <BrandsForYou
-        brands={
-          brands.length > 0
-            ? brands.map(({ name, slug }) => ({ name, slug }))
-            : undefined
-        }
-      />
+      <PromoBanners />
     </section>
   );
 }

@@ -193,7 +193,7 @@ export default function PrivacyPolicyPage() {
       <Navbar showSecondaryNav={false} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-[#ece4d8] bg-[#f8f6f3] px-6 py-20 sm:px-10 lg:px-14">
+      <section className="relative overflow-hidden border-b border-[#ece4d8] bg-[#f4f1ea] px-6 py-20 sm:px-10 lg:px-14">
         <div className="absolute left-[-140px] top-[-140px] h-80 w-80 rounded-full bg-[#ffd36a]/20 blur-3xl" />
         <div className="absolute bottom-[-120px] right-[-100px] h-72 w-72 rounded-full bg-[#ffc2a6]/25 blur-3xl" />
 
@@ -227,7 +227,7 @@ export default function PrivacyPolicyPage() {
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="group flex items-center gap-3 rounded-xl px-4 py-3 text-[14px] text-[#3a3630] transition duration-200 hover:bg-[#f8f6f3]"
+                className="group flex items-center gap-3 rounded-xl px-4 py-3 text-[14px] text-[#3a3630] transition duration-200 hover:bg-[#f4f1ea]"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-[#d4c9bb] transition duration-200 group-hover:bg-[#111]" />
                 {section.title}

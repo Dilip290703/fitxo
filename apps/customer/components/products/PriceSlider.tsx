@@ -25,9 +25,9 @@ export function PriceSlider({
       </div>
 
       <div className="relative mt-6 h-6">
-        <div className="absolute top-1/2 h-[2px] w-full -translate-y-1/2 bg-[#e7e1d8]" />
+        <div className="absolute top-1/2 h-[2px] w-full -translate-y-1/2 bg-[#e6dac8]" />
         <div
-          className="absolute top-1/2 h-[2px] -translate-y-1/2 bg-[#f15a5a]"
+          className="absolute top-1/2 h-[2px] -translate-y-1/2 bg-[#a48d78]"
           style={{ left: `${left}%`, right: `${100 - right}%` }}
         />
 
@@ -42,7 +42,7 @@ export function PriceSlider({
               maxValue,
             ])
           }
-          className="pointer-events-none absolute inset-0 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#f15a5a] [&::-webkit-slider-thumb]:shadow-none"
+          className="pointer-events-none absolute inset-0 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#a48d78] [&::-webkit-slider-thumb]:shadow-none"
         />
         <input
           type="range"
@@ -55,7 +55,7 @@ export function PriceSlider({
               Math.max(Number(event.target.value), minValue + 10),
             ])
           }
-          className="pointer-events-none absolute inset-0 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#f15a5a] [&::-webkit-slider-thumb]:shadow-none"
+          className="pointer-events-none absolute inset-0 h-full w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#a48d78] [&::-webkit-slider-thumb]:shadow-none"
         />
       </div>
     </div>

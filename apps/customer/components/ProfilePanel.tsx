@@ -337,7 +337,7 @@ export function ProfilePanel() {
 
   if (loading) {
     return (
-      <section className="bg-[#f8f6f3] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
+      <section className="bg-[#f4f1ea] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
         <div className="mx-auto max-w-7xl">
           <div className="h-[400px] animate-pulse rounded-[32px] bg-[#ece3d9]" />
         </div>
@@ -346,9 +346,9 @@ export function ProfilePanel() {
   }
 
   return (
-    <section className="bg-[#f8f6f3] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
+    <section className="bg-[#f4f1ea] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
       {toast ? (
-        <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#1f2a3c] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
+        <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#221b13] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
           {toast}
         </div>
       ) : null}
@@ -356,7 +356,7 @@ export function ProfilePanel() {
       <div className="mx-auto max-w-7xl">
         <section className="overflow-hidden rounded-[32px] border border-[#eadfd4] bg-[#fffdf9] shadow-[0_28px_80px_rgba(31,25,18,0.1)]">
           <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="bg-[#1f2a3c] p-6 text-white sm:p-8 lg:p-10">
+            <div className="bg-[#221b13] p-6 text-white sm:p-8 lg:p-10">
               <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/70">
                 Account overview
               </p>
@@ -374,7 +374,7 @@ export function ProfilePanel() {
                     <span>{user.email}</span>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-[#f5d75c] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1f2a3c]">
+                    <span className="rounded-full bg-[#f5d75c] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#221b13]">
                       {user.membership}
                     </span>
                     <span className="rounded-full border border-white/20 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-white/72">
@@ -388,7 +388,7 @@ export function ProfilePanel() {
                 <button
                   type="button"
                   onClick={openProfileModal}
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5"
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:-translate-y-0.5"
                 >
                   Edit profile
                 </button>
@@ -443,7 +443,7 @@ export function ProfilePanel() {
               </div>
               <Link
                 href="/ai-style-setup"
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
+                className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
               >
                 Update preferences
               </Link>
@@ -455,7 +455,7 @@ export function ProfilePanel() {
                 <button
                   type="button"
                   onClick={() => showToast("Password change flow coming soon.")}
-                  className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c]"
+                  className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13]"
                 >
                   Change password
                   <ChevronRight />
@@ -463,7 +463,7 @@ export function ProfilePanel() {
                 <button
                   type="button"
                   onClick={() => showToast("Session manager coming soon.")}
-                  className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c]"
+                  className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13]"
                 >
                   Manage sessions
                   <ChevronRight />
@@ -486,14 +486,14 @@ export function ProfilePanel() {
                   <Link
                     key={action.label}
                     href={action.href}
-                    className="group rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#1f2a3c] hover:shadow-[0_20px_44px_rgba(34,28,20,0.09)]"
+                    className="group rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#221b13] hover:shadow-[0_20px_44px_rgba(34,28,20,0.09)]"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-semibold text-[#1f2a3c]">{action.label}</h3>
+                        <h3 className="font-semibold text-[#221b13]">{action.label}</h3>
                         <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">{action.text}</p>
                       </div>
-                      <span className="mt-1 rounded-full bg-[#f6f1e8] p-2 text-[#1f2a3c] transition duration-200 group-hover:bg-[#ffd233]">
+                      <span className="mt-1 rounded-full bg-[#f6f1e8] p-2 text-[#221b13] transition duration-200 group-hover:bg-[#a48d78]">
                         <ChevronRight />
                       </span>
                     </div>
@@ -511,17 +511,17 @@ export function ProfilePanel() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c]">
+                        <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13]">
                           {address.label}
                         </span>
                         {address.isDefault ? (
-                          <span className="rounded-full bg-[#ffd233] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c]">
+                          <span className="rounded-full bg-[#a48d78] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13]">
                             Default
                           </span>
                         ) : null}
                       </div>
                     </div>
-                    <h3 className="mt-4 font-semibold text-[#1f2a3c]">{address.name}</h3>
+                    <h3 className="mt-4 font-semibold text-[#221b13]">{address.name}</h3>
                     <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">
                       {address.line}, {address.city} - {address.pincode}
                     </p>
@@ -529,7 +529,7 @@ export function ProfilePanel() {
                       <button
                         type="button"
                         onClick={() => openAddressModal(address)}
-                        className="rounded-full border border-[#d9ccbd] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+                        className="rounded-full border border-[#d9ccbd] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
                       >
                         Edit
                       </button>
@@ -544,7 +544,7 @@ export function ProfilePanel() {
                         <button
                           type="button"
                           onClick={() => markDefaultAddress(address.id)}
-                          className="rounded-full bg-[#1f2a3c] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition duration-200 hover:bg-[#141d2b]"
+                          className="rounded-full bg-[#221b13] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition duration-200 hover:bg-[#141d2b]"
                         >
                           Set default
                         </button>
@@ -556,7 +556,7 @@ export function ProfilePanel() {
               <button
                 type="button"
                 onClick={() => openAddressModal()}
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#ffd233] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5"
+                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#a48d78] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:-translate-y-0.5"
               >
                 Add new address
               </button>
@@ -572,7 +572,7 @@ export function ProfilePanel() {
                     >
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="font-semibold text-[#1f2a3c]">{order.id}</h3>
+                          <h3 className="font-semibold text-[#221b13]">{order.id}</h3>
                           <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.13em] text-[#7b6f63]">
                             {order.status}
                           </span>
@@ -583,7 +583,7 @@ export function ProfilePanel() {
                       </div>
                       <Link
                         href="/order-tracking"
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+                        className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
                       >
                         Track
                       </Link>
@@ -595,7 +595,7 @@ export function ProfilePanel() {
               )}
               <Link
                 href="/orders"
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
+                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
               >
                 View all orders
               </Link>
@@ -629,7 +629,7 @@ export function ProfilePanel() {
             <Input label="Name" value={profileDraft.name} onChange={(value) => setProfileDraft((current) => ({ ...current, name: value }))} required />
             <Input label="Email" type="email" value={profileDraft.email} onChange={(value) => setProfileDraft((current) => ({ ...current, email: value }))} required />
             <Input label="Phone" value={profileDraft.phone} onChange={(value) => setProfileDraft((current) => ({ ...current, phone: value }))} required />
-            <button className="h-12 w-full rounded-full bg-[#1f2a3c] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#141d2b]">
+            <button className="h-12 w-full rounded-full bg-[#221b13] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#141d2b]">
               Save changes
             </button>
           </form>
@@ -647,8 +647,8 @@ export function ProfilePanel() {
                   onClick={() => setAddressDraft((current) => ({ ...current, label }))}
                   className={`h-11 rounded-full text-[11px] font-semibold uppercase tracking-[0.13em] transition duration-200 ${
                     addressDraft.label === label
-                      ? "bg-[#1f2a3c] text-white"
-                      : "border border-[#ded3c6] bg-white text-[#1f2a3c]"
+                      ? "bg-[#221b13] text-white"
+                      : "border border-[#ded3c6] bg-white text-[#221b13]"
                   }`}
                 >
                   {label}
@@ -659,16 +659,16 @@ export function ProfilePanel() {
             <Input label="Address line" value={addressDraft.line} onChange={(value) => setAddressDraft((current) => ({ ...current, line: value }))} required />
             <Input label="City" value={addressDraft.city} onChange={(value) => setAddressDraft((current) => ({ ...current, city: value }))} required />
             <Input label="Pincode" value={addressDraft.pincode} onChange={(value) => setAddressDraft((current) => ({ ...current, pincode: value }))} required />
-            <label className="flex items-center gap-3 rounded-2xl border border-[#eadfd4] bg-white px-4 py-3 text-[13px] font-semibold text-[#1f2a3c]">
+            <label className="flex items-center gap-3 rounded-2xl border border-[#eadfd4] bg-white px-4 py-3 text-[13px] font-semibold text-[#221b13]">
               <input
                 type="checkbox"
                 checked={addressDraft.isDefault}
                 onChange={(event) => setAddressDraft((current) => ({ ...current, isDefault: event.target.checked }))}
-                className="h-4 w-4 accent-[#1f2a3c]"
+                className="h-4 w-4 accent-[#221b13]"
               />
               Mark as default address
             </label>
-            <button className="h-12 w-full rounded-full bg-[#ffd233] text-[11px] font-semibold uppercase tracking-[0.15em] text-[#1f2a3c] transition duration-200 hover:bg-[#ffe04c]">
+            <button className="h-12 w-full rounded-full bg-[#a48d78] text-[11px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:bg-[#cbb9a4]">
               Save address
             </button>
           </form>
@@ -735,7 +735,7 @@ function PreferenceRow({ label, value }: { label: string; value: string }) {
       <p className="text-[10px] font-medium uppercase tracking-[0.13em] text-[#8b8176]">
         {label}
       </p>
-      <p className="mt-2 text-[14px] font-semibold leading-6 text-[#1f2a3c]">{value}</p>
+      <p className="mt-2 text-[14px] font-semibold leading-6 text-[#221b13]">{value}</p>
     </div>
   );
 }
@@ -759,7 +759,7 @@ function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#ded3c6] bg-white text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#ded3c6] bg-white text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
             aria-label="Close modal"
           >
             <CloseIcon />
@@ -791,14 +791,14 @@ function ConfirmModal({
         <button
           type="button"
           onClick={onConfirm}
-          className="h-11 flex-1 rounded-full bg-[#1f2a3c] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#141d2b]"
+          className="h-11 flex-1 rounded-full bg-[#221b13] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#141d2b]"
         >
           {confirmLabel}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="h-11 flex-1 rounded-full border border-[#d9ccbd] bg-white text-[11px] font-semibold uppercase tracking-[0.15em] text-[#1f2a3c] transition duration-200 hover:bg-[#f6f1e8]"
+          className="h-11 flex-1 rounded-full border border-[#d9ccbd] bg-white text-[11px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
         >
           Cancel
         </button>
@@ -830,7 +830,7 @@ function Input({
         value={value}
         required={required}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-2xl border border-[#ded3c6] bg-white px-4 text-[15px] text-[#1f2a3c] outline-none transition duration-200 focus:border-[#1f2a3c] focus:ring-4 focus:ring-[#ffd233]/20"
+        className="h-12 w-full rounded-2xl border border-[#ded3c6] bg-white px-4 text-[15px] text-[#221b13] outline-none transition duration-200 focus:border-[#221b13] focus:ring-4 focus:ring-[#a48d78]/20"
       />
     </label>
   );

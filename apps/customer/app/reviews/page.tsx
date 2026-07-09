@@ -24,7 +24,7 @@ export default function ReviewsPage() {
             <h2 className="mt-3 font-display text-[34px] leading-none text-[#171717]">
               {item.name}
             </h2>
-            <p className="mt-4 text-[15px] leading-8 text-[#5f5750]">{item.quote}</p>
+            <p className="mt-4 text-[15px] leading-8 text-[#6f6050]">{item.quote}</p>
           </article>
         ))}
       </div>

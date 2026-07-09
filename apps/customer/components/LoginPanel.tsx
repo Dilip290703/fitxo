@@ -239,9 +239,9 @@ export function LoginPanel() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-88px)] w-full bg-[#f8f6f3] px-0 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
+    <section className="relative min-h-[calc(100vh-88px)] w-full bg-[#f4f1ea] px-0 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
       {toast ? (
-        <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#1f2a3c] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
+        <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#221b13] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
           {toast}
         </div>
       ) : null}
@@ -321,8 +321,8 @@ export function LoginPanel() {
                   onClick={() => { setMode(item); setOtpPending(false); setOtpToken(""); }}
                   className={`h-11 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] transition duration-200 ${
                     mode === item
-                      ? "bg-[#1f2a3c] text-white shadow-[0_10px_22px_rgba(31,42,60,0.18)]"
-                      : "text-[#6b6258] hover:text-[#1f2a3c]"
+                      ? "bg-[#221b13] text-white shadow-[0_10px_22px_rgba(31,42,60,0.18)]"
+                      : "text-[#6b6258] hover:text-[#221b13]"
                   }`}
                 >
                   {item === "login" ? "Login" : "Signup"}
@@ -348,7 +348,7 @@ export function LoginPanel() {
                   <button
                     type="button"
                     onClick={() => { setOtpPending(false); setOtpToken(""); }}
-                    className="block w-full text-center text-[12px] font-semibold text-[#806f5c] hover:text-[#1f2a3c]"
+                    className="block w-full text-center text-[12px] font-semibold text-[#806f5c] hover:text-[#221b13]"
                   >
                     ← Back
                   </button>
@@ -381,7 +381,7 @@ export function LoginPanel() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      className="text-[12px] font-semibold text-[#806f5c] transition duration-200 hover:text-[#1f2a3c]"
+                      className="text-[12px] font-semibold text-[#806f5c] transition duration-200 hover:text-[#221b13]"
                     >
                       Forgot password?
                     </button>
@@ -451,7 +451,7 @@ export function LoginPanel() {
               type="button"
               onClick={handleGoogle}
               disabled={isSubmitting}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-[#ded3c6] bg-white text-[13px] font-semibold text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-[#ded3c6] bg-white text-[13px] font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <span>Continue with Google</span>
               <GoogleMark />
@@ -462,7 +462,7 @@ export function LoginPanel() {
               <button
                 type="button"
                 onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                className="font-semibold text-[#1f2a3c] underline-offset-4 hover:underline"
+                className="font-semibold text-[#221b13] underline-offset-4 hover:underline"
               >
                 {mode === "login" ? "Sign up" : "Login"}
               </button>
@@ -511,7 +511,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
-        className={`h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#1f2a3c] outline-none transition duration-200 placeholder:text-[#aaa197] focus:border-[#1f2a3c] focus:ring-4 focus:ring-[#ffd233]/20 ${
+        className={`h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#221b13] outline-none transition duration-200 placeholder:text-[#aaa197] focus:border-[#221b13] focus:ring-4 focus:ring-[#a48d78]/20 ${
           error ? "border-[#c4492d]" : "border-[#ded3c6]"
         }`}
       />
@@ -531,7 +531,7 @@ function PrimaryButton({
     <button
       type="submit"
       disabled={disabled}
-      className="button-shadow h-12 w-full rounded-full bg-[#ffd233] text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:bg-[#ffe04c] disabled:cursor-not-allowed disabled:opacity-70"
+      className="button-shadow h-12 w-full rounded-full bg-[#a48d78] text-[11px] font-semibold uppercase tracking-[0.16em] text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:bg-[#cbb9a4] disabled:cursor-not-allowed disabled:opacity-70"
     >
       {children}
     </button>

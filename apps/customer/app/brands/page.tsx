@@ -63,7 +63,7 @@ export default async function BrandsPage() {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate font-semibold text-[#1f2a3c] group-hover:underline group-hover:underline-offset-2">
+                  <p className="truncate font-semibold text-[#221b13] group-hover:underline group-hover:underline-offset-2">
                     {brand.name}
                   </p>
                   {brand.description && (
@@ -77,11 +77,11 @@ export default async function BrandsPage() {
           </div>
         ) : (
           <div className="mt-10 rounded-[22px] border border-[#eadfd4] bg-white p-12 text-center">
-            <p className="text-[15px] font-semibold text-[#1f2a3c]">No brands available yet</p>
+            <p className="text-[15px] font-semibold text-[#221b13]">No brands available yet</p>
             <p className="mt-2 text-[14px] text-[#6b6258]">Check back soon as we onboard new partners.</p>
             <Link
               href="/products"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
             >
               Browse all products
             </Link>

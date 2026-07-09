@@ -159,7 +159,7 @@ export default function ContactPage() {
       <Navbar showSecondaryNav={false} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-[#e9e1d5] bg-[#f8f6f3] px-5 py-20 sm:px-8 lg:px-12">
+      <section className="relative overflow-hidden border-b border-[#e9e1d5] bg-[#f4f1ea] px-5 py-20 sm:px-8 lg:px-12">
         <div className="absolute left-[-120px] top-[-120px] h-72 w-72 rounded-full bg-[#ffd36a]/30 blur-3xl" />
         <div className="absolute bottom-[-150px] right-[-120px] h-80 w-80 rounded-full bg-[#ffc2a6]/45 blur-3xl" />
 
@@ -176,14 +176,14 @@ export default function ContactPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#contact-form"
-                className="group inline-flex items-center justify-center rounded-full bg-[#1f2a3c] px-7 py-4 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                className="group inline-flex items-center justify-center rounded-full bg-[#221b13] px-7 py-4 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
               >
                 Send a message
                 <ArrowRight className="ml-3 h-4 w-4 transition duration-300 group-hover:translate-x-1" />
               </a>
               <a
                 href="tel:+919876543210"
-                className="inline-flex items-center justify-center rounded-full border border-[#d7cab9] bg-white/55 px-7 py-4 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#1f2a3c] transition duration-300 hover:-translate-y-1 hover:bg-white"
+                className="inline-flex items-center justify-center rounded-full border border-[#d7cab9] bg-white/55 px-7 py-4 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#221b13] transition duration-300 hover:-translate-y-1 hover:bg-white"
               >
                 Call support
               </a>
@@ -200,7 +200,7 @@ export default function ContactPage() {
                   <div className="mt-7 space-y-4">
                     {["Average reply under 10 minutes", "Doorstep return guidance", "Secure payment assistance"].map((item) => (
                       <div key={item} className="flex items-center gap-3 text-[14px] font-semibold text-[#303642]">
-                        <CheckCircle2 className="h-5 w-5 text-[#1f2a3c]" />
+                        <CheckCircle2 className="h-5 w-5 text-[#221b13]" />
                         {item}
                       </div>
                     ))}
@@ -233,7 +233,7 @@ export default function ContactPage() {
                 <h3 className="font-display text-[26px] leading-none tracking-[-0.02em] text-[#171717]">{card.title}</h3>
                 <p className="mt-3 text-[12px] font-extrabold uppercase tracking-[0.2em] text-[#8a7b6d]">{card.value}</p>
                 <p className="mt-4 text-[14px] leading-7 text-[#5a554f]">{card.text}</p>
-                <button className="mt-7 inline-flex items-center text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#1f2a3c] transition duration-300 group-hover:translate-x-1">
+                <button className="mt-7 inline-flex items-center text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#221b13] transition duration-300 group-hover:translate-x-1">
                   {card.action} <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </article>
@@ -245,7 +245,7 @@ export default function ContactPage() {
       {/* Form + Support Topics */}
       <section id="contact-form" className="px-5 pb-20 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <aside className="rounded-[2rem] bg-[#1f2a3c] p-8 text-white shadow-[0_30px_80px_rgba(17,24,39,0.18)] lg:p-10">
+          <aside className="rounded-[2rem] bg-[#221b13] p-8 text-white shadow-[0_30px_80px_rgba(17,24,39,0.18)] lg:p-10">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#ffd037]">Support topics</p>
             <h2 className="mt-4 font-display text-[32px] leading-none tracking-[-0.03em] sm:text-[40px]">Choose what you need help with.</h2>
             <p className="mt-5 text-[14px] leading-7 text-white/70">
@@ -258,7 +258,7 @@ export default function ContactPage() {
                 return (
                   <div key={topic.title} className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 transition duration-300 hover:bg-white/[0.1]">
                     <div className="flex gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#1f2a3c]">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#221b13]">
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
@@ -286,19 +286,19 @@ export default function ContactPage() {
             <div className="mt-8 grid gap-5 sm:grid-cols-2">
               <label className="block">
                 <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#4a453f]">Full name</span>
-                <input required className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#1f2a3c] focus:bg-white" placeholder="Your name" />
+                <input required className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#221b13] focus:bg-white" placeholder="Your name" />
               </label>
               <label className="block">
                 <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#4a453f]">Email</span>
-                <input required type="email" className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#1f2a3c] focus:bg-white" placeholder="you@example.com" />
+                <input required type="email" className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#221b13] focus:bg-white" placeholder="you@example.com" />
               </label>
               <label className="block">
                 <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#4a453f]">Phone</span>
-                <input className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#1f2a3c] focus:bg-white" placeholder="+91 00000 00000" />
+                <input className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#221b13] focus:bg-white" placeholder="+91 00000 00000" />
               </label>
               <label className="block">
                 <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#4a453f]">Topic</span>
-                <select className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#1f2a3c] focus:bg-white">
+                <select className="mt-3 w-full rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#221b13] focus:bg-white">
                   <option>Delivery support</option>
                   <option>Return or pickup</option>
                   <option>Payment or refund</option>
@@ -310,10 +310,10 @@ export default function ContactPage() {
 
             <label className="mt-5 block">
               <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#4a453f]">Message</span>
-              <textarea required rows={6} className="mt-3 w-full resize-none rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#1f2a3c] focus:bg-white" placeholder="Tell us your order issue, pincode, item details, or question..." />
+              <textarea required rows={6} className="mt-3 w-full resize-none rounded-2xl border border-[#e0d6ca] bg-[#fbfaf7] px-5 py-4 text-[14px] outline-none transition focus:border-[#221b13] focus:bg-white" placeholder="Tell us your order issue, pincode, item details, or question..." />
             </label>
 
-            <button type="submit" className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-[#ffd037] px-7 py-4 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#1f2a3c] transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-auto">
+            <button type="submit" className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-[#ffd037] px-7 py-4 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#221b13] transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-auto">
               Submit request <ArrowRight className="ml-3 h-4 w-4" />
             </button>
 
@@ -348,17 +348,17 @@ export default function ContactPage() {
       <section className="px-5 py-16 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
           <div className="rounded-[1.6rem] border border-[#eadfd1] bg-white p-7 transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-            <MapPin className="h-6 w-6 text-[#1f2a3c]" />
+            <MapPin className="h-6 w-6 text-[#221b13]" />
             <h3 className="mt-5 font-display text-[24px] leading-none tracking-[-0.02em] text-[#171717]">Pune support hub</h3>
             <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">FitZo Care, Baner Road, Pune, Maharashtra 411045</p>
           </div>
           <div className="rounded-[1.6rem] border border-[#eadfd1] bg-white p-7 transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-            <Clock className="h-6 w-6 text-[#1f2a3c]" />
+            <Clock className="h-6 w-6 text-[#221b13]" />
             <h3 className="mt-5 font-display text-[24px] leading-none tracking-[-0.02em] text-[#171717]">Working hours</h3>
             <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">Every day, 9:00 AM – 10:00 PM. Urgent order support remains prioritized.</p>
           </div>
           <div className="rounded-[1.6rem] border border-[#eadfd1] bg-white p-7 transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-            <ShieldCheck className="h-6 w-6 text-[#1f2a3c]" />
+            <ShieldCheck className="h-6 w-6 text-[#221b13]" />
             <h3 className="mt-5 font-display text-[24px] leading-none tracking-[-0.02em] text-[#171717]">Safe support</h3>
             <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">Never share OTPs, full card details, or passwords with anyone claiming to be Fitzo.</p>
           </div>

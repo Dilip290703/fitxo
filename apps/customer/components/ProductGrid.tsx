@@ -54,8 +54,8 @@ export function ProductGrid({
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-[560px]">
               {eyebrow ? (
-                <p className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8b8378]">
-                  <span aria-hidden="true" className="h-px w-7 bg-[#d8cfc2]" />
+                <p className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
+                  <span aria-hidden="true" className="h-px w-7 bg-[#cbb9a4]" />
                   {eyebrow}
                 </p>
               ) : null}
@@ -63,7 +63,7 @@ export function ProductGrid({
                 {title}
               </h2>
               {description ? (
-                <p className="mt-4 max-w-[460px] text-[14px] leading-[1.7] text-[#63605b]">
+                <p className="mt-4 max-w-[460px] text-[14px] leading-[1.7] text-[#6f6050]">
                   {description}
                 </p>
               ) : null}
@@ -72,9 +72,9 @@ export function ProductGrid({
             {viewAllHref ? (
               <Link
                 href={viewAllHref}
-                className="group inline-flex h-11 shrink-0 items-center gap-2.5 self-start rounded-full border border-[#d8cfc2] px-6 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#1f2a3c] transition duration-300 hover:border-[#1f2a3c] hover:bg-white sm:self-auto"
+                className="group inline-flex shrink-0 items-center gap-2 self-start text-[13px] font-medium text-[#221b13] transition duration-300 hover:text-[#a48d78] sm:self-auto"
               >
-                View all
+                View All Products
                 <span className="transition-transform duration-300 group-hover:translate-x-1">
                   <ArrowGlyph />
                 </span>
@@ -84,7 +84,7 @@ export function ProductGrid({
         ) : null}
 
         <div
-          className={`${title ? "mt-12" : ""} grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4`}
+          className={`${title ? "mt-12" : ""} grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-6`}
         >
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />

@@ -103,7 +103,7 @@ export default function SizeGuidePage() {
         <div className="mt-10">
           <Link
             href="/products"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-[#1f2a3c] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
           >
             Start shopping
           </Link>

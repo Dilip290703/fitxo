@@ -1,147 +1,127 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { testimonials } from "@/lib/mockData";
 
-function StarRow() {
+/** 5-star row with half-star support; shows the numeric value beside it. */
+function StarRow({ rating }: { rating: number }) {
   return (
-    <div className="mt-3 flex items-center justify-center gap-1 text-[#f8c833]">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <span key={index} aria-hidden="true">
-          ★
-        </span>
-      ))}
+    <div className="mt-4 flex items-center justify-center gap-2">
+      <span className="flex text-[15px] leading-none text-[#a48d78]" aria-hidden="true">
+        {Array.from({ length: 5 }).map((_, index) => {
+          const fill =
+            rating >= index + 1 ? 1 : rating >= index + 0.5 ? 0.5 : 0;
+          return (
+            <span key={index} className="relative inline-block">
+              <span className="text-[#e6dac8]">★</span>
+              {fill > 0 ? (
+                <span
+                  className="absolute inset-y-0 left-0 overflow-hidden"
+                  style={{ width: `${fill * 100}%` }}
+                >
+                  ★
+                </span>
+              ) : null}
+            </span>
+          );
+        })}
+      </span>
+      <span className="text-[12px] font-medium text-[#8a7a67]">
+        {rating.toFixed(1)}
+      </span>
+      <span className="sr-only">{rating} out of 5 stars</span>
     </div>
   );
 }
 
-function ArrowRightIcon() {
+function TestimonialCard({
+  item,
+}: {
+  item: (typeof testimonials)[number];
+}) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
-      <path
-        d="M9 6l6 6-6 6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
+    <Link
+      href="/reviews"
+      className="group w-[300px] shrink-0 rounded-[20px] border border-[#e6dac8] bg-white px-7 py-8 text-center shadow-[0_10px_30px_-18px_rgba(34,27,19,0.2)] transition duration-300 hover:-translate-y-1.5 hover:border-[#cbb9a4] hover:shadow-[0_0_0_1px_rgba(164,141,120,0.35),0_30px_60px_-24px_rgba(164,141,120,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/40 sm:w-[340px]"
+    >
+      <span
+        aria-hidden="true"
+        className="font-display text-[40px] leading-none text-[#a48d78] transition duration-300 group-hover:scale-110"
+      >
+        &ldquo;
+      </span>
+      <p className="mt-2 text-[13.5px] leading-[1.75] text-[#2c241b]">
+        {item.quote}
+      </p>
+
+      <span
+        aria-hidden="true"
+        className="mx-auto mt-5 block h-px w-8 bg-[#cbb9a4] transition-all duration-300 group-hover:w-14 group-hover:bg-[#a48d78]"
       />
-    </svg>
+
+      <div className="mt-5 flex flex-col items-center">
+        <span className="relative h-12 w-12 overflow-hidden rounded-full ring-1 ring-[#e6dac8]">
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            className="object-cover"
+            sizes="48px"
+          />
+        </span>
+        <p className="mt-3 text-[14px] font-semibold text-[#221b13]">
+          {item.name}
+        </p>
+        <p className="mt-0.5 text-[10px] uppercase tracking-[0.22em] text-[#8a7a67]">
+          {item.role}
+        </p>
+        <StarRow rating={item.rating} />
+      </div>
+    </Link>
   );
 }
 
+/**
+ * Auto-scrolling testimonial belt: the track holds the list twice and the
+ * `marquee-track` animation slides it -50% on loop (see globals.css).
+ * Hovering a card pauses the belt and lifts the card with a sandstone glow.
+ */
 export function Testimonials() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-
-    const updateState = () => {
-      setCanScrollLeft(element.scrollLeft > 8);
-      setCanScrollRight(
-        element.scrollLeft + element.clientWidth < element.scrollWidth - 8,
-      );
-    };
-
-    updateState();
-    element.addEventListener("scroll", updateState, { passive: true });
-    window.addEventListener("resize", updateState);
-
-    return () => {
-      element.removeEventListener("scroll", updateState);
-      window.removeEventListener("resize", updateState);
-    };
-  }, []);
-
-  const handleScroll = (amount: number) => {
-    scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
   return (
     <section
       id="testimonials"
-      className="relative isolate overflow-hidden bg-[#fcfbf8] py-18"
+      className="relative isolate overflow-hidden bg-[#faf9f6] py-20"
     >
-      {/* Colour behind the glass — without something to refract, a frosted panel
-          just reads as grey. These blooms give the blur something to pick up. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-24 top-10 h-[420px] w-[420px] rounded-full bg-[#ffd233] opacity-[0.18] blur-[130px]" />
-        <div className="absolute -right-20 bottom-0 h-[380px] w-[380px] rounded-full bg-[#7fa9d9] opacity-[0.16] blur-[130px]" />
-        <div className="absolute left-1/2 top-1/3 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-[#e8b4a0] opacity-[0.12] blur-[120px]" />
-      </div>
-
       <div className="section-frame">
         <div className="mb-14 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8b8378]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
             Feedback
           </p>
-          <h2 className="underlined-title mt-3 font-display text-[36px] font-medium tracking-[-0.03em] text-black sm:text-[48px]">
-            What Our Customers Say About Our Services
+          <h2 className="underlined-title mt-3 font-display text-[36px] font-medium tracking-[-0.03em] text-[#221b13] sm:text-[48px]">
+            What Our Customers Say
           </h2>
         </div>
+      </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => handleScroll(-320)}
-            disabled={!canScrollLeft}
-            className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/40 text-[#5c554d] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-md transition duration-300 hover:bg-white/75 hover:text-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
-            aria-label="Previous testimonials"
-          >
-            <span className="rotate-180">
-              <ArrowRightIcon />
-            </span>
-          </button>
-
-          <div
-            ref={scrollRef}
-            className="hide-scrollbar flex flex-1 gap-5 overflow-x-auto scroll-smooth"
-          >
+      {/* Full-bleed belt with feathered edges so cards melt in and out. */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+        }}
+      >
+        <div className="marquee-track flex w-max gap-6 px-3 py-4">
+          {testimonials.map((item) => (
+            <TestimonialCard key={item.id} item={item} />
+          ))}
+          {/* Second copy makes the -50% loop seamless. */}
+          <div aria-hidden="true" className="contents">
             {testimonials.map((item) => (
-              <Link
-                key={item.id}
-                href="/reviews"
-                className="group min-w-[280px] overflow-hidden rounded-[18px] border border-white/60 bg-white/45 p-4 shadow-[0_8px_32px_rgba(24,24,28,0.07),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl backdrop-saturate-150 transition duration-300 hover:-translate-y-1.5 hover:border-white/80 hover:bg-white/60 hover:shadow-[0_30px_56px_rgba(24,24,28,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20 md:min-w-[340px] lg:min-w-[360px]"
-              >
-                <div className="overflow-hidden rounded-[12px] bg-white/50">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    width={720}
-                    height={900}
-                    className="h-[360px] w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="px-2 pb-2 pt-4">
-                  <h3 className="text-center text-[18px] font-extrabold text-[#111111]">
-                    {item.name}
-                  </h3>
-                  <p className="mt-1 text-center text-[11px] uppercase tracking-[0.22em] text-[#6b635a]">
-                    {item.role}
-                  </p>
-                  <StarRow />
-                  <p className="mt-4 text-[13px] leading-6 text-[#33312e]">
-                    {item.quote}
-                  </p>
-                </div>
-              </Link>
+              <TestimonialCard key={`${item.id}-loop`} item={item} />
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => handleScroll(320)}
-            disabled={!canScrollRight}
-            className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/40 text-[#5c554d] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-md transition duration-300 hover:bg-white/75 hover:text-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
-            aria-label="More testimonials"
-          >
-            <ArrowRightIcon />
-          </button>
         </div>
       </div>
     </section>

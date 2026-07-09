@@ -198,11 +198,11 @@ export function SearchBar({
         tabIndex={isOpen ? -1 : 0}
         className={`${isOpen ? "invisible" : ""} ${
           variant === "field"
-            ? `group relative flex h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:-translate-y-0.5 hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 ${
-                active ? "text-[#1f2a3c]" : "text-[#78726a]"
+            ? `group relative flex h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:-translate-y-0.5 hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 ${
+                active ? "text-[#221b13]" : "text-[#78726a]"
               }`
-            : `group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 ${
-                active ? "text-[#1f2a3c]" : "text-[#6f6860]"
+            : `group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 ${
+                active ? "text-[#221b13]" : "text-[#6f6860]"
               }`
         }`}
       >
@@ -244,7 +244,7 @@ export function SearchBar({
                 inputRef.current?.focus();
               }}
               aria-label="Clear search"
-              className="shrink-0 rounded-full p-1 text-[#a8a29b] transition hover:bg-[#f2efe9] hover:text-[#1f2a3c]"
+              className="shrink-0 rounded-full p-1 text-[#a8a29b] transition hover:bg-[#f2efe9] hover:text-[#221b13]"
             >
               <ClearGlyph />
             </button>
@@ -293,11 +293,11 @@ export function SearchBar({
                     <span className="block truncate text-[13px] font-medium text-[#232323]">
                       {product.title}
                     </span>
-                    <span className="block truncate text-[11px] uppercase tracking-[0.14em] text-[#8b8378]">
+                    <span className="block truncate text-[11px] uppercase tracking-[0.14em] text-[#a48d78]">
                       {product.brand}
                     </span>
                   </span>
-                  <span className="shrink-0 text-[13px] font-semibold text-[#1f2a3c]">
+                  <span className="shrink-0 text-[13px] font-semibold text-[#221b13]">
                     {formatPrice(product.price)}
                   </span>
                 </button>
@@ -310,7 +310,7 @@ export function SearchBar({
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={goToResults}
-              className="flex w-full items-center justify-center gap-2 border-t border-[#eee7de] bg-[#fbfaf7] px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#1f2a3c] transition hover:bg-[#f5f0e8]"
+              className="flex w-full items-center justify-center gap-2 border-t border-[#e6dac8] bg-[#fbfaf7] px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#221b13] transition hover:bg-[#f5f0e8]"
             >
               View all results
               <span aria-hidden="true">→</span>

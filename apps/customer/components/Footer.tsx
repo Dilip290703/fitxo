@@ -277,7 +277,7 @@ export function Footer() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="h-[48px] min-w-[170px] bg-[#1f2a3c] px-6 text-[13px] font-medium uppercase tracking-[0.08em] text-white transition duration-200 hover:bg-[#151e2d] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="h-[48px] min-w-[170px] bg-[#221b13] px-6 text-[13px] font-medium uppercase tracking-[0.08em] text-white transition duration-200 hover:bg-[#151e2d] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {isSubmitting ? "Subscribing..." : "Subscribe"}
                   </button>
@@ -303,7 +303,7 @@ export function Footer() {
                 Platforms
               </h3>
 
-              <div className="mt-5 flex items-center gap-5 text-[#1f2a3c]">
+              <div className="mt-5 flex items-center gap-5 text-[#221b13]">
                 <a
                   href="https://play.google.com"
                   target="_blank"

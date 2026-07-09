@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { createClient } from "@fitzo/supabase/client";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
@@ -127,12 +127,36 @@ function ChevronDown({ className = "" }: { className?: string }) {
   );
 }
 
-/** Check whether the current pathname matches a given nav href */
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  // Strip query string for matching
-  const basePath = href.split("?")[0];
-  return pathname.startsWith(basePath);
+/**
+ * Whether a nav href matches the CURRENT url, query string included.
+ * Exactly one of PRODUCTS / CATEGORIES / SALE may be active at a time:
+ * SALE owns ?sale=true, CATEGORIES owns ?category=…, and the plain
+ * PRODUCTS link only lights up when neither qualifier is present —
+ * previously all three underlined together because matching ignored
+ * the query string entirely.
+ */
+function isActive(
+  pathname: string,
+  search: URLSearchParams,
+  href: string,
+): boolean {
+  const [basePath, query] = href.split("?");
+  if (basePath === "/") return pathname === "/";
+  if (!pathname.startsWith(basePath)) return false;
+
+  const wanted = new URLSearchParams(query ?? "");
+  for (const [key, value] of wanted.entries()) {
+    if (search.get(key) !== value) return false;
+  }
+  if (!query && basePath === "/products") {
+    return search.get("sale") !== "true" && !search.get("category");
+  }
+  return true;
+}
+
+/** The CATEGORIES trigger is "active" when a category filter is applied. */
+function isCategoriesActive(pathname: string, search: URLSearchParams): boolean {
+  return pathname.startsWith("/products") && !!search.get("category");
 }
 
 function NavIconButton({
@@ -152,8 +176,8 @@ function NavIconButton({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 ${
-        active ? "text-[#1f2a3c]" : "text-[#6f6860]"
+      className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 ${
+        active ? "text-[#221b13]" : "text-[#6f6860]"
       }`}
       aria-label={label}
     >
@@ -164,7 +188,7 @@ function NavIconButton({
         </span>
       ) : null}
       <span
-        className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
+        className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#221b13] transition duration-200 ${
           active ? "opacity-100" : "opacity-0 group-hover:opacity-45"
         }`}
       />
@@ -177,12 +201,22 @@ type NavbarProps = {
   searchMode?: "icon" | "field";
 };
 
-export function Navbar({
+/** Suspense wrapper — useSearchParams inside requires one at prerender time. */
+export function Navbar(props: NavbarProps = {}) {
+  return (
+    <Suspense fallback={null}>
+      <NavbarInner {...props} />
+    </Suspense>
+  );
+}
+
+function NavbarInner({
   showSecondaryNav = true,
   searchMode = "icon",
-}: NavbarProps = {}) {
+}: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { count } = useWishlist();
   const { totalItems } = useCart();
   const navRef = useRef<HTMLDivElement>(null);
@@ -256,11 +290,15 @@ export function Navbar({
     <>
       <header
         id="top"
-        className="sticky top-0 z-40 border-b border-gray-200 bg-[#f8f6f3]/95 backdrop-blur-sm"
+        className="sticky top-0 z-40 border-b border-gray-200 bg-[#f4f1ea]/95 backdrop-blur-sm"
       >
         <div ref={navRef} className="relative border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 py-4 md:px-10 lg:px-12">
-            <nav className="hidden items-center gap-8 text-xs uppercase tracking-widest text-gray-600 md:flex">
+          {/* Three balanced grid columns: links | logo | actions. The logo used
+              to be absolutely centred, which let the right cluster slide
+              underneath it on narrower viewports. */}
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-6 py-4 md:grid-cols-[1fr_auto_1fr] md:px-10 lg:px-12">
+            <div className="flex items-center">
+            <nav className="hidden items-center gap-6 text-xs whitespace-nowrap uppercase tracking-widest text-gray-600 md:flex xl:gap-8">
               {topLinks.map((item) =>
                 item.isTrigger ? (
                   <button
@@ -268,7 +306,7 @@ export function Navbar({
                     type="button"
                     onClick={() => setIsCategoryOpen((current) => !current)}
                     className={`group relative inline-flex items-center gap-2 pb-2 transition-colors duration-200 hover:text-black ${
-                      isActive(pathname, item.href) ? "text-black" : ""
+                      isCategoriesActive(pathname, searchParams) ? "text-black" : ""
                     }`}
                     aria-expanded={isCategoryOpen}
                     aria-controls="fitzo-mega-menu"
@@ -279,7 +317,7 @@ export function Navbar({
                     />
                     <span
                       className={`pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full bg-black origin-left transition-all duration-300 ease-out ${
-                        isActive(pathname, item.href)
+                        isCategoriesActive(pathname, searchParams)
                           ? "scale-x-100 opacity-100"
                           : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
                       }`}
@@ -290,7 +328,7 @@ export function Navbar({
                     key={item.label}
                     href={item.href}
                     className={`group relative inline-block pb-2 transition-colors duration-200 hover:text-black ${
-                      isActive(pathname, item.href) ? "text-black" : ""
+                      isActive(pathname, searchParams, item.href) ? "text-black" : ""
                     }`}
                     onClick={() => {
                       setIsCategoryOpen(false);
@@ -300,7 +338,7 @@ export function Navbar({
                     <span>{item.label}</span>
                     <span
                       className={`pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full bg-black origin-left transition-all duration-300 ease-out ${
-                        isActive(pathname, item.href)
+                        isActive(pathname, searchParams, item.href)
                           ? "scale-x-100 opacity-100"
                           : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
                       }`}
@@ -319,20 +357,21 @@ export function Navbar({
             >
               <span className="block h-px w-4 bg-current shadow-[0_5px_0_0_currentColor,0_-5px_0_0_currentColor]" />
             </button>
+            </div>
 
             <button
               type="button"
               onClick={handleLogoClick}
-              className="absolute left-1/2 -translate-x-1/2 font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
+              className="justify-self-center font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
             >
               FITZO
             </button>
 
-            <div className="ml-auto flex items-center gap-3 text-gray-700 sm:gap-5">
+            <div className="flex items-center gap-3 justify-self-end text-gray-700 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setIsPincodeOpen(true)}
-                className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition duration-200 hover:-translate-y-0.5 hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex"
+                className="hidden shrink-0 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm whitespace-nowrap text-gray-700 transition duration-200 hover:-translate-y-0.5 hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 lg:flex"
               >
                 <PinIcon />
                 <span>{pincodeLabel}</span>
@@ -382,13 +421,13 @@ export function Navbar({
               {!isLoggedIn ? (
                 <Link
                   href="/login"
-                  className={`group relative hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c] hover:bg-[#fff9e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
-                    isLoginActive ? "border-[#1f2a3c]" : "border-[#d8cbb9]"
+                  className={`group relative hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13] hover:bg-[#fff9e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
+                    isLoginActive ? "border-[#221b13]" : "border-[#d8cbb9]"
                   }`}
                 >
                   Login / Signup
                   <span
-                    className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-8 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
+                    className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-8 -translate-x-1/2 rounded-full bg-[#221b13] transition duration-200 ${
                       isLoginActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
                     }`}
                   />
@@ -440,7 +479,7 @@ export function Navbar({
                       type="button"
                       onClick={() => setIsCategoryOpen((current) => !current)}
                       className={`flex w-full items-center justify-between ${
-                        isActive(pathname, item.href) ? "text-black font-semibold" : ""
+                        isCategoriesActive(pathname, searchParams) ? "text-black font-semibold" : ""
                       }`}
                     >
                       <span>{item.label}</span>
@@ -453,7 +492,7 @@ export function Navbar({
                       key={item.label}
                       href={item.href}
                       className={`block ${
-                        isActive(pathname, item.href) ? "text-black font-semibold" : ""
+                        isActive(pathname, searchParams, item.href) ? "text-black font-semibold" : ""
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -472,8 +511,8 @@ export function Navbar({
                 {isLoggedIn ? (
                   <Link
                     href="/profile"
-                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-white px-4 py-3 font-semibold text-[#1f2a3c] ${
-                      isProfileActive ? "ring-1 ring-[#1f2a3c]" : ""
+                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-white px-4 py-3 font-semibold text-[#221b13] ${
+                      isProfileActive ? "ring-1 ring-[#221b13]" : ""
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -483,8 +522,8 @@ export function Navbar({
                 ) : (
                   <Link
                     href="/login"
-                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-[#fff9e6] px-4 py-3 font-semibold text-[#1f2a3c] ${
-                      isLoginActive ? "ring-1 ring-[#1f2a3c]" : ""
+                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-[#fff9e6] px-4 py-3 font-semibold text-[#221b13] ${
+                      isLoginActive ? "ring-1 ring-[#221b13]" : ""
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

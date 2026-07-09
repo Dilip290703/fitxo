@@ -94,7 +94,7 @@ export function NotificationsView() {
           <h1 className="mt-3 font-display text-[34px] leading-none tracking-[-0.04em] text-[#171717] sm:text-[42px]">
             Notifications
             {unreadCount > 0 && (
-              <span className="ml-3 inline-flex h-7 min-w-[28px] items-center justify-center rounded-full bg-[#ffd233] px-2 text-[13px] font-bold text-[#1f2a3c]">
+              <span className="ml-3 inline-flex h-7 min-w-[28px] items-center justify-center rounded-full bg-[#a48d78] px-2 text-[13px] font-bold text-[#221b13]">
                 {unreadCount}
               </span>
             )}
@@ -104,7 +104,7 @@ export function NotificationsView() {
           <button
             type="button"
             onClick={markAllRead}
-            className="mb-1 text-[12px] font-semibold text-[#1f2a3c] underline-offset-4 hover:underline"
+            className="mb-1 text-[12px] font-semibold text-[#221b13] underline-offset-4 hover:underline"
           >
             Mark all as read
           </button>
@@ -126,7 +126,7 @@ export function NotificationsView() {
         ) : notifications.length === 0 ? (
           <div className="rounded-[22px] border border-[#eadfd4] bg-white p-10 text-center shadow-[0_14px_34px_rgba(34,28,20,0.05)]">
             <p className="text-[28px]">🔔</p>
-            <p className="mt-3 text-[15px] font-semibold text-[#1f2a3c]">All clear</p>
+            <p className="mt-3 text-[15px] font-semibold text-[#221b13]">All clear</p>
             <p className="mt-2 text-[14px] text-[#6b6258]">
               No notifications yet. Order updates and offers will appear here.
             </p>
@@ -143,7 +143,7 @@ export function NotificationsView() {
               >
                 {/* Unread dot */}
                 {!n.is_read && (
-                  <span className="absolute right-5 top-5 h-2 w-2 rounded-full bg-[#ffd233]" />
+                  <span className="absolute right-5 top-5 h-2 w-2 rounded-full bg-[#a48d78]" />
                 )}
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ export function NotificationsView() {
                   <button
                     type="button"
                     onClick={() => markRead(n.id)}
-                    className="mt-3 text-[11px] font-semibold text-[#8b7058] hover:text-[#1f2a3c]"
+                    className="mt-3 text-[11px] font-semibold text-[#8b7058] hover:text-[#221b13]"
                   >
                     Mark as read
                   </button>

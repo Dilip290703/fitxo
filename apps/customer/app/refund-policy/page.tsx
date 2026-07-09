@@ -134,7 +134,7 @@ export default function RefundPolicyPage() {
       <Navbar showSecondaryNav={false} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-[#ece4d8] bg-[#f8f6f3] px-6 py-20 sm:px-10 lg:px-14">
+      <section className="relative overflow-hidden border-b border-[#ece4d8] bg-[#f4f1ea] px-6 py-20 sm:px-10 lg:px-14">
         <div className="absolute left-[-100px] top-[-120px] h-72 w-72 rounded-full bg-[#a6ffc2]/15 blur-3xl" />
         <div className="absolute bottom-[-130px] right-[-80px] h-80 w-80 rounded-full bg-[#ffd36a]/15 blur-3xl" />
 
@@ -201,7 +201,7 @@ export default function RefundPolicyPage() {
                   <div className="overflow-hidden rounded-2xl border border-[#ece4d8]">
                     <table className="w-full text-left text-[14px]">
                       <thead>
-                        <tr className="bg-[#f8f6f3]">
+                        <tr className="bg-[#f4f1ea]">
                           <th className="px-6 py-4 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#6b6359]">
                             Payment Method
                           </th>
@@ -287,13 +287,13 @@ export default function RefundPolicyPage() {
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                       <Link
                         href="/contact"
-                        className="inline-flex h-12 items-center justify-center rounded-full bg-[#1f2a3c] px-7 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#141d2b]"
+                        className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#141d2b]"
                       >
                         Contact support
                       </Link>
                       <Link
                         href="/"
-                        className="inline-flex h-12 items-center justify-center rounded-full border border-[#d7cab9] bg-white px-7 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#1f2a3c] transition duration-200 hover:bg-[#faf4eb]"
+                        className="inline-flex h-12 items-center justify-center rounded-full border border-[#d7cab9] bg-white px-7 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#221b13] transition duration-200 hover:bg-[#faf4eb]"
                       >
                         Back to home
                       </Link>

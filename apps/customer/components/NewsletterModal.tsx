@@ -16,7 +16,7 @@ export function NewsletterModal({
   return (
     <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-[20px] border border-[#e6ddd1] bg-white px-5 py-4 shadow-[0_18px_40px_rgba(26,22,18,0.14)]">
       <div className="flex items-start gap-3">
-        <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#ffd233] text-[14px] font-black text-black">
+        <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#a48d78] text-[14px] font-black text-black">
           ✓
         </div>
         <div className="min-w-0">

@@ -422,7 +422,7 @@ export const testimonials = [
     id: "aadhira-nair",
     name: "Aadhira Nair",
     role: "Weekend shopper",
-    rating: 5,
+    rating: 4.5,
     image:
       "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80",
     quote:
@@ -432,7 +432,7 @@ export const testimonials = [
     id: "sana-ali",
     name: "Sana Ali",
     role: "Content creator",
-    rating: 5,
+    rating: 4.5,
     image:
       "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
     quote:
@@ -442,21 +442,12 @@ export const testimonials = [
     id: "rhea-kapoor",
     name: "Rhea Kapoor",
     role: "Early user",
-    rating: 5,
+    rating: 4,
     image:
       "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=900&q=80",
     quote:
       "The delivery slot I booked was bang on time. I could plan an outfit after work and still make my dinner reservation.",
   },
-];
-
-export const brandLogoLinks = [
-  { name: "Chanel", slug: "chanel" },
-  { name: "D&G", slug: "dolce-gabbana" },
-  { name: "Dior", slug: "dior" },
-  { name: "Versace", slug: "versace" },
-  { name: "Zara", slug: "zara" },
-  { name: "Gucci", slug: "gucci" },
 ];
 
 export const supportLinks = [

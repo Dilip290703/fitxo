@@ -34,7 +34,7 @@ export default function AboutPage() {
       <Features />
       <HowItWorks />
 
-      <section className="bg-[#fcfbf8] py-20">
+      <section className="bg-[#faf9f6] py-20">
         <div className="section-frame">
           <div className="mx-auto max-w-[620px] text-center fade-up">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8a7d71]">
