@@ -125,7 +125,7 @@ export function HistoryView() {
                     </div>
                     <div className="text-right">
                       <p className="text-[14px] font-semibold text-success">
-                        {r.status === "completed" ? `+${inr(r.deliveryFee)}` : "—"}
+                        {r.status === "completed" ? `+${inr(r.riderFee)}` : "—"}
                       </p>
                       <p className="text-[11px] text-soft">
                         {r.completedAt

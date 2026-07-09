@@ -12,6 +12,7 @@ export interface SystemSettings {
   try_window_minutes: number;
   delivery_fee: number;
   free_delivery_above: number;
+  rider_fee: number;
   commission_rate: number;
 }
 
@@ -23,6 +24,7 @@ const DEFAULTS: SystemSettings = {
   try_window_minutes: 1440,
   delivery_fee: 49,
   free_delivery_above: 999,
+  rider_fee: 40,
   commission_rate: 15,
 };
 
@@ -31,7 +33,7 @@ export async function getSettings(): Promise<SystemSettings> {
   const { data } = await supabase
     .from('system_settings')
     .select(
-      'site_name, contact_email, support_phone, try_window_minutes, delivery_fee, free_delivery_above, commission_rate',
+      'site_name, contact_email, support_phone, try_window_minutes, delivery_fee, free_delivery_above, rider_fee, commission_rate',
     )
     .eq('id', 1)
     .maybeSingle();
@@ -54,6 +56,9 @@ function validate(patch: Partial<SystemSettings>) {
   }
   if (patch.free_delivery_above !== undefined && (!Number.isFinite(patch.free_delivery_above) || patch.free_delivery_above < 0)) {
     throw new Error('Free-delivery threshold cannot be negative');
+  }
+  if (patch.rider_fee !== undefined && (!Number.isFinite(patch.rider_fee) || patch.rider_fee < 0)) {
+    throw new Error('Rider fee cannot be negative');
   }
   if (patch.commission_rate !== undefined && (!Number.isFinite(patch.commission_rate) || patch.commission_rate < 0 || patch.commission_rate > 100)) {
     throw new Error('Commission rate must be between 0 and 100');

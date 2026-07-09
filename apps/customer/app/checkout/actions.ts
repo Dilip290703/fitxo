@@ -72,16 +72,21 @@ export async function placeOrder(
 
   const subtotal = items.reduce((sum, i) => sum + i.priceValue * i.quantity, 0);
 
-  // Delivery fee from Admin → System Settings (free above the configured threshold).
-  // This is the rider's pay per completed delivery (agent payouts read delivery_fee).
+  // Fees from Admin → System Settings.
+  //   • delivery_fee  = what the CUSTOMER is charged (free above the threshold).
+  //   • rider_fee     = what the RIDER earns per completed delivery — a platform
+  //     cost, always paid regardless of the customer's free-delivery waiver.
+  // These are deliberately separate (migration 037): agent earnings + Admin >
+  // Agent Payouts read orders.rider_fee, never delivery_fee.
   const { data: settings } = await supabase
     .from('system_settings')
-    .select('delivery_fee, free_delivery_above')
+    .select('delivery_fee, free_delivery_above, rider_fee')
     .eq('id', 1)
     .maybeSingle();
   const feeConfig = Number(settings?.delivery_fee ?? 0);
   const freeAbove = Number(settings?.free_delivery_above ?? 0);
   const deliveryFee = freeAbove > 0 && subtotal >= freeAbove ? 0 : feeConfig;
+  const riderFee = Number(settings?.rider_fee ?? 0);
   const finalAmount = subtotal + deliveryFee;
 
   // Create order (order_number set by DB trigger when passed as empty string)
@@ -94,6 +99,7 @@ export async function placeOrder(
       subtotal,
       deposit_total: 0,
       delivery_fee: deliveryFee,
+      rider_fee: riderFee,
       discount_amount: 0,
       final_amount: finalAmount,
       coupon_discount: 0,
