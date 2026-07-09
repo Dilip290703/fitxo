@@ -34,6 +34,8 @@ type AlertsApi = {
   markRead: () => void;
   openOrder: (orderId: string) => void;
   dismiss: (orderId: string) => void;
+  /** Empty the whole alert history + pop-up stack. */
+  clearAll: () => void;
   /** Re-count pending orders — call after confirming an order. */
   refreshPending: () => void;
 };
@@ -244,7 +246,10 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
 
   const openOrder = useCallback(
     (orderId: string) => {
+      // Clear from both the pop-up stack and the bell history so a clicked
+      // alert visibly goes away instead of lingering in the dropdown.
       setActiveIds((prev) => prev.filter((id) => id !== orderId));
+      setAlerts((prev) => prev.filter((a) => a.orderId !== orderId));
       router.push(`/orders/${orderId}`);
     },
     [router],
@@ -255,6 +260,12 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
     [],
   );
 
+  const clearAll = useCallback(() => {
+    setAlerts([]);
+    setActiveIds([]);
+    setUnread(0);
+  }, []);
+
   const markRead = useCallback(() => setUnread(0), []);
 
   const activeAlerts = activeIds
@@ -263,7 +274,7 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
 
   return (
     <AlertsContext.Provider
-      value={{ alerts, unread, pendingCount, muted, toggleMute, markRead, openOrder, dismiss, refreshPending }}
+      value={{ alerts, unread, pendingCount, muted, toggleMute, markRead, openOrder, dismiss, clearAll, refreshPending }}
     >
       {children}
 
@@ -304,7 +315,7 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
 
 /** Bell + dropdown, rendered inside the shell header. */
 export function AlertBell() {
-  const { alerts, unread, muted, toggleMute, markRead, openOrder } = useOrderAlerts();
+  const { alerts, unread, muted, toggleMute, markRead, openOrder, clearAll } = useOrderAlerts();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -348,13 +359,24 @@ export function AlertBell() {
         <div className="absolute right-0 z-[60] mt-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-white shadow-pop">
           <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
             <p className="text-[13px] font-semibold text-ink">Order alerts</p>
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="text-[11px] font-semibold text-soft hover:text-ink"
-            >
-              {muted ? "Unmute chime" : "Mute chime"}
-            </button>
+            <div className="flex items-center gap-3">
+              {alerts.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="text-[11px] font-semibold text-soft hover:text-ink"
+                >
+                  Clear all
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="text-[11px] font-semibold text-soft hover:text-ink"
+              >
+                {muted ? "Unmute" : "Mute"}
+              </button>
+            </div>
           </div>
           {alerts.length === 0 ? (
             <p className="px-4 py-6 text-center text-[13px] text-muted">No new orders yet today.</p>

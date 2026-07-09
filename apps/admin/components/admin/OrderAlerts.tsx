@@ -131,13 +131,22 @@ export default function OrderAlerts() {
   };
 
   const openOrder = (orderId: string) => {
+    // Remove from BOTH the pop-up stack and the bell history — a clicked alert
+    // must visibly go away, not linger in the dropdown forever.
     setActiveIds((prev) => prev.filter((id) => id !== orderId));
+    setAlerts((prev) => prev.filter((a) => a.orderId !== orderId));
     setBellOpen(false);
     router.push(`/admin/orders/${orderId}`);
   };
 
   const dismiss = (orderId: string) =>
     setActiveIds((prev) => prev.filter((id) => id !== orderId));
+
+  const clearAll = () => {
+    setAlerts([]);
+    setActiveIds([]);
+    setUnread(0);
+  };
 
   const activeAlerts = activeIds
     .map((id) => alerts.find((a) => a.orderId === id))
@@ -168,13 +177,24 @@ export default function OrderAlerts() {
           <div className="absolute right-0 mt-2 z-[60] w-[300px] overflow-hidden rounded-xl border border-line bg-white shadow-pop">
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <p className="text-[13px] font-semibold text-ink">Order alerts</p>
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="text-[11px] font-semibold text-soft hover:text-ink"
-              >
-                {muted ? '🔇 Unmute' : '🔔 Mute'}
-              </button>
+              <div className="flex items-center gap-3">
+                {alerts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    className="text-[11px] font-semibold text-soft hover:text-ink"
+                  >
+                    Clear all
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="text-[11px] font-semibold text-soft hover:text-ink"
+                >
+                  {muted ? 'Unmute' : 'Mute'}
+                </button>
+              </div>
             </div>
             {alerts.length === 0 ? (
               <p className="px-4 py-6 text-center text-[13px] text-muted">No new orders yet.</p>
@@ -213,14 +233,14 @@ export default function OrderAlerts() {
             className="overflow-hidden rounded-xl border border-ink/40 bg-white shadow-pop"
           >
             <div className="flex items-start justify-between gap-2 bg-ink px-4 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
-                🛒 New order
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+                New order
               </p>
               <button
                 type="button"
                 onClick={() => dismiss(a.orderId)}
                 aria-label="Dismiss"
-                className="text-[14px] leading-none text-ink/70 hover:text-ink"
+                className="text-[14px] leading-none text-white/70 hover:text-white"
               >
                 ✕
               </button>

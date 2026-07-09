@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@fitzo/supabase/client";
 import {
@@ -87,31 +87,48 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [lastChecked, setLastChecked] = useState<number | null>(null);
+
+  // Re-fetch the store's onboarding state. Returns true if it's now approved
+  // (in which case we've already redirected to the dashboard). Callable both on
+  // mount and from the "Check status" button — router.refresh() alone doesn't
+  // re-run this client fetch, which is why the button used to appear dead: the
+  // store was approved but the wizard kept showing "under review" until a full
+  // page reload.
+  const loadState = useCallback(async (): Promise<boolean> => {
+    setLoadFailed(false);
+    try {
+      const state = await loadOnboarding(storeId);
+      if (state.status === "approved") {
+        router.replace("/");
+        return true;
+      }
+      setStatus(state.status);
+      setRejectionReason(state.rejectionReason);
+      setData(state.data);
+      setLoading(false);
+      return false;
+    } catch {
+      // Network failure — this is the one screen a pending store is forced
+      // onto, so never leave it stuck on "Loading…".
+      setLoadFailed(true);
+      return false;
+    }
+  }, [storeId, router]);
 
   useEffect(() => {
-    let active = true;
-    setLoadFailed(false);
-    loadOnboarding(storeId)
-      .then((state) => {
-        if (!active) return;
-        if (state.status === "approved") {
-          router.replace("/");
-          return;
-        }
-        setStatus(state.status);
-        setRejectionReason(state.rejectionReason);
-        setData(state.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        // Network failure — this is the one screen a pending store is forced
-        // onto, so never leave it stuck on "Loading…".
-        if (active) setLoadFailed(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, [storeId, router]);
+    void loadState();
+  }, [loadState]);
+
+  const checkStatus = async () => {
+    setChecking(true);
+    const approved = await loadState();
+    if (!approved) {
+      setChecking(false);
+      setLastChecked(Date.now());
+    }
+  };
 
   const set = <K extends keyof OnboardingData>(key: K, value: OnboardingData[K]) => {
     setData((d) => (d ? { ...d, [key]: value } : d));
@@ -187,7 +204,7 @@ export function OnboardingWizard({ storeId, email }: { storeId: string; email: s
   if (status === "submitted") {
     return (
       <Frame email={email} onLogout={handleLogout}>
-        <UnderReview onRefresh={() => router.refresh()} />
+        <UnderReview onRefresh={checkStatus} checking={checking} lastChecked={lastChecked} />
       </Frame>
     );
   }
@@ -538,7 +555,15 @@ function Review({ data }: { data: OnboardingData }) {
   );
 }
 
-function UnderReview({ onRefresh }: { onRefresh: () => void }) {
+function UnderReview({
+  onRefresh,
+  checking,
+  lastChecked,
+}: {
+  onRefresh: () => void;
+  checking: boolean;
+  lastChecked: number | null;
+}) {
   return (
     <div className="rounded-2xl border border-line bg-white p-8 text-center">
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-pale text-[26px]">⏳</div>
@@ -550,10 +575,14 @@ function UnderReview({ onRefresh }: { onRefresh: () => void }) {
       <button
         type="button"
         onClick={onRefresh}
-        className="mt-6 h-11 rounded-full border border-line-strong px-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-body transition hover:bg-cream"
+        disabled={checking}
+        className="mt-6 h-11 rounded-full border border-line-strong px-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-body transition hover:bg-cream disabled:opacity-60"
       >
-        Check status
+        {checking ? "Checking…" : "Check status"}
       </button>
+      {lastChecked && !checking ? (
+        <p className="mt-3 text-[12px] text-muted">Still under review — checked just now.</p>
+      ) : null}
     </div>
   );
 }
