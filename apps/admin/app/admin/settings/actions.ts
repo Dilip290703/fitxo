@@ -12,6 +12,7 @@ export interface SystemSettings {
   try_window_minutes: number;
   delivery_fee: number;
   free_delivery_above: number;
+  offer_expiry_minutes: number;
   commission_rate: number;
 }
 
@@ -23,6 +24,7 @@ const DEFAULTS: SystemSettings = {
   try_window_minutes: 1440,
   delivery_fee: 49,
   free_delivery_above: 999,
+  offer_expiry_minutes: 120,
   commission_rate: 15,
 };
 
@@ -31,7 +33,7 @@ export async function getSettings(): Promise<SystemSettings> {
   const { data } = await supabase
     .from('system_settings')
     .select(
-      'site_name, contact_email, support_phone, try_window_minutes, delivery_fee, free_delivery_above, commission_rate',
+      'site_name, contact_email, support_phone, try_window_minutes, delivery_fee, free_delivery_above, offer_expiry_minutes, commission_rate',
     )
     .eq('id', 1)
     .maybeSingle();
@@ -54,6 +56,9 @@ function validate(patch: Partial<SystemSettings>) {
   }
   if (patch.free_delivery_above !== undefined && (!Number.isFinite(patch.free_delivery_above) || patch.free_delivery_above < 0)) {
     throw new Error('Free-delivery threshold cannot be negative');
+  }
+  if (patch.offer_expiry_minutes !== undefined && (!Number.isFinite(patch.offer_expiry_minutes) || patch.offer_expiry_minutes < 5)) {
+    throw new Error('Offer expiry must be at least 5 minutes');
   }
   if (patch.commission_rate !== undefined && (!Number.isFinite(patch.commission_rate) || patch.commission_rate < 0 || patch.commission_rate > 100)) {
     throw new Error('Commission rate must be between 0 and 100');
