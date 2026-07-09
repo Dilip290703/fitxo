@@ -2,14 +2,14 @@ import Link from "next/link";
 
 export function CTA() {
   return (
-    <section className="bg-[#f3efe7] py-16">
+    <section className="bg-[#f4f1ea] py-16">
       <div className="section-frame">
-        <div className="grid gap-8 rounded-[28px] border border-[#ebe3d8] bg-[linear-gradient(135deg,#fffdf8_0%,#f8f0e5_60%,#f6c29f_100%)] px-6 py-8 shadow-[0_25px_50px_rgba(33,29,26,0.08)] md:grid-cols-[1.2fr_0.8fr] md:px-10 md:py-10">
+        <div className="grid gap-8 rounded-[24px] border border-[#e6dac8] bg-white px-6 py-10 shadow-[0_24px_48px_-28px_rgba(34,27,19,0.25)] md:grid-cols-[1.2fr_0.8fr] md:px-12 md:py-12">
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.26em] text-[#8a6a53]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#a48d78]">
               Booked to your door
             </p>
-            <h2 className="mt-4 font-display text-[38px] leading-[0.95] font-medium tracking-[-0.04em] text-black sm:text-[52px]">
+            <h2 className="mt-4 font-display text-[38px] leading-[1.02] font-medium tracking-[-0.02em] text-[#221b13] sm:text-[52px]">
               Your next outfit is already nearby.
             </h2>
             <p className="mt-4 max-w-[520px] text-[14px] leading-7 text-[#6f6050]">
@@ -21,15 +21,19 @@ export function CTA() {
           <div className="flex flex-col justify-center gap-4 md:items-end">
             <Link
               href="/products"
-              className="button-shadow inline-flex h-12 items-center justify-center rounded-[999px] bg-[color:var(--accent)] px-7 text-[11px] font-extrabold uppercase tracking-[0.26em] text-black transition duration-300 hover:-translate-y-0.5 hover:brightness-95"
+              className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-full border border-[#221b13] bg-[#221b13] px-8 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#faf9f6] transition-colors duration-500 hover:text-[#221b13]"
             >
-              Book your try-on
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -translate-x-full rounded-full bg-white transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0"
+              />
+              <span className="relative z-10">Book your try-on</span>
             </Link>
             <Link
-              href="/products?collection=summer"
-              className="inline-flex h-12 items-center justify-center rounded-[999px] border border-[#cab6a5] px-7 text-[11px] font-extrabold uppercase tracking-[0.26em] text-[#4b3b2e] transition duration-300 hover:bg-white/70"
+              href="/products?sale=true"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-[#cbb9a4] px-8 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6f6050] transition duration-300 hover:border-[#221b13] hover:text-[#221b13]"
             >
-              Browse collections
+              Shop the sale
             </Link>
           </div>
         </div>
