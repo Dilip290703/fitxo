@@ -219,12 +219,21 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
   };
 
   const open = (item: AlertItem) => {
+    // Remove from both the pop-up stack and the bell history so a tapped alert
+    // visibly goes away instead of lingering in the list.
     setActiveIds((prev) => prev.filter((id) => id !== item.id));
+    setAlerts((prev) => prev.filter((a) => a.id !== item.id));
     setBellOpen(false);
     if (item.deliveryId) router.push(`/deliveries/${item.deliveryId}`);
   };
 
   const dismiss = (id: string) => setActiveIds((prev) => prev.filter((x) => x !== id));
+
+  const clearAll = () => {
+    setAlerts([]);
+    setActiveIds([]);
+    setUnread(0);
+  };
 
   const activeAlerts = activeIds
     .map((id) => alerts.find((a) => a.id === id))
@@ -255,14 +264,25 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
           <div className="absolute right-0 mt-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-white shadow-pop">
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <p className="text-[14px] font-semibold text-ink">Job alerts</p>
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="flex h-9 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold text-soft hover:bg-cream hover:text-ink"
-              >
-                {muted ? <IconBellOff size={14} /> : <IconBell size={14} />}
-                {muted ? "Unmute" : "Mute"}
-              </button>
+              <div className="flex items-center gap-1">
+                {alerts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    className="flex h-9 items-center rounded-full px-2.5 text-[12px] font-semibold text-soft hover:bg-cream hover:text-ink"
+                  >
+                    Clear all
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="flex h-9 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-semibold text-soft hover:bg-cream hover:text-ink"
+                >
+                  {muted ? <IconBellOff size={14} /> : <IconBell size={14} />}
+                  {muted ? "Unmute" : "Mute"}
+                </button>
+              </div>
             </div>
             {alerts.length === 0 ? (
               <p className="px-4 py-6 text-center text-[13px] text-soft">
