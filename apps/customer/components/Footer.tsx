@@ -162,7 +162,7 @@ function SocialButton({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[#293245] text-[#1d2433] transition duration-200 hover:border-[#111827] hover:text-[#111827]"
+      className="flex h-[42px] w-[42px] items-center justify-center rounded-full border border-white/25 text-[#e8e2d9] transition duration-200 hover:border-[#faf9f6] hover:text-[#faf9f6]"
     >
       {children}
     </a>
@@ -171,7 +171,7 @@ function SocialButton({
 
 function PaymentBadge({ label }: { label: string }) {
   return (
-    <span className="flex h-[34px] items-center justify-center rounded-[2px] border border-[#d7d1c8] bg-[#faf9f7] px-3 text-[10px] font-medium uppercase tracking-[0.08em] text-[#2c2c2c]">
+    <span className="flex h-[34px] items-center justify-center rounded-[2px] border border-white/20 bg-white/5 px-3 text-[10px] font-medium uppercase tracking-[0.08em] text-[#e8e2d9]">
       {label}
     </span>
   );
@@ -202,13 +202,13 @@ export function Footer() {
 
   return (
     <>
-      <footer id="footer" className="bg-[#f3f3f3] text-[#273041]">
+      <footer id="footer" className="bg-[#191309] text-[#e8e2d9]">
         <div className="mx-auto w-full max-w-[1440px] px-8 pb-10 pt-12 sm:px-10 lg:px-14 xl:px-20">
           <div className="grid grid-cols-1 gap-y-10 xl:grid-cols-[180px_160px_170px_160px_1fr_110px] xl:gap-x-8">
             <div className="xl:pt-1">
               <Link
                 href="/"
-                className="font-serif text-[34px] font-semibold tracking-[0.07em] text-[#161d2b]"
+                className="font-serif text-[34px] font-semibold tracking-[0.07em] text-[#faf9f6]"
               >
                 FITZO
               </Link>
@@ -216,16 +216,16 @@ export function Footer() {
 
             {footerColumns.map((column) => (
               <div key={column.title}>
-                <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#2b3342]">
+                <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#faf9f6]">
                   {column.title}
                 </h3>
 
-                <ul className="mt-5 space-y-[10px] text-[14px] leading-[1.45] text-[#767d89]">
+                <ul className="mt-5 space-y-[10px] text-[14px] leading-[1.45] text-[#a99f92]">
                   {column.items.map((item) => (
                     <li key={item.label}>
                       <Link
                         href={item.href}
-                        className="transition duration-200 hover:text-[#111827]"
+                        className="transition duration-200 hover:text-[#faf9f6]"
                       >
                         {item.label}
                       </Link>
@@ -236,7 +236,7 @@ export function Footer() {
             ))}
 
             <div className="min-w-0">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#2b3342]">
+              <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#faf9f6]">
                 Socials
               </h3>
 
@@ -259,7 +259,7 @@ export function Footer() {
               </div>
 
               <div className="mt-10 max-w-[760px]">
-                <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#2b3342]">
+                <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#faf9f6]">
                   Sign Up For Fitzo Style News
                 </h3>
 
@@ -272,25 +272,25 @@ export function Footer() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Your email"
-                    className="h-[48px] min-w-0 flex-1 border border-[#afb6c0] bg-transparent px-5 text-[14px] text-[#404855] outline-none placeholder:text-[#8b939f] transition duration-200 focus:border-[#263041]"
+                    className="h-[48px] min-w-0 flex-1 border border-white/30 bg-transparent px-5 text-[14px] text-[#faf9f6] outline-none placeholder:text-white/40 transition duration-200 focus:border-[#faf9f6]"
                   />
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="h-[48px] min-w-[170px] bg-[#221b13] px-6 text-[13px] font-medium uppercase tracking-[0.08em] text-white transition duration-200 hover:bg-[#151e2d] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="h-[48px] min-w-[170px] bg-[#faf9f6] px-6 text-[13px] font-medium uppercase tracking-[0.08em] text-[#221b13] transition duration-200 hover:bg-[#e6dac8] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {isSubmitting ? "Subscribing..." : "Subscribe"}
                   </button>
                 </form>
                 {error ? (
-                  <p className="mt-3 text-[12px] text-[#c0392b]">{error}</p>
+                  <p className="mt-3 text-[12px] text-[#e08663]">{error}</p>
                 ) : null}
 
-                <p className="mt-4 max-w-[720px] text-[12px] leading-6 text-[#77716b]">
+                <p className="mt-4 max-w-[720px] text-[12px] leading-6 text-[#8f8578]">
                   By clicking the SUBSCRIBE button, you are agreeing to our{" "}
                   <Link
                     href="/privacy-policy"
-                    className="font-medium text-[#3e6dd2] underline"
+                    className="font-medium text-[#cbb9a4] underline"
                   >
                     Privacy & Cookie Policy
                   </Link>
@@ -299,11 +299,11 @@ export function Footer() {
             </div>
 
             <div>
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#2b3342]">
+              <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#faf9f6]">
                 Platforms
               </h3>
 
-              <div className="mt-5 flex items-center gap-5 text-[#221b13]">
+              <div className="mt-5 flex items-center gap-5 text-[#faf9f6]">
                 <a
                   href="https://play.google.com"
                   target="_blank"
@@ -326,48 +326,48 @@ export function Footer() {
 
           <div className="mt-14 grid grid-cols-1 gap-y-10 xl:grid-cols-[1fr_480px] xl:gap-x-12">
             <div>
-              <p className="text-[13px] text-[#767d89]">
+              <p className="text-[13px] text-[#a99f92]">
                 ©2026 Fitzo All Rights Reserved
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center text-[13px] text-[#767d89]">
+              <div className="mt-8 flex flex-wrap items-center text-[13px] text-[#a99f92]">
                 {legalLinksTop.map((item, index) => (
                   <div key={item.label} className="flex items-center">
                     <Link
                       href={item.href}
-                      className="transition duration-200 hover:text-[#111827] hover:underline"
+                      className="transition duration-200 hover:text-[#faf9f6] hover:underline"
                     >
                       {item.label}
                     </Link>
                     {index !== legalLinksTop.length - 1 && (
-                      <span className="mx-3 text-[#c0b9b0]">|</span>
+                      <span className="mx-3 text-white/20">|</span>
                     )}
                   </div>
                 ))}
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center text-[13px] text-[#767d89]">
+              <div className="mt-3 flex flex-wrap items-center text-[13px] text-[#a99f92]">
                 {legalLinksBottom.map((item, index) => (
                   <div key={item.label} className="flex items-center">
                     <Link
                       href={item.href}
-                      className="transition duration-200 hover:text-[#111827] hover:underline"
+                      className="transition duration-200 hover:text-[#faf9f6] hover:underline"
                     >
                       {item.label}
                     </Link>
                     {index !== legalLinksBottom.length - 1 && (
-                      <span className="mx-3 text-[#c0b9b0]">|</span>
+                      <span className="mx-3 text-white/20">|</span>
                     )}
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-3 text-[13px] text-[#767d89]">
+              <div className="mt-6 flex flex-wrap gap-3 text-[13px] text-[#a99f92]">
                 {supportLinks.map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="transition duration-200 hover:text-[#111827]"
+                    className="transition duration-200 hover:text-[#faf9f6]"
                   >
                     {item.label}
                   </Link>
@@ -376,7 +376,7 @@ export function Footer() {
             </div>
 
             <div>
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#2b3342]">
+              <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#faf9f6]">
                 We Accept
               </h3>
 
