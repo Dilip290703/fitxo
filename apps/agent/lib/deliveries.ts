@@ -115,7 +115,8 @@ export type AvailableJob = {
   /** Redacted pre-claim: city / pincode / landmark only (033). */
   dropArea: DropAddress;
   itemCount: number;
-  deliveryFee: number;
+  /** What the RIDER earns for this job (rider_fee, migration 038). */
+  riderFee: number;
   /** Pickup store (033); null until the migration is applied. */
   storeName: string | null;
   storeArea: string | null;
@@ -141,7 +142,9 @@ export async function fetchAvailableJobs(): Promise<{ jobs: AvailableJob[]; erro
     // read both so the panel works either way.
     dropArea: (d.drop_area ?? d.drop_address ?? {}) as DropAddress,
     itemCount: Number(d.item_count ?? 0),
-    deliveryFee: Number(d.delivery_fee ?? 0),
+    // 038 returns rider_fee; pre-038 returned delivery_fee — read both so the
+    // panel works either way while the migration rolls out.
+    riderFee: Number(d.rider_fee ?? d.delivery_fee ?? 0),
     storeName: d.store_name ?? null,
     storeArea: d.store_area ?? null,
     storeCount: Number(d.store_count ?? 1),
