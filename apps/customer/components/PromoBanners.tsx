@@ -55,7 +55,7 @@ export function PromoBanners() {
               </h3>
               <Link
                 href={banner.href}
-                className="group mt-6 inline-flex h-11 items-center gap-2.5 rounded-full bg-[#221b13] px-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#faf9f6] transition duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#221b13]/40"
+                className="mt-6 inline-flex h-11 items-center gap-2.5 rounded-full bg-[#221b13] px-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#faf9f6] transition duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#221b13]/40"
               >
                 {banner.cta}
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5">
@@ -71,12 +71,16 @@ export function PromoBanners() {
               </Link>
             </div>
 
-            <div className="absolute inset-y-0 right-0 w-[46%]">
+            {/* Own overflow-hidden + GPU layer: a square local clip absorbs the
+                image's hover scale cleanly, so the card's rounded corners never
+                have to re-clip a transforming child (that was the corner-bleed
+                flicker). */}
+            <div className="absolute inset-y-0 right-0 w-[46%] transform-gpu overflow-hidden">
               <Image
                 src={banner.image}
                 alt={banner.imageAlt}
                 fill
-                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
+                className="transform-gpu object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-hover:scale-[1.06]"
                 sizes="(max-width: 1024px) 46vw, 23vw"
               />
               <div
