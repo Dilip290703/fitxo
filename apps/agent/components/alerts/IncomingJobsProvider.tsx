@@ -24,11 +24,16 @@ function areaOf(a: AvailableJob["dropArea"]) {
   return [a.landmark, a.city, a.pincode].filter(Boolean).join(" · ") || "Area on accept";
 }
 
-/** "just now" / "waiting 4 min" — how long the order has been waiting for a rider. */
+/** "just now" / "waiting 4 min" / "waiting 2h 10m" — capped so a stale order
+ *  never reads "waiting 25512 min". */
 function waitingLabel(createdAt: string, now: number) {
   const m = Math.floor((now - new Date(createdAt).getTime()) / 60000);
   if (!Number.isFinite(m) || m < 1) return "just now";
-  return `waiting ${m} min`;
+  if (m < 60) return `waiting ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `waiting ${h}h ${m % 60}m`;
+  const d = Math.floor(h / 24);
+  return `waiting ${d}d+`;
 }
 
 /**
