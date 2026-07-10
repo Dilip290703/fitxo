@@ -67,12 +67,6 @@ export function ProductCard({ product }: { product: FrontendProduct }) {
           defaultClassName="bg-white/90 text-[#221b13] backdrop-blur-sm hover:bg-white"
           filledClassName="bg-[#221b13] text-white"
         />
-
-        {product.badge ? (
-          <span className="absolute left-3 top-3 inline-flex bg-white/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-[#221b13] backdrop-blur-sm">
-            {product.badge}
-          </span>
-        ) : null}
       </div>
 
       <div className="pt-3">
