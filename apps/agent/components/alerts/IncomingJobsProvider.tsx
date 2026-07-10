@@ -218,7 +218,7 @@ export function IncomingJobsProvider() {
             <div className="flex items-center justify-between gap-2">
               <p className="font-mono text-[14px] font-semibold text-ink">{job.orderNumber}</p>
               <p className="text-[18px] font-bold text-success">
-                +{formatCurrency(job.deliveryFee)}
+                +{formatCurrency(job.riderFee)}
               </p>
             </div>
             <div className="mt-2 space-y-1 text-[13px]">

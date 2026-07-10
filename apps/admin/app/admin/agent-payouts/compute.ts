@@ -28,18 +28,18 @@ function formatDestination(d: {
 }
 
 /**
- * Per-rider payables. A rider earns the order's `delivery_fee` for each completed
- * delivery (the only rider-facing money the DB models — same basis the agent
- * Earnings screen uses). Earned − already-settled (agent_payouts) = outstanding.
- * Used by both the page (display) and the record-payout action (write) so the
- * math is identical.
+ * Per-rider payables. A rider earns the order's `rider_fee` for each completed
+ * delivery (migration 037 — a flat platform cost, decoupled from the customer's
+ * delivery charge; same basis the agent Earnings screen uses). Earned −
+ * already-settled (agent_payouts) = outstanding. Used by both the page (display)
+ * and the record-payout action (write) so the math is identical.
  */
 export async function computeAgentPayables(supabase: SupabaseClient): Promise<AgentPayable[]> {
   const [{ data: riders }, { data: deliveries }, { data: payouts }, { data: payoutDetails }] = await Promise.all([
     supabase.from('riders').select('id, users(name)').eq('is_verified', true),
     supabase
       .from('deliveries')
-      .select('rider_id, order_id, order:orders(delivery_fee)')
+      .select('rider_id, order_id, order:orders(rider_fee)')
       .eq('status', 'completed'),
     supabase.from('agent_payouts').select('rider_id, order_id, amount'),
     // Pre-034 this table doesn't exist — data comes back null and every
@@ -60,16 +60,16 @@ export async function computeAgentPayables(supabase: SupabaseClient): Promise<Ag
     destByRider.set(d.rider_id, formatDestination(d));
   }
 
-  // rider -> (order -> delivery_fee earned)
+  // rider -> (order -> rider_fee earned)
   const earnedByRiderOrder = new Map<string, Map<string, number>>();
   for (const d of (deliveries ?? []) as unknown as {
     rider_id: string | null;
     order_id: string;
-    order: { delivery_fee: number } | { delivery_fee: number }[] | null;
+    order: { rider_fee: number } | { rider_fee: number }[] | null;
   }[]) {
     if (!d.rider_id) continue;
     const order = Array.isArray(d.order) ? d.order[0] : d.order;
-    const fee = Number(order?.delivery_fee ?? 0);
+    const fee = Number(order?.rider_fee ?? 0);
     const m = earnedByRiderOrder.get(d.rider_id) ?? new Map<string, number>();
     m.set(d.order_id, fee);
     earnedByRiderOrder.set(d.rider_id, m);

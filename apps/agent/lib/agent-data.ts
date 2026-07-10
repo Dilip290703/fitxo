@@ -2,9 +2,9 @@ import { createClient } from "@fitzo/supabase/client";
 import type { DeliveryStatus, DropAddress, OrderStatus } from "./deliveries";
 
 // ── Completed/earnings rows ──────────────────────────────────────────────
-// A rider's pay for a job is the order's delivery_fee (the only rider-facing
-// money the DB models today — there is no separate rider-commission config, so
-// per the no-hardcoding rule we treat the delivery fee as the rider's earning).
+// A rider's pay for a job is the order's rider_fee (migration 037) — a flat
+// platform cost per completed delivery, set in Admin → System Settings and
+// independent of the customer's delivery charge / free-delivery waiver.
 
 export type CompletedDelivery = {
   id: string;
@@ -13,7 +13,7 @@ export type CompletedDelivery = {
   orderNumber: string;
   orderStatus: OrderStatus;
   finalAmount: number;
-  deliveryFee: number;
+  riderFee: number;
   completedAt: string | null;
   city: string | null;
   itemCount: number;
@@ -27,7 +27,7 @@ type OrderRel = {
   order_number: string;
   status: OrderStatus;
   final_amount: number;
-  delivery_fee: number;
+  rider_fee: number;
 } | null;
 
 export async function fetchCompletedDeliveries(
@@ -37,7 +37,7 @@ export async function fetchCompletedDeliveries(
   const { data, error } = await supabase
     .from("deliveries")
     .select(
-      "id, status, completed_at, drop_address, order_id, order:orders(order_number, status, final_amount, delivery_fee, order_items(id))",
+      "id, status, completed_at, drop_address, order_id, order:orders(order_number, status, final_amount, rider_fee, order_items(id))",
     )
     .eq("rider_id", riderId)
     .in("status", ["completed", "failed"])
@@ -54,7 +54,7 @@ export async function fetchCompletedDeliveries(
       orderNumber: order?.order_number ?? "Order",
       orderStatus: (order?.status ?? "completed") as OrderStatus,
       finalAmount: Number(order?.final_amount ?? 0),
-      deliveryFee: Number(order?.delivery_fee ?? 0),
+      riderFee: Number(order?.rider_fee ?? 0),
       completedAt: d.completed_at,
       city: addr.city ?? null,
       itemCount: Array.isArray(order?.order_items) ? order!.order_items.length : 0,
@@ -109,14 +109,14 @@ export function rollupEarnings(rows: CompletedDelivery[]): EarningsSummary {
 
   for (const r of paid) {
     const t = r.completedAt ? new Date(r.completedAt).getTime() : 0;
-    allTime += r.deliveryFee;
-    if (t >= monthCut) month += r.deliveryFee;
+    allTime += r.riderFee;
+    if (t >= monthCut) month += r.riderFee;
     if (t >= weekCut) {
-      week += r.deliveryFee;
+      week += r.riderFee;
       weekCount += 1;
     }
     if (t >= dayCut) {
-      today += r.deliveryFee;
+      today += r.riderFee;
       todayCount += 1;
     }
   }

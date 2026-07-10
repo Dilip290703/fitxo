@@ -80,7 +80,7 @@ export function EarningsView() {
     <ContentWrap>
       <PageHeader
         title="Earnings"
-        subtitle="Your pay is the delivery fee on each completed job."
+        subtitle="You earn a flat rider fee on every completed job."
       />
 
       {hasPayoutDetails === false && (
@@ -164,7 +164,7 @@ export function EarningsView() {
                 >
                   {paidOrderIds.has(r.orderId) ? "Paid" : "Due"}
                 </span>
-                <span className="text-[15px] font-semibold text-success">+{inr(r.deliveryFee)}</span>
+                <span className="text-[15px] font-semibold text-success">+{inr(r.riderFee)}</span>
               </div>
             </div>
           ))}
@@ -178,7 +178,7 @@ export function EarningsView() {
       {payouts.length === 0 ? (
         <Card>
           <p className="text-[14px] text-body">
-            No payouts yet. Fitzo settles your earned delivery fees to your bank/UPI —
+            No payouts yet. Fitzo settles your earned rider fees to your bank/UPI —
             each settlement shows up here.
           </p>
         </Card>
@@ -212,7 +212,7 @@ export function EarningsView() {
 }
 
 // Last 7 days, oldest → newest, summed by completion day.
-function weeklyBars(rows: { deliveryFee: number; completedAt: string | null }[]) {
+function weeklyBars(rows: { riderFee: number; completedAt: string | null }[]) {
   const days: { label: string; key: string; amount: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -228,7 +228,7 @@ function weeklyBars(rows: { deliveryFee: number; completedAt: string | null }[])
     if (!r.completedAt) continue;
     const key = new Date(r.completedAt).toDateString();
     const slot = days.find((x) => x.key === key);
-    if (slot) slot.amount += r.deliveryFee;
+    if (slot) slot.amount += r.riderFee;
   }
   return days;
 }

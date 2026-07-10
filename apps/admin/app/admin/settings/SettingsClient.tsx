@@ -35,6 +35,7 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
 
   const [commission, setCommission] = useState({
     commission_rate: String(initial.commission_rate),
+    rider_fee: String(initial.rider_fee),
   });
 
   function save(label: string, patch: Partial<SystemSettings>) {
@@ -119,9 +120,14 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
         <div>
           <label className={labelClass}>Platform Commission (%)</label>
           <p className="text-xs text-muted mb-1.5">Fitzo&apos;s cut of each kept item; the rest is the store payout</p>
-          <input type="number" value={commission.commission_rate} min={0} max={100} step={0.5} onChange={(e) => setCommission({ commission_rate: e.target.value })} className={inputClass} />
+          <input type="number" value={commission.commission_rate} min={0} max={100} step={0.5} onChange={(e) => setCommission((f) => ({ ...f, commission_rate: e.target.value }))} className={inputClass} />
         </div>
-        <button onClick={() => save('Commission settings', { commission_rate: Number(commission.commission_rate) })} disabled={isPending} className={buttonClass}>
+        <div>
+          <label className={labelClass}>Rider Pay per Delivery (₹)</label>
+          <p className="text-xs text-muted mb-1.5">What a rider earns for each completed delivery — a platform cost, paid regardless of the customer&apos;s delivery charge</p>
+          <input type="number" value={commission.rider_fee} min={0} onChange={(e) => setCommission((f) => ({ ...f, rider_fee: e.target.value }))} className={inputClass} />
+        </div>
+        <button onClick={() => save('Commission settings', { commission_rate: Number(commission.commission_rate), rider_fee: Number(commission.rider_fee) })} disabled={isPending} className={buttonClass}>
           {isPending ? 'Saving…' : 'Save Commission Settings'}
         </button>
       </section>
