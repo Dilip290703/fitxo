@@ -25,7 +25,7 @@ function toHomepageProduct(p: FrontendProduct) {
 export async function FeaturedStores() {
   const supabase = await createClient();
   const [featuredProducts, brandsRes] = await Promise.all([
-    queryFeaturedProducts(supabase, 6),
+    queryFeaturedProducts(supabase, 8),
     supabase
       .from("brands")
       .select("name, slug, logo_url")

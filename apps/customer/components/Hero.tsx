@@ -13,19 +13,31 @@ const FLOW_STEPS = [
 ];
 
 /** Rotating hero imagery — the right column cycles through these vertically.
-    Files live in public/hero/ (sourced from Jay's reference pins). */
+    Files live in public/hero/ (Jay's picks, 2026-07-10). */
 const HERO_SLIDES = [
   {
     src: "/hero/slide-1.jpg",
-    alt: "Man in a cream knit and white trousers",
+    alt: "Woman in a yellow cropped hoodie and joggers on a seaside basketball court",
   },
   {
     src: "/hero/slide-2.jpg",
-    alt: "Woman in a brown off-shoulder top and cream trousers",
+    alt: "Rack of cream, polka-dot and orange tops on wooden hangers",
   },
   {
     src: "/hero/slide-3.jpg",
-    alt: "Three women in embroidered sarees",
+    alt: "Three men in layered streetwear looks by a carved wooden door",
+  },
+  {
+    src: "/hero/slide-4.jpg",
+    alt: "Woman in an all-black outfit against a red panelled wall",
+  },
+  {
+    src: "/hero/slide-5.jpg",
+    alt: "Rack of beige and camel coats with check jackets",
+  },
+  {
+    src: "/hero/slide-6.jpg",
+    alt: "Close-up of rust, pink and teal knitwear on a rail",
   },
 ];
 
@@ -159,17 +171,25 @@ export function Hero() {
               </span>
 
               <h1
-                className="hero-item mt-7 font-display text-[clamp(2.75rem,6vw,4.6rem)] font-medium leading-[1.05] tracking-[-0.015em] text-[#221b13]"
+                className="hero-item mt-7 font-display text-[clamp(2.6rem,5.5vw,4.3rem)] font-medium leading-[1.06] tracking-[-0.015em] text-[#221b13]"
                 style={{ "--i": 1 } as React.CSSProperties}
               >
-                <span className="block">Try before</span>
+                <span className="block">The fitting room</span>
                 <span className="block">
-                  you{" "}
+                  comes to{" "}
                   <span className="hero-underline relative inline-block italic text-[#a48d78]">
-                    buy.
+                    you.
                   </span>
                 </span>
               </h1>
+
+              <p
+                className="hero-item mt-5 flex items-center gap-3 text-[13px] font-semibold uppercase tracking-[0.24em] text-[#a48d78]"
+                style={{ "--i": 1.5 } as React.CSSProperties}
+              >
+                <span aria-hidden="true" className="h-px w-8 bg-[#cbb9a4]" />
+                Try before you buy
+              </p>
 
               <p
                 className="hero-item mt-6 max-w-[430px] text-[15px] leading-[1.75] text-[#6f6050]"

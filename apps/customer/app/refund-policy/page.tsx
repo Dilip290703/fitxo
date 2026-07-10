@@ -287,7 +287,7 @@ export default function RefundPolicyPage() {
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                       <Link
                         href="/contact"
-                        className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#141d2b]"
+                        className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#3a2f22]"
                       >
                         Contact support
                       </Link>

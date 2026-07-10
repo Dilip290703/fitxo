@@ -79,7 +79,13 @@ export function LoginRequiredModal({
 
           <button
             type="button"
-            onClick={() => router.push("/login")}
+            onClick={() => {
+              // Close BEFORE navigating — this modal is rendered by providers
+              // that live in the root layout, so it survives the client-side
+              // route change and would keep covering the /login page.
+              onClose();
+              router.push("/login");
+            }}
             className="mt-6 w-full rounded-[14px] bg-[#171d2b] px-5 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#2a3345]"
           >
             Log in / Sign up

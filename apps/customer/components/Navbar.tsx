@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { EASE } from "@/components/motion";
 import { createClient } from "@fitzo/supabase/client";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
@@ -176,22 +178,17 @@ function NavIconButton({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 ${
-        active ? "text-[#221b13]" : "text-[#6f6860]"
+      className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[#e3d7c5] hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 ${
+        active ? "bg-[#eadfce] text-[#221b13]" : "text-[#6f6860]"
       }`}
       aria-label={label}
     >
-      <span className="transition duration-200 group-hover:scale-105">{children}</span>
+      {children}
       {typeof badge === "number" && badge > 0 ? (
         <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
           {badge}
         </span>
       ) : null}
-      <span
-        className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#221b13] transition duration-200 ${
-          active ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-        }`}
-      />
     </button>
   );
 }
@@ -225,6 +222,7 @@ function NavbarInner({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { selectedPincode, setPincode } = useLocation();
+  const reduce = useReducedMotion();
 
   // Display label: show pincode if set, otherwise prompt
   const pincodeLabel = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Enter Pincode";
@@ -410,37 +408,49 @@ function NavbarInner({
                 <BagIcon />
               </NavIconButton>
 
-              <NavIconButton
-                label={isLoggedIn ? "Profile" : "Login"}
-                active={isProfileActive}
-                onClick={() => router.push(profileHref)}
-              >
-                <UserIcon />
-              </NavIconButton>
-
-              {!isLoggedIn ? (
+              {/* Profile icon only exists for a signed-in session — a logged-out
+                  visitor gets the Login/Signup pill instead (Jay, 2026-07-10). */}
+              {isLoggedIn ? (
+                <NavIconButton
+                  label="Profile"
+                  active={isProfileActive}
+                  onClick={() => router.push(profileHref)}
+                >
+                  <UserIcon />
+                </NavIconButton>
+              ) : (
                 <Link
                   href="/login"
-                  className={`group relative hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13] hover:bg-[#fff9e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
+                  className={`hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition-colors duration-200 hover:border-[#221b13] hover:bg-[#f0e7d6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
                     isLoginActive ? "border-[#221b13]" : "border-[#d8cbb9]"
                   }`}
                 >
                   Login / Signup
-                  <span
-                    className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-8 -translate-x-1/2 rounded-full bg-[#221b13] transition duration-200 ${
-                      isLoginActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-                    }`}
-                  />
                 </Link>
-              ) : null}
+              )}
             </div>
           </div>
 
-          {isCategoryOpen ? (
-            <div
-              id="fitzo-mega-menu"
-              className="absolute inset-x-0 top-full z-50 border-t border-[#ebe1d6] bg-[#fffdf9] shadow-[0_24px_60px_rgba(22,22,22,0.08)]"
-            >
+          <motion.div
+            id="fitzo-mega-menu"
+            initial={false}
+            animate={
+              isCategoryOpen
+                ? { opacity: 1, y: 0 }
+                : reduce
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: -10 }
+            }
+            transition={{
+              duration: isCategoryOpen ? 0.28 : 0.15,
+              ease: EASE,
+            }}
+            inert={!isCategoryOpen}
+            aria-hidden={!isCategoryOpen}
+            className={`absolute inset-x-0 top-full z-50 border-t border-[#ebe1d6] bg-[#fffdf9] shadow-[0_24px_60px_rgba(22,22,22,0.08)] ${
+              isCategoryOpen ? "pointer-events-auto" : "pointer-events-none"
+            }`}
+          >
               <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-5 md:px-10 lg:px-12">
                 {megaCategories.map((category) => (
                   <div key={category.title}>
@@ -466,11 +476,24 @@ function NavbarInner({
                   </div>
                 ))}
               </div>
-            </div>
-          ) : null}
+            </motion.div>
 
-          {isMobileMenuOpen ? (
-            <div className="border-t border-[#ebe1d6] bg-[#fffdf9] px-6 py-5 md:hidden">
+          <motion.div
+            initial={false}
+            animate={
+              isMobileMenuOpen
+                ? { opacity: 1, height: "auto" }
+                : { opacity: 0, height: 0 }
+            }
+            transition={{
+              duration: isMobileMenuOpen ? 0.3 : 0.2,
+              ease: EASE,
+            }}
+            inert={!isMobileMenuOpen}
+            aria-hidden={!isMobileMenuOpen}
+            className="overflow-hidden border-t border-[#ebe1d6] bg-[#fffdf9] md:hidden"
+          >
+            <div className="px-6 py-5">
               <div className="space-y-4 text-sm uppercase tracking-[0.18em] text-[#57524b]">
                 {topLinks.map((item) =>
                   item.isTrigger ? (
@@ -533,7 +556,7 @@ function NavbarInner({
                 )}
               </div>
             </div>
-          ) : null}
+          </motion.div>
         </div>
 
         {showSecondaryNav ? (

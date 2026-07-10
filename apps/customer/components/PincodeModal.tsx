@@ -1,7 +1,23 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { getDeliveryStatus } from "@/lib/pincode";
+import { backdropVariants, panelVariants } from "@/components/motion";
+
+function CloseGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
 
 /** Promisified geolocation — the callback API doesn't compose with async/await. */
 function getPosition(): Promise<GeolocationPosition> {
@@ -45,6 +61,7 @@ export function PincodeModal({
   const [manualPincode, setManualPincode] = useState(currentValue);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (isOpen) {
@@ -53,7 +70,14 @@ export function PincodeModal({
     }
   }, [currentValue, isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   // Live status as the user types — shown when exactly 6 digits entered
   const liveStatus =
@@ -121,8 +145,25 @@ export function PincodeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="w-full max-w-md rounded-[28px] bg-[#fffdf9] p-7 shadow-[0_30px_70px_rgba(17,17,17,0.16)]">
+    <motion.div
+      initial={false}
+      animate={isOpen ? "open" : "closed"}
+      variants={backdropVariants}
+      inert={!isOpen}
+      aria-hidden={!isOpen}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 ${
+        isOpen ? "pointer-events-auto" : "pointer-events-none"
+      }`}
+      onClick={onClose}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Set your delivery pincode"
+        variants={panelVariants(reduce)}
+        className="w-full max-w-md rounded-[28px] bg-[#faf9f6] p-7 shadow-[0_30px_70px_rgba(17,17,17,0.16)]"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8a7b6d]">
@@ -138,10 +179,10 @@ export function PincodeModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-[#6f6a63] transition duration-200 hover:bg-[#f4ede4] hover:text-black"
+            className="cursor-pointer rounded-full p-2.5 text-[#6f6050] transition duration-200 hover:bg-[#f4f1ea] hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/50"
             aria-label="Close pincode modal"
           >
-            ✕
+            <CloseGlyph />
           </button>
         </div>
 
@@ -198,13 +239,13 @@ export function PincodeModal({
 
             <button
               type="submit"
-              className="mt-4 inline-flex h-11 items-center rounded-full bg-[#221b13] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#141d2b]"
+              className="mt-4 inline-flex h-11 cursor-pointer items-center rounded-full bg-[#221b13] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#3a2f22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/50"
             >
               Save pincode
             </button>
           </form>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

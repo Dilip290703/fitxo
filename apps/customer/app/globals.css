@@ -55,6 +55,13 @@
 
   button {
     font: inherit;
+    /* Tailwind v4 preflight ships cursor: default on buttons — every
+       enabled button in the storefront is clickable, so restore pointer. */
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 }
 

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { Reveal } from "@/components/motion";
 
 export function CTA() {
   return (
     <section className="bg-[#f4f1ea] py-16">
       <div className="section-frame">
-        <div className="grid gap-8 rounded-[24px] border border-[#e6dac8] bg-white px-6 py-10 shadow-[0_24px_48px_-28px_rgba(34,27,19,0.25)] md:grid-cols-[1.2fr_0.8fr] md:px-12 md:py-12">
+        <Reveal className="grid gap-8 rounded-[24px] border border-[#e6dac8] bg-white px-6 py-10 shadow-[0_24px_48px_-28px_rgba(34,27,19,0.25)] md:grid-cols-[1.2fr_0.8fr] md:px-12 md:py-12">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#a48d78]">
               Booked to your door
@@ -36,7 +37,7 @@ export function CTA() {
               Shop the sale
             </Link>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

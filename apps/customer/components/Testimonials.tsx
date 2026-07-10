@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { testimonials } from "@/lib/mockData";
+import { Reveal } from "@/components/motion";
 
 /** 5-star row with half-star support; shows the numeric value beside it. */
 function StarRow({ rating }: { rating: number }) {
@@ -92,14 +93,14 @@ export function Testimonials() {
       className="relative isolate overflow-hidden bg-[#faf9f6] py-20"
     >
       <div className="section-frame">
-        <div className="mb-14 text-center">
+        <Reveal className="mb-14 text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
             Feedback
           </p>
           <h2 className="underlined-title mt-3 font-display text-[36px] font-medium tracking-[-0.03em] text-[#221b13] sm:text-[48px]">
             What Our Customers Say
           </h2>
-        </div>
+        </Reveal>
       </div>
 
       {/* Full-bleed belt with feathered edges so cards melt in and out. */}

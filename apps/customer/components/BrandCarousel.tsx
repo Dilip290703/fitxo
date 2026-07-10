@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion";
 
 type Brand = {
   name: string;
@@ -17,21 +18,24 @@ type Brand = {
 export function BrandCarousel({ brands }: { brands: Brand[] }) {
   return (
     <div className="mx-auto max-w-[1240px]">
-      <div className="mb-12 text-center">
+      <Reveal className="mb-12 text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
           Stores near you
         </p>
         <h2 className="mt-3 font-display text-3xl text-[#221b13] sm:text-4xl">
           Shop by brand
         </h2>
-      </div>
+      </Reveal>
 
-      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <StaggerGroup
+        amount={0.15}
+        className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      >
         {brands.map((brand) => (
+          <StaggerItem key={brand.slug}>
           <Link
-            key={brand.slug}
             href={`/brand/${brand.slug}`}
-            className="group flex flex-col items-center justify-center gap-4 rounded-2xl bg-white px-4 py-10 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_-18px_rgba(24,24,28,0.28)] focus:outline-none focus:ring-2 focus:ring-[#221b13]/20"
+            className="group flex flex-col items-center justify-center gap-4 rounded-2xl border border-transparent bg-white px-4 py-10 text-center shadow-[0_10px_24px_-18px_rgba(34,27,19,0.25)] transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:border-[#e6dac8] hover:shadow-[0_28px_50px_-22px_rgba(164,141,120,0.5)] focus:outline-none focus:ring-2 focus:ring-[#221b13]/20"
           >
             {brand.logo_url ? (
               <span className="relative h-16 w-28">
@@ -52,8 +56,9 @@ export function BrandCarousel({ brands }: { brands: Brand[] }) {
               Shop {brand.name}
             </span>
           </Link>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerGroup>
 
       <div className="mt-12 flex justify-center">
         <Link

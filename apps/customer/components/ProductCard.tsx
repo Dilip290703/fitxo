@@ -71,14 +71,14 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[#f4f1ea]">
         <Link
           href={`/product/${product.id}`}
-          className="block h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#221b13]/20"
+          className="relative block h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#221b13]/20"
         >
           {product.image ? (
             <Image
               src={product.image}
               alt={product.title}
               fill
-              className="object-cover transition duration-500 group-hover:scale-[1.05]"
+              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 17vw"
             />
           ) : (

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Reveal } from "@/components/motion";
 
 /**
  * Dual promo banner row (reference: "Spring Sale" / "Fresh Styles Just Landed").
@@ -35,10 +36,11 @@ export function PromoBanners() {
   return (
     <section className="bg-[color:var(--background)] py-14 sm:py-16">
       <div className="section-frame grid gap-6 lg:grid-cols-2">
-        {DUMMY_BANNERS.map((banner) => (
-          <div
+        {DUMMY_BANNERS.map((banner, index) => (
+          <Reveal
             key={banner.id}
-            className="relative flex min-h-[240px] items-center overflow-hidden rounded-[20px] border border-[#e6dac8] bg-[#f4f1ea]"
+            delay={index * 0.12}
+            className="group relative flex min-h-[240px] items-center overflow-hidden rounded-[20px] border border-[#e6dac8] bg-[#f4f1ea] transition-shadow duration-500 hover:shadow-[0_32px_60px_-30px_rgba(164,141,120,0.55)]"
           >
             <div className="relative z-10 max-w-[58%] px-8 py-10 sm:px-10">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
@@ -74,7 +76,7 @@ export function PromoBanners() {
                 src={banner.image}
                 alt={banner.imageAlt}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
                 sizes="(max-width: 1024px) 46vw, 23vw"
               />
               <div
@@ -82,7 +84,7 @@ export function PromoBanners() {
                 className="absolute inset-0 bg-gradient-to-r from-[#f4f1ea] via-[#f4f1ea]/30 to-transparent"
               />
             </div>
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>

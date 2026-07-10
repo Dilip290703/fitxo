@@ -17,13 +17,15 @@ import {
   type FilterOptions,
 } from "@/lib/supabase/products";
 
+import { normalizeSort, type SortOption } from "@/lib/sort";
+
 type ProductsCatalogPageProps = {
   initialCategory?: string;
   initialCollection?: string;
   initialSale?: boolean;
+  /** Preselects the sort dropdown from the URL (e.g. ?sort=popular). */
+  initialSort?: string;
 };
-
-type SortOption = "new-arrivals" | "popular" | "price-low" | "price-high";
 
 // 4 across × 4 down on xl — a full, unragged grid per page.
 const PRODUCTS_PER_PAGE = 16;
@@ -61,8 +63,9 @@ export function ProductsCatalogPage({
   initialCategory,
   initialCollection,
   initialSale = false,
+  initialSort,
 }: ProductsCatalogPageProps) {
-  const [sortBy, setSortBy] = useState<SortOption>("new-arrivals");
+  const [sortBy, setSortBy] = useState<SortOption>(normalizeSort(initialSort));
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(

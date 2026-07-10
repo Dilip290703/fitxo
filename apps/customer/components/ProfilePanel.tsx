@@ -544,7 +544,7 @@ export function ProfilePanel() {
                         <button
                           type="button"
                           onClick={() => markDefaultAddress(address.id)}
-                          className="rounded-full bg-[#221b13] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition duration-200 hover:bg-[#141d2b]"
+                          className="rounded-full bg-[#221b13] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition duration-200 hover:bg-[#3a2f22]"
                         >
                           Set default
                         </button>
@@ -629,7 +629,7 @@ export function ProfilePanel() {
             <Input label="Name" value={profileDraft.name} onChange={(value) => setProfileDraft((current) => ({ ...current, name: value }))} required />
             <Input label="Email" type="email" value={profileDraft.email} onChange={(value) => setProfileDraft((current) => ({ ...current, email: value }))} required />
             <Input label="Phone" value={profileDraft.phone} onChange={(value) => setProfileDraft((current) => ({ ...current, phone: value }))} required />
-            <button className="h-12 w-full rounded-full bg-[#221b13] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#141d2b]">
+            <button className="h-12 w-full rounded-full bg-[#221b13] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#3a2f22]">
               Save changes
             </button>
           </form>
@@ -791,7 +791,7 @@ function ConfirmModal({
         <button
           type="button"
           onClick={onConfirm}
-          className="h-11 flex-1 rounded-full bg-[#221b13] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#141d2b]"
+          className="h-11 flex-1 rounded-full bg-[#221b13] text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:bg-[#3a2f22]"
         >
           {confirmLabel}
         </button>

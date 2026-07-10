@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
+import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion";
 
 type Product = {
   id: string;
@@ -51,7 +52,7 @@ export function ProductGrid({
     <section id="hot-picks" className={className}>
       <div className="section-frame">
         {title ? (
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-[560px]">
               {eyebrow ? (
                 <p className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
@@ -80,16 +81,19 @@ export function ProductGrid({
                 </span>
               </Link>
             ) : null}
-          </div>
+          </Reveal>
         ) : null}
 
-        <div
-          className={`${title ? "mt-12" : ""} grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-6`}
+        <StaggerGroup
+          amount={0.1}
+          className={`${title ? "mt-12" : ""} grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-7`}
         >
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <StaggerItem key={product.id}>
+              <ProductCard product={product} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       </div>
     </section>
   );
