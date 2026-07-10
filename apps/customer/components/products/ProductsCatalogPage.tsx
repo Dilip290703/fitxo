@@ -187,7 +187,7 @@ export function ProductsCatalogPage({
 
       <section
         ref={resultsTopRef}
-        className="w-full scroll-mt-[128px] px-4 py-8 sm:px-6 lg:px-8"
+        className="mx-auto w-full max-w-[1360px] scroll-mt-[128px] px-4 py-8 sm:px-6 lg:px-8"
       >
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-[12px] text-[#4a463f]">

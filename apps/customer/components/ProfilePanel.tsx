@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStorageItem } from "@/lib/storage";
 import { useLocation, PINCODE_STORAGE_KEY } from "@/store/locationStore";
+import { useWishlist } from "@/store/wishlistStore";
 import { createClient } from "@fitzo/supabase/client";
 
 type UserProfile = {
@@ -67,7 +68,7 @@ function toUIOrder(order: any): Order {
     id: order.order_number ?? order.id,
     status: formatOrderStatus(order.status ?? ""),
     items: Array.isArray(order.order_items) ? order.order_items.length : 0,
-    total: `Rs. ${Number(order.final_amount ?? 0).toLocaleString("en-IN")}`,
+    total: `₹${Number(order.final_amount ?? 0).toLocaleString("en-IN")}`,
     eta: new Date(order.created_at).toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
@@ -76,44 +77,38 @@ function toUIOrder(order: any): Order {
   };
 }
 
-const actionCards = [
-  { label: "My Orders", text: "Track try-on deliveries and past purchases.", href: "/orders" },
-  { label: "Wishlist", text: "Looks saved for your next delivery.", href: "/wishlist" },
-  { label: "My Addresses", text: "Manage home and office delivery points.", href: "#addresses" },
-  { label: "AI Style Preferences", text: "Tune fit, undertone, brands, and sizes.", href: "/ai-style-setup" },
-  { label: "Try Timer / Active Try-On", text: "Watch your keep-or-return window.", href: "/try-timer" },
-  { label: "Payment Methods", text: "Cards, UPI, wallets, and pay-later.", href: "#security" },
-  { label: "Coupons & Rewards", text: "View available credits and vouchers.", href: "#rewards" },
-  { label: "Refer a Friend", text: "Share Fitzo and earn try-on credits.", href: "#rewards" },
-  { label: "Help & Support", text: "Get order, return, and sizing support.", href: "/contact" },
-  { label: "Privacy & Security", text: "Password, sessions, and account controls.", href: "#security" },
-  { label: "Notifications", text: "Delivery, offers, and style alerts.", href: "/notifications" },
-];
-
 const emptyUser: UserProfile = { name: "", email: "", phone: "", membership: "Fitzo Muse" };
 const emptyAddress: Address = { id: "", label: "Home", name: "", line: "", city: "", pincode: "", isDefault: false };
 
-function ChevronRight() {
+/* ---------------------------------------------------------------- icons */
+
+function Icon({ path, className = "h-[18px] w-[18px]" }: { path: string; className?: string }) {
   return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
-      <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={path} />
     </svg>
   );
 }
 
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden="true">
-      <path d="m5 5 10 10M15 5 5 15" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-    </svg>
-  );
-}
+const ICONS = {
+  bag: "M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2",
+  heart: "M12 20s-7-4.6-7-9.3A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 7 2.7C19 15.4 12 20 12 20z",
+  pin: "M12 21s6-5.7 6-11a6 6 0 1 0-12 0c0 5.3 6 11 6 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
+  ticket: "M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4zM14 6v12",
+  bell: "M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6M10.5 20a1.8 1.8 0 0 0 3 0",
+  help: "M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.9.4-1.4 1-1.4 1.9M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+  chevron: "M9 6l6 6-6 6",
+  lock: "M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z",
+  logout: "M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11",
+};
+
+/* ---------------------------------------------------------------- panel */
 
 export function ProfilePanel() {
   const router = useRouter();
   const { setPincode: setGlobalPincode } = useLocation();
+  const { count: wishlistCount } = useWishlist();
   const [authUserId, setAuthUserId] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserProfile>(emptyUser);
   const [profileDraft, setProfileDraft] = useState<UserProfile>(emptyUser);
@@ -149,6 +144,7 @@ export function ProfilePanel() {
         setPincode(defaultAddr.pincode);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -161,13 +157,11 @@ export function ProfilePanel() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        setIsLoggedIn(false);
         setLoading(false);
         router.push("/login");
         return;
       }
 
-      setIsLoggedIn(true);
       setAuthUserId(session.user.id);
 
       const [userRes, ordersRes] = await Promise.all([
@@ -209,6 +203,11 @@ export function ProfilePanel() {
     return () => subscription.unsubscribe();
   }, [router, refreshAddresses]);
 
+  const firstName = useMemo(
+    () => (user.name || user.email || "there").split(/[ @]/)[0],
+    [user.name, user.email],
+  );
+
   const initials = useMemo(
     () =>
       (user.name || user.email || "?")
@@ -218,6 +217,14 @@ export function ProfilePanel() {
         .slice(0, 2)
         .toUpperCase(),
     [user.name, user.email],
+  );
+
+  const activeOrders = useMemo(
+    () =>
+      orders.filter(
+        (o) => !["Delivered", "Completed", "Cancelled", "Return picked"].includes(o.status),
+      ).length,
+    [orders],
   );
 
   const openProfileModal = () => {
@@ -323,7 +330,6 @@ export function ProfilePanel() {
     if (confirmAction === "logout") {
       const supabase = createClient();
       await supabase.auth.signOut();
-      setIsLoggedIn(false);
       setConfirmAction(null);
       router.push("/login");
       return;
@@ -337,294 +343,296 @@ export function ProfilePanel() {
 
   if (loading) {
     return (
-      <section className="bg-[#f4f1ea] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="h-[400px] animate-pulse rounded-[32px] bg-[#ece3d9]" />
+      <section className="bg-[#f4f1ea] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        <div className="mx-auto max-w-5xl space-y-6">
+          <div className="h-[160px] animate-pulse rounded-[24px] bg-[#ece3d9]" />
+          <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+            <div className="h-[360px] animate-pulse rounded-[24px] bg-[#ece3d9]" />
+            <div className="h-[360px] animate-pulse rounded-[24px] bg-[#ece3d9]" />
+          </div>
         </div>
       </section>
     );
   }
 
+  const menuItems = [
+    { label: "My Orders", desc: "Track deliveries & past orders", href: "/orders", icon: ICONS.bag },
+    { label: "Wishlist", desc: `${wishlistCount} saved ${wishlistCount === 1 ? "look" : "looks"}`, href: "/wishlist", icon: ICONS.heart },
+    { label: "Saved Addresses", desc: `${addresses.length} delivery ${addresses.length === 1 ? "location" : "locations"}`, href: "#addresses", icon: ICONS.pin },
+    { label: "Coupons & Rewards", desc: "Credits & vouchers", href: "#rewards", icon: ICONS.ticket },
+    { label: "Notifications", desc: "Delivery & offer alerts", href: "/notifications", icon: ICONS.bell },
+    { label: "Help & Support", desc: "Orders, returns & sizing", href: "/contact", icon: ICONS.help },
+  ];
+
+  // CSS-driven entrance (see .rise-in in globals.css). Robust by construction:
+  // `animation-fill-mode: forwards` holds the final state, so a block can never
+  // get stranded hidden the way a framer mount animation can under re-renders.
+  const delay = (d: number) => ({ animationDelay: `${d}s` }) as React.CSSProperties;
+
   return (
-    <section className="bg-[#f4f1ea] px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
+    <section className="bg-[#f4f1ea] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       {toast ? (
         <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#221b13] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
           {toast}
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-7xl">
-        <section className="overflow-hidden rounded-[32px] border border-[#eadfd4] bg-[#fffdf9] shadow-[0_28px_80px_rgba(31,25,18,0.1)]">
-          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="bg-[#221b13] p-6 text-white sm:p-8 lg:p-10">
-              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/70">
-                Account overview
+      <div className="mx-auto max-w-5xl">
+        {/* ---------------------------------------------------- header */}
+        <header
+          style={delay(0)}
+          className="rise-in flex flex-col gap-6 rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-6 shadow-[0_18px_50px_rgba(31,25,18,0.07)] sm:flex-row sm:items-center sm:justify-between sm:p-8"
+        >
+          <div className="flex items-center gap-5">
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[#221b13] font-display text-[24px] text-[#faf9f6]">
+              {initials}
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a48d78]">
+                My account
               </p>
-              <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
-                <div className="grid h-24 w-24 shrink-0 place-items-center rounded-full border border-white/35 bg-white/15 font-display text-[38px] shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
-                  {initials}
-                </div>
-                <div>
-                  <h1 className="font-display text-[44px] leading-none tracking-[-0.04em] sm:text-[58px]">
-                    {user.name || user.email}
-                  </h1>
-                  <div className="mt-5 flex flex-wrap gap-3 text-[13px] text-white/78">
-                    {user.phone ? <span>{user.phone}</span> : null}
-                    {user.phone && user.email ? <span className="hidden text-white/35 sm:inline">/</span> : null}
-                    <span>{user.email}</span>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-[#f5d75c] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#221b13]">
-                      {user.membership}
-                    </span>
-                    <span className="rounded-full border border-white/20 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-white/72">
-                      {isLoggedIn ? "Logged in" : "Demo profile preview"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={openProfileModal}
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:-translate-y-0.5"
-                >
-                  Edit profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmAction("logout")}
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/35 px-6 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10"
-                >
-                  Logout
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmAction("delete-account")}
-                  className="text-left text-[12px] font-semibold text-white/68 underline-offset-4 transition duration-200 hover:text-white hover:underline sm:ml-auto"
-                >
-                  Delete account
-                </button>
-              </div>
+              <h1 className="mt-1 font-display text-[30px] leading-none tracking-[-0.03em] text-[#171717] sm:text-[36px]">
+                Hi, {firstName}
+              </h1>
+              <p className="mt-2 text-[13px] text-[#6b6258]">
+                {[user.phone, user.email].filter(Boolean).join("  ·  ")}
+              </p>
             </div>
+          </div>
 
-            <div className="grid content-center gap-4 p-6 sm:grid-cols-2 sm:p-8 lg:p-10">
-              {[
-                ["Active Orders", String(orders.filter((o) => !["Delivered", "Completed", "Cancelled", "Return picked"].includes(o.status)).length)],
-                ["Wishlist Items", "—"],
-                ["Saved Addresses", String(addresses.length)],
-                ["Style Match", "—"],
-              ].map(([label, value]) => (
-                <article
-                  key={label}
-                  className="rounded-[22px] border border-[#ece3d9] bg-white p-6 shadow-[0_16px_38px_rgba(34,28,20,0.06)] transition duration-200 hover:-translate-y-1"
-                >
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8b8176]">
-                    {label}
-                  </p>
-                  <p className="mt-4 font-display text-[42px] leading-none tracking-[-0.04em] text-[#171717]">
-                    {value}
-                  </p>
-                </article>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={openProfileModal}
+              className="inline-flex h-11 items-center justify-center rounded-full border border-[#221b13] px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#221b13] transition duration-200 hover:bg-[#221b13] hover:text-[#faf9f6]"
+            >
+              Edit profile
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmAction("logout")}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#221b13] px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22]"
+            >
+              <Icon path={ICONS.logout} className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
+        </header>
+
+        {/* ---------------------------------------------------- quick stats */}
+        <div style={delay(0.06)} className="rise-in mt-6 grid grid-cols-3 gap-3 sm:gap-4">
+          <StatTile label="Active orders" value={String(activeOrders)} href="/orders" />
+          <StatTile label="Wishlist" value={String(wishlistCount)} href="/wishlist" />
+          <StatTile label="Addresses" value={String(addresses.length)} href="#addresses" />
+        </div>
+
+        {/* ---------------------------------------------------- body */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+          {/* menu (Snitch-style list) */}
+          <aside
+            style={delay(0.12)}
+            className="rise-in h-fit rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-2.5 shadow-[0_18px_50px_rgba(31,25,18,0.06)]"
+          >
+            <nav className="flex flex-col">
+              {menuItems.map((m) => (
+                <MenuRow key={m.label} {...m} />
               ))}
-            </div>
-          </div>
-        </section>
+            </nav>
 
-        <section className="mt-8 grid gap-8 lg:grid-cols-[0.78fr_1.22fr]">
-          <div className="space-y-8">
-            <Panel title="Style Preferences" eyebrow="AI style setup" id="style">
-              <div className="space-y-5">
-                <PreferenceRow label="Skin tone / undertone" value="Medium warm, golden undertone" />
-                <PreferenceRow label="Favorite categories" value="Dresses, denim, shirts, occasionwear" />
-                <PreferenceRow label="Preferred sizes" value="M tops, 30 denim, UK 6 footwear" />
-                <PreferenceRow label="Preferred brands" value="Zara, H&M, Levi's, Nike" />
+            <div className="my-2 h-px bg-[#eadfd4]" />
+
+            <button
+              type="button"
+              onClick={() => showToast("Password change flow coming soon.")}
+              className="group flex w-full items-center gap-3.5 rounded-[16px] px-3.5 py-3 text-left transition duration-200 hover:bg-[#f6f1e8]"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f6f1e8] text-[#221b13] transition duration-200 group-hover:bg-white">
+                <Icon path={ICONS.lock} />
+              </span>
+              <span className="flex-1 text-[14px] font-semibold text-[#221b13]">Change password</span>
+              <span className="text-[#b8ab9b] transition-transform duration-200 group-hover:translate-x-0.5">
+                <Icon path={ICONS.chevron} className="h-4 w-4" />
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmAction("delete-account")}
+              className="flex w-full items-center gap-3.5 rounded-[16px] px-3.5 py-3 text-left text-[13px] font-semibold text-[#9a3c2b] transition duration-200 hover:bg-[#fff1ec]"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#fbeae4] text-[#9a3c2b]">
+                <Icon path="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13h10l1-13" />
+              </span>
+              Delete account
+            </button>
+          </aside>
+
+          {/* content */}
+          <div className="space-y-6">
+            {/* recent orders */}
+            <section
+              style={delay(0.18)}
+              className="rise-in rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-[22px] leading-none tracking-[-0.02em] text-[#171717] sm:text-[24px]">
+                  Recent orders
+                </h2>
+                <Link
+                  href="/orders"
+                  className="text-[12px] font-semibold text-[#a48d78] transition hover:text-[#221b13]"
+                >
+                  View all
+                </Link>
               </div>
-              <Link
-                href="/ai-style-setup"
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
-              >
-                Update preferences
-              </Link>
-            </Panel>
 
-            <Panel title="Security" eyebrow="Privacy & login" id="security">
-              <div className="space-y-4 text-[14px] text-[#5e574f]">
-                <PreferenceRow label="Login method" value="Email, phone OTP, Google" />
-                <button
-                  type="button"
-                  onClick={() => showToast("Password change flow coming soon.")}
-                  className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13]"
-                >
-                  Change password
-                  <ChevronRight />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => showToast("Session manager coming soon.")}
-                  className="flex w-full items-center justify-between rounded-2xl border border-[#eadfd4] bg-white px-4 py-4 text-left font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13]"
-                >
-                  Manage sessions
-                  <ChevronRight />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmAction("delete-account")}
-                  className="text-[13px] font-semibold text-[#9a3c2b] underline-offset-4 hover:underline"
-                >
-                  Delete account
-                </button>
-              </div>
-            </Panel>
-          </div>
-
-          <div className="space-y-8">
-            <Panel title="Main Account Actions" eyebrow="Customer dashboard">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {actionCards.map((action) => (
-                  <Link
-                    key={action.label}
-                    href={action.href}
-                    className="group rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#221b13] hover:shadow-[0_20px_44px_rgba(34,28,20,0.09)]"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-semibold text-[#221b13]">{action.label}</h3>
-                        <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">{action.text}</p>
+              {orders.length > 0 ? (
+                <div className="mt-5 space-y-3">
+                  {orders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-[#eadfd4] bg-white px-4 py-3.5"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[14px] font-semibold text-[#221b13]">{order.id}</span>
+                          <span className="rounded-full bg-[#f6f1e8] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#7b6f63]">
+                            {order.status}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[12px] text-[#6b6258]">
+                          {order.items} {order.items === 1 ? "item" : "items"} · {order.total} · {order.eta}
+                        </p>
                       </div>
-                      <span className="mt-1 rounded-full bg-[#f6f1e8] p-2 text-[#221b13] transition duration-200 group-hover:bg-[#a48d78]">
-                        <ChevronRight />
-                      </span>
+                      <Link
+                        href="/orders"
+                        className="inline-flex h-9 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
+                      >
+                        Track
+                      </Link>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            </Panel>
-
-            <Panel title="Address Book" eyebrow="Delivery locations" id="addresses">
-              <div className="grid gap-4 md:grid-cols-2">
-                {addresses.map((address) => (
-                  <article
-                    key={address.id}
-                    className="rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)]"
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-[16px] border border-dashed border-[#e0d4c5] bg-white px-5 py-8 text-center">
+                  <p className="text-[14px] text-[#8b8176]">No orders yet.</p>
+                  <Link
+                    href="/products"
+                    className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-[#221b13] px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22]"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    Start shopping
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* address book */}
+            <section
+              style={delay(0.24)}
+              id="addresses"
+              className="rise-in scroll-mt-28 rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-[22px] leading-none tracking-[-0.02em] text-[#171717] sm:text-[24px]">
+                  Saved addresses
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => openAddressModal()}
+                  className="inline-flex h-9 items-center justify-center rounded-full bg-[#a48d78] px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#221b13] transition duration-200 hover:bg-[#cbb9a4]"
+                >
+                  + Add
+                </button>
+              </div>
+
+              {addresses.length > 0 ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {addresses.map((address) => (
+                    <article
+                      key={address.id}
+                      className="rounded-[16px] border border-[#eadfd4] bg-white p-4"
+                    >
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13]">
+                        <span className="rounded-full bg-[#f6f1e8] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#221b13]">
                           {address.label}
                         </span>
                         {address.isDefault ? (
-                          <span className="rounded-full bg-[#a48d78] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13]">
+                          <span className="rounded-full bg-[#a48d78] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#221b13]">
                             Default
                           </span>
                         ) : null}
                       </div>
-                    </div>
-                    <h3 className="mt-4 font-semibold text-[#221b13]">{address.name}</h3>
-                    <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">
-                      {address.line}, {address.city} - {address.pincode}
-                    </p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openAddressModal(address)}
-                        className="rounded-full border border-[#d9ccbd] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteAddressId(address.id)}
-                        className="rounded-full border border-[#ead0c7] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9a3c2b] transition duration-200 hover:bg-[#fff1ec]"
-                      >
-                        Delete
-                      </button>
-                      {!address.isDefault ? (
+                      <h3 className="mt-3 text-[14px] font-semibold text-[#221b13]">{address.name}</h3>
+                      <p className="mt-1 text-[12px] leading-5 text-[#6b6258]">
+                        {address.line}, {address.city} - {address.pincode}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           type="button"
-                          onClick={() => markDefaultAddress(address.id)}
-                          className="rounded-full bg-[#221b13] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition duration-200 hover:bg-[#3a2f22]"
+                          onClick={() => openAddressModal(address)}
+                          className="rounded-full border border-[#d9ccbd] px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
                         >
-                          Set default
+                          Edit
                         </button>
-                      ) : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => openAddressModal()}
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#a48d78] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#221b13] transition duration-200 hover:-translate-y-0.5"
-              >
-                Add new address
-              </button>
-            </Panel>
-
-            <Panel title="Order Snapshot" eyebrow="Latest activity">
-              {orders.length > 0 ? (
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <article
-                      key={order.id}
-                      className="grid gap-4 rounded-[22px] border border-[#eadfd4] bg-white p-5 shadow-[0_14px_34px_rgba(34,28,20,0.05)] md:grid-cols-[1fr_auto]"
-                    >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="font-semibold text-[#221b13]">{order.id}</h3>
-                          <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.13em] text-[#7b6f63]">
-                            {order.status}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-[13px] leading-6 text-[#6b6258]">
-                          {order.items} items / {order.total} / {order.eta}
-                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteAddressId(address.id)}
+                          className="rounded-full border border-[#ead0c7] px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9a3c2b] transition duration-200 hover:bg-[#fff1ec]"
+                        >
+                          Delete
+                        </button>
+                        {!address.isDefault ? (
+                          <button
+                            type="button"
+                            onClick={() => markDefaultAddress(address.id)}
+                            className="rounded-full bg-[#221b13] px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-white transition duration-200 hover:bg-[#3a2f22]"
+                          >
+                            Set default
+                          </button>
+                        ) : null}
                       </div>
-                      <Link
-                        href="/order-tracking"
-                        className="inline-flex h-10 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
-                      >
-                        Track
-                      </Link>
                     </article>
                   ))}
                 </div>
               ) : (
-                <p className="text-[14px] text-[#8b8176]">No orders yet. Start shopping!</p>
+                <p className="mt-5 rounded-[16px] border border-dashed border-[#e0d4c5] bg-white px-5 py-6 text-center text-[13px] text-[#8b8176]">
+                  No addresses saved yet.
+                </p>
               )}
-              <Link
-                href="/orders"
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
-              >
-                View all orders
-              </Link>
-            </Panel>
+            </section>
 
-            <Panel title="Coupons & Rewards" eyebrow="Wallet" id="rewards">
-              <div className="grid gap-4 sm:grid-cols-3">
+            {/* coupons & rewards */}
+            <section
+              style={delay(0.3)}
+              id="rewards"
+              className="rise-in scroll-mt-28 rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
+            >
+              <h2 className="font-display text-[22px] leading-none tracking-[-0.02em] text-[#171717] sm:text-[24px]">
+                Coupons &amp; rewards
+              </h2>
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 {[
-                  ["Rs. 0", "try-on credits"],
+                  ["₹0", "try-on credits"],
                   ["0", "active coupons"],
-                  ["0 friends", "referred"],
+                  ["0", "friends referred"],
                 ].map(([value, label]) => (
-                  <div key={label} className="rounded-[20px] border border-[#eadfd4] bg-white p-5">
-                    <p className="font-display text-[32px] leading-none tracking-[-0.04em] text-[#171717]">
+                  <div key={label} className="rounded-[16px] border border-[#eadfd4] bg-white p-4">
+                    <p className="font-display text-[28px] leading-none tracking-[-0.03em] text-[#171717]">
                       {value}
                     </p>
-                    <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.13em] text-[#8b8176]">
+                    <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.12em] text-[#8b8176]">
                       {label}
                     </p>
                   </div>
                 ))}
               </div>
-            </Panel>
+            </section>
           </div>
-        </section>
+        </div>
       </div>
 
+      {/* ---------------------------------------------------- modals */}
       {isProfileModalOpen ? (
-        <Modal title="Edit Profile" onClose={() => setIsProfileModalOpen(false)}>
+        <Modal title="Edit profile" onClose={() => setIsProfileModalOpen(false)}>
           <form onSubmit={saveProfile} className="space-y-4">
             <Input label="Name" value={profileDraft.name} onChange={(value) => setProfileDraft((current) => ({ ...current, name: value }))} required />
             <Input label="Email" type="email" value={profileDraft.email} onChange={(value) => setProfileDraft((current) => ({ ...current, email: value }))} required />
@@ -637,7 +645,7 @@ export function ProfilePanel() {
       ) : null}
 
       {isAddressModalOpen ? (
-        <Modal title={editingAddressId ? "Edit Address" : "Add Address"} onClose={() => setIsAddressModalOpen(false)}>
+        <Modal title={editingAddressId ? "Edit address" : "Add address"} onClose={() => setIsAddressModalOpen(false)}>
           <form onSubmit={saveAddress} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               {(["Home", "Office"] as Address["label"][]).map((label) => (
@@ -702,41 +710,41 @@ export function ProfilePanel() {
   );
 }
 
-function Panel({
-  title,
-  eyebrow,
-  children,
-  id,
-}: {
-  title: string;
-  eyebrow: string;
-  children: React.ReactNode;
-  id?: string;
-}) {
+/* ---------------------------------------------------------------- pieces */
+
+function StatTile({ label, value, href }: { label: string; value: string; href: string }) {
   return (
-    <section
-      id={id}
-      className="rounded-[28px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_24px_60px_rgba(31,25,18,0.07)] sm:p-7"
+    <Link
+      href={href}
+      className="group rounded-[18px] border border-[#eadfd4] bg-[#fffdf9] p-4 text-center shadow-[0_12px_34px_rgba(34,28,20,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#cbb9a4] sm:p-5"
     >
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#8b8176]">
-        {eyebrow}
+      <p className="font-display text-[30px] leading-none tracking-[-0.03em] text-[#171717] sm:text-[36px]">
+        {value}
       </p>
-      <h2 className="mt-3 font-display text-[34px] leading-none tracking-[-0.04em] text-[#171717] sm:text-[40px]">
-        {title}
-      </h2>
-      <div className="mt-6">{children}</div>
-    </section>
+      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8b8176] transition group-hover:text-[#a48d78]">
+        {label}
+      </p>
+    </Link>
   );
 }
 
-function PreferenceRow({ label, value }: { label: string; value: string }) {
+function MenuRow({ label, desc, href, icon }: { label: string; desc: string; href: string; icon: string }) {
   return (
-    <div className="rounded-2xl border border-[#eadfd4] bg-white px-4 py-4">
-      <p className="text-[10px] font-medium uppercase tracking-[0.13em] text-[#8b8176]">
-        {label}
-      </p>
-      <p className="mt-2 text-[14px] font-semibold leading-6 text-[#221b13]">{value}</p>
-    </div>
+    <Link
+      href={href}
+      className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 transition duration-200 hover:bg-[#f6f1e8]"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f6f1e8] text-[#221b13] transition duration-200 group-hover:bg-white group-hover:text-[#a48d78]">
+        <Icon path={icon} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-semibold text-[#221b13]">{label}</span>
+        <span className="block truncate text-[12px] text-[#8b8176]">{desc}</span>
+      </span>
+      <span className="text-[#b8ab9b] transition-transform duration-200 group-hover:translate-x-0.5">
+        <Icon path={ICONS.chevron} className="h-4 w-4" />
+      </span>
+    </Link>
   );
 }
 
@@ -753,7 +761,7 @@ function Modal({
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#111827]/45 px-4 py-8 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-[28px] border border-[#eadfd4] bg-[#fffdf9] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.22)]">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h3 className="font-display text-[34px] leading-none tracking-[-0.04em] text-[#171717]">
+          <h3 className="font-display text-[28px] leading-none tracking-[-0.03em] text-[#171717]">
             {title}
           </h3>
           <button
@@ -762,7 +770,7 @@ function Modal({
             className="grid h-10 w-10 place-items-center rounded-full border border-[#ded3c6] bg-white text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
             aria-label="Close modal"
           >
-            <CloseIcon />
+            <Icon path="M5 5l14 14M19 5L5 19" className="h-5 w-5" />
           </button>
         </div>
         {children}

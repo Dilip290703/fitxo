@@ -225,6 +225,34 @@
   }
 }
 
+/* ============================================================
+   Generic rise-in — a robust CSS entrance for blocks that must
+   NEVER get stuck hidden (used on the profile). `forwards` holds
+   the final state; a per-element animation-delay gives the stagger.
+   ============================================================ */
+.rise-in {
+  animation: fitzoRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Transform-only on purpose: opacity is never animated, so the content is
+   visible even if the animation clock never advances (paused/background
+   renderers, throttled webviews). Worst case it rests 12px lower — never
+   invisible. */
+@keyframes fitzoRiseIn {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
+}
+
 /* Gold rule that draws itself under "buy." once the headline has landed. */
 .hero-underline::after {
   content: "";
