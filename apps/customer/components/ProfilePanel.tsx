@@ -33,6 +33,9 @@ type Order = {
   eta: string;
 };
 
+/** The single view shown in the right panel — selected by the left menu. */
+type AccountView = "overview" | "addresses" | "rewards";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toUIAddress(addr: any): Address {
   return {
@@ -91,6 +94,7 @@ function Icon({ path, className = "h-[18px] w-[18px]" }: { path: string; classNa
 }
 
 const ICONS = {
+  home: "M3.5 10.5L12 3.5l8.5 7M5.5 9.5V20h13V9.5",
   bag: "M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2",
   heart: "M12 20s-7-4.6-7-9.3A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 7 2.7C19 15.4 12 20 12 20z",
   pin: "M12 21s6-5.7 6-11a6 6 0 1 0-12 0c0 5.3 6 11 6 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
@@ -122,6 +126,27 @@ export function ProfilePanel() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [deleteAddressId, setDeleteAddressId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<"logout" | "delete-account" | null>(null);
+  // Snitch-style account shell: the left menu selects ONE view for the right
+  // panel — nothing renders beside a menu entry with the same name.
+  const [activeView, setActiveView] = useState<AccountView>("overview");
+
+  const selectView = (view: AccountView) => {
+    setActiveView(view);
+    // Keep deep links (/profile#addresses from checkout etc.) working without
+    // stacking history entries per click.
+    window.history.replaceState(null, "", view === "overview" ? window.location.pathname : `#${view}`);
+  };
+
+  // Honour an incoming hash (e.g. /profile#addresses) on mount + back/forward.
+  useEffect(() => {
+    const applyHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash === "addresses" || hash === "rewards") setActiveView(hash);
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -219,11 +244,13 @@ export function ProfilePanel() {
     [user.name, user.email],
   );
 
-  const activeOrders = useMemo(
+  // Most recent order still in flight — the one thing worth surfacing on
+  // the Overview (status, not a duplicate order list; history lives at /orders).
+  const latestActive = useMemo(
     () =>
-      orders.filter(
+      orders.find(
         (o) => !["Delivered", "Completed", "Cancelled", "Return picked"].includes(o.status),
-      ).length,
+      ) ?? null,
     [orders],
   );
 
@@ -355,11 +382,16 @@ export function ProfilePanel() {
     );
   }
 
-  const menuItems = [
-    { label: "My Orders", desc: "Track deliveries & past orders", href: "/orders", icon: ICONS.bag },
+  // One entry per destination. `view` rows swap the right panel in place
+  // (Snitch pattern); `href` rows navigate to their own page.
+  const menuItems: Array<
+    { label: string; desc: string; icon: string } & ({ href: string } | { view: AccountView })
+  > = [
+    { label: "Overview", desc: "Your account at a glance", view: "overview", icon: ICONS.home },
+    { label: "Orders", desc: "Track deliveries & past orders", href: "/orders", icon: ICONS.bag },
     { label: "Wishlist", desc: `${wishlistCount} saved ${wishlistCount === 1 ? "look" : "looks"}`, href: "/wishlist", icon: ICONS.heart },
-    { label: "Saved Addresses", desc: `${addresses.length} delivery ${addresses.length === 1 ? "location" : "locations"}`, href: "#addresses", icon: ICONS.pin },
-    { label: "Coupons & Rewards", desc: "Credits & vouchers", href: "#rewards", icon: ICONS.ticket },
+    { label: "Addresses", desc: `${addresses.length} delivery ${addresses.length === 1 ? "location" : "locations"}`, view: "addresses", icon: ICONS.pin },
+    { label: "Coupons & Rewards", desc: "Credits & vouchers", view: "rewards", icon: ICONS.ticket },
     { label: "Notifications", desc: "Delivery & offer alerts", href: "/notifications", icon: ICONS.bell },
     { label: "Help & Support", desc: "Orders, returns & sizing", href: "/contact", icon: ICONS.help },
   ];
@@ -419,24 +451,28 @@ export function ProfilePanel() {
           </div>
         </header>
 
-        {/* ---------------------------------------------------- quick stats */}
-        <div style={delay(0.06)} className="rise-in mt-6 grid grid-cols-3 gap-3 sm:gap-4">
-          <StatTile label="Active orders" value={String(activeOrders)} href="/orders" />
-          <StatTile label="Wishlist" value={String(wishlistCount)} href="/wishlist" />
-          <StatTile label="Addresses" value={String(addresses.length)} href="#addresses" />
-        </div>
-
         {/* ---------------------------------------------------- body */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
-          {/* menu (Snitch-style list) */}
+          {/* menu (Snitch-style: navigation only — content lives in ONE right panel) */}
           <aside
-            style={delay(0.12)}
+            style={delay(0.08)}
             className="rise-in h-fit rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-2.5 shadow-[0_18px_50px_rgba(31,25,18,0.06)]"
           >
             <nav className="flex flex-col">
-              {menuItems.map((m) => (
-                <MenuRow key={m.label} {...m} />
-              ))}
+              {menuItems.map((m) =>
+                "view" in m ? (
+                  <MenuRow
+                    key={m.label}
+                    label={m.label}
+                    desc={m.desc}
+                    icon={m.icon}
+                    active={activeView === m.view}
+                    onClick={() => selectView(m.view)}
+                  />
+                ) : (
+                  <MenuRow key={m.label} label={m.label} desc={m.desc} icon={m.icon} href={m.href} />
+                ),
+              )}
             </nav>
 
             <div className="my-2 h-px bg-[#eadfd4]" />
@@ -466,70 +502,69 @@ export function ProfilePanel() {
             </button>
           </aside>
 
-          {/* content */}
-          <div className="space-y-6">
-            {/* recent orders */}
-            <section
-              style={delay(0.18)}
-              className="rise-in rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-[22px] leading-none tracking-[-0.02em] text-[#171717] sm:text-[24px]">
-                  Recent orders
-                </h2>
-                <Link
-                  href="/orders"
-                  className="text-[12px] font-semibold text-[#a48d78] transition hover:text-[#221b13]"
-                >
-                  View all
-                </Link>
-              </div>
+          {/* content — exactly ONE view renders here, chosen by the menu */}
+          <div className="min-w-0">
+            {activeView === "overview" ? (
+              <section key="overview" style={delay(0.16)} className="rise-in">
+                {/* Dark welcome banner — the account's hero, not a duplicate list. */}
+                <div className="overflow-hidden rounded-[24px] bg-[#191309] p-6 text-[#e8e2d9] shadow-[0_24px_60px_-24px_rgba(25,19,9,0.6)] sm:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#cbb9a4]">
+                    {user.membership}
+                  </p>
+                  <h2 className="mt-4 font-display text-[30px] leading-[1.08] tracking-[-0.02em] text-[#faf9f6] sm:text-[38px]">
+                    Your fitting room,
+                    <span className="block italic text-[#cbb9a4]">on call.</span>
+                  </h2>
+                  <p className="mt-3 max-w-[460px] text-[13px] leading-6 text-white/65">
+                    Book a slot, try at your door while the rider waits, and pay
+                    only for what you keep.
+                  </p>
+                </div>
 
-              {orders.length > 0 ? (
-                <div className="mt-5 space-y-3">
-                  {orders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-[#eadfd4] bg-white px-4 py-3.5"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[14px] font-semibold text-[#221b13]">{order.id}</span>
-                          <span className="rounded-full bg-[#f6f1e8] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#7b6f63]">
-                            {order.status}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[12px] text-[#6b6258]">
-                          {order.items} {order.items === 1 ? "item" : "items"} · {order.total} · {order.eta}
-                        </p>
+                {/* The one live thing worth surfacing: the order in flight. */}
+                {latestActive ? (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#eadfd4] bg-[#fffdf9] px-5 py-4 shadow-[0_18px_50px_rgba(31,25,18,0.06)]">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a48d78]">
+                        Order in progress
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        <span className="text-[14px] font-semibold text-[#221b13]">{latestActive.id}</span>
+                        <span className="rounded-full bg-[#f6f1e8] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#7b6f63]">
+                          {latestActive.status}
+                        </span>
                       </div>
-                      <Link
-                        href="/orders"
-                        className="inline-flex h-9 items-center justify-center rounded-full border border-[#d9ccbd] px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#221b13] transition duration-200 hover:bg-[#f6f1e8]"
-                      >
-                        Track
-                      </Link>
+                      <p className="mt-1 text-[12px] text-[#6b6258]">
+                        {latestActive.items} {latestActive.items === 1 ? "item" : "items"} · {latestActive.total} · {latestActive.eta}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-5 rounded-[16px] border border-dashed border-[#e0d4c5] bg-white px-5 py-8 text-center">
-                  <p className="text-[14px] text-[#8b8176]">No orders yet.</p>
-                  <Link
-                    href="/products"
-                    className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-[#221b13] px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22]"
-                  >
-                    Start shopping
-                  </Link>
-                </div>
-              )}
-            </section>
+                    <Link
+                      href="/orders"
+                      className="inline-flex h-10 items-center justify-center rounded-full bg-[#221b13] px-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22]"
+                    >
+                      Track order
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-dashed border-[#e0d4c5] bg-[#fffdf9] px-5 py-4">
+                    <p className="text-[13px] text-[#8b8176]">No order in progress right now.</p>
+                    <Link
+                      href="/products"
+                      className="inline-flex h-10 items-center justify-center rounded-full bg-[#221b13] px-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22]"
+                    >
+                      Shop new picks
+                    </Link>
+                  </div>
+                )}
+              </section>
+            ) : null}
 
             {/* address book */}
+            {activeView === "addresses" ? (
             <section
-              style={delay(0.24)}
-              id="addresses"
-              className="rise-in scroll-mt-28 rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
+              key="addresses"
+              style={delay(0.16)}
+              className="rise-in rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
             >
               <div className="flex items-center justify-between">
                 <h2 className="font-display text-[22px] leading-none tracking-[-0.02em] text-[#171717] sm:text-[24px]">
@@ -599,12 +634,14 @@ export function ProfilePanel() {
                 </p>
               )}
             </section>
+            ) : null}
 
             {/* coupons & rewards */}
+            {activeView === "rewards" ? (
             <section
-              style={delay(0.3)}
-              id="rewards"
-              className="rise-in scroll-mt-28 rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
+              key="rewards"
+              style={delay(0.16)}
+              className="rise-in rounded-[24px] border border-[#eadfd4] bg-[#fffdf9] p-5 shadow-[0_18px_50px_rgba(31,25,18,0.06)] sm:p-6"
             >
               <h2 className="font-display text-[22px] leading-none tracking-[-0.02em] text-[#171717] sm:text-[24px]">
                 Coupons &amp; rewards
@@ -626,6 +663,7 @@ export function ProfilePanel() {
                 ))}
               </div>
             </section>
+            ) : null}
           </div>
         </div>
       </div>
@@ -712,39 +750,66 @@ export function ProfilePanel() {
 
 /* ---------------------------------------------------------------- pieces */
 
-function StatTile({ label, value, href }: { label: string; value: string; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="group rounded-[18px] border border-[#eadfd4] bg-[#fffdf9] p-4 text-center shadow-[0_12px_34px_rgba(34,28,20,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#cbb9a4] sm:p-5"
-    >
-      <p className="font-display text-[30px] leading-none tracking-[-0.03em] text-[#171717] sm:text-[36px]">
-        {value}
-      </p>
-      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8b8176] transition group-hover:text-[#a48d78]">
-        {label}
-      </p>
-    </Link>
-  );
-}
+/** One menu row — a Link when `href` is given, a view-switching button otherwise. */
+function MenuRow({
+  label,
+  desc,
+  icon,
+  href,
+  active = false,
+  onClick,
+}: {
+  label: string;
+  desc: string;
+  icon: string;
+  href?: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const rowClass = `group flex w-full items-center gap-3.5 rounded-[16px] px-3.5 py-3 text-left transition duration-200 ${
+    active ? "bg-[#221b13]" : "hover:bg-[#f6f1e8]"
+  }`;
 
-function MenuRow({ label, desc, href, icon }: { label: string; desc: string; href: string; icon: string }) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 transition duration-200 hover:bg-[#f6f1e8]"
-    >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f6f1e8] text-[#221b13] transition duration-200 group-hover:bg-white group-hover:text-[#a48d78]">
+  const inner = (
+    <>
+      <span
+        className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition duration-200 ${
+          active
+            ? "bg-white/15 text-[#faf9f6]"
+            : "bg-[#f6f1e8] text-[#221b13] group-hover:bg-white group-hover:text-[#a48d78]"
+        }`}
+      >
         <Icon path={icon} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-semibold text-[#221b13]">{label}</span>
-        <span className="block truncate text-[12px] text-[#8b8176]">{desc}</span>
+        <span className={`block text-[14px] font-semibold ${active ? "text-[#faf9f6]" : "text-[#221b13]"}`}>
+          {label}
+        </span>
+        <span className={`block truncate text-[12px] ${active ? "text-white/60" : "text-[#8b8176]"}`}>
+          {desc}
+        </span>
       </span>
-      <span className="text-[#b8ab9b] transition-transform duration-200 group-hover:translate-x-0.5">
+      <span
+        className={`transition-transform duration-200 group-hover:translate-x-0.5 ${
+          active ? "text-white/50" : "text-[#b8ab9b]"
+        }`}
+      >
         <Icon path={ICONS.chevron} className="h-4 w-4" />
       </span>
-    </Link>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={rowClass}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} aria-current={active ? "true" : undefined} className={rowClass}>
+      {inner}
+    </button>
   );
 }
 
