@@ -28,7 +28,7 @@ independent reasons:
    commission" architecture is off the table until that scale.
 
 **What exists instead (and was hardened in this task):** the manual ledger flow.
-Money moves by hand (bank/UPI transfer by Jay/Amit); Admin > Store Payouts and
+Money moves by hand (bank/UPI transfer by Dilip/Amit); Admin > Store Payouts and
 Admin > Agent Payouts record it. Migration **042** adds a payment **reference
 (UTR / UPI txn id)** and a **destination snapshot** to both ledgers so every
 manual transfer is traceable and the ledger keeps saying where the money went
@@ -38,12 +38,12 @@ even after a rider/store edits their payout details.
 
 | # | Step | Owner | Notes |
 |---|------|-------|-------|
-| 1 | Register the business entity (Business PAN, ideally GSTIN) | Jay + Amit | Prerequisite for everything below |
-| 2 | Complete Payment Gateway **live** KYC + swap live keys, verified website, live webhook + Vault secret rotation | Jay | Independent of payouts; already on the known-issues list |
-| 3 | Sign up for **RazorpayX** (x.razorpay.com), pass the 2–3 day review | Jay | Needs #1's documents |
-| 4 | Complete RazorpayX KYC (separate from PG KYC) and fund the account | Jay | Current Account (Axis) or whatever variant Razorpay offers at signup |
+| 1 | Register the business entity (Business PAN, ideally GSTIN) | Dilip + Amit | Prerequisite for everything below |
+| 2 | Complete Payment Gateway **live** KYC + swap live keys, verified website, live webhook + Vault secret rotation | Dilip | Independent of payouts; already on the known-issues list |
+| 3 | Sign up for **RazorpayX** (x.razorpay.com), pass the 2–3 day review | Dilip | Needs #1's documents |
+| 4 | Complete RazorpayX KYC (separate from PG KYC) and fund the account | Dilip | Current Account (Axis) or whatever variant Razorpay offers at signup |
 | 5 | Generate RazorpayX **test-mode** keys → build + test the integration (below) | dev (Claude/D) | This is the point where coding starts |
-| 6 | Live keys, small real payout to a team member's account, then enable for stores/riders | Jay + dev | |
+| 6 | Live keys, small real payout to a team member's account, then enable for stores/riders | Dilip + dev | |
 | 7 | Revisit **Route** when domestic turnover crosses ₹40L | later | Would replace store payouts entirely (auto-split at capture; no payout liability) |
 
 ## Integration sketch (for step 5, ~1–2 days once keys exist)
