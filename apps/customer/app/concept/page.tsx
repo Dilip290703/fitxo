@@ -6,6 +6,7 @@ import { CategoryRail, type RailItem } from "@/components/concept/CategoryRail";
 import { ArchHero, type HeroSlide } from "@/components/concept/ArchHero";
 import { PromoMarquee } from "@/components/concept/PromoMarquee";
 import { NewArrivals } from "@/components/concept/NewArrivals";
+import { BestSellers } from "@/components/concept/BestSellers";
 import { FeaturedProduct } from "@/components/concept/FeaturedProduct";
 import { FantasticalBand } from "@/components/concept/FantasticalBand";
 import { ShoppableVideo } from "@/components/concept/ShoppableVideo";
@@ -64,6 +65,7 @@ export default async function ConceptPage() {
       <ArchHero slides={heroSlides} />
       <PromoMarquee />
       <NewArrivals products={list.slice(0, 4)} />
+      <BestSellers products={list} />
       <FeaturedProduct promoImage="/concept/promo.jpg" products={list.slice(4, 6)} />
       <FantasticalBand image="/concept/band.jpg" />
       <ShoppableVideo products={list.slice(6, 10)} />

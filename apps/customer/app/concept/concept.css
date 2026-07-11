@@ -50,14 +50,41 @@
   }
 }
 
-/* The ARLUNE arch: a tall image block with a domed top. */
-.cx-arch {
-  border-radius: 260px 260px 18px 18px;
+/* Slow continuous Ken-Burns zoom (loops, no remount needed). */
+@keyframes cxZoom {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+.cx-kenburns {
+  animation: cxZoom 14s ease-in-out infinite alternate;
 }
 
-@media (max-width: 640px) {
-  .cx-arch {
-    border-radius: 140px 140px 14px 14px;
+/* Odometer roll for countdown digits. */
+@keyframes cxRoll {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.cx-roll {
+  animation: cxRoll 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-kenburns,
+  .cx-roll {
+    animation: none;
   }
 }
 

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxReveal";
 
 /** "JOURNAL" — 3 editorial blog cards with date pills (ARLUNE reference). */
 const POSTS = [
@@ -24,17 +25,18 @@ export function Journal({ images }: { images: string[] }) {
   return (
     <section id="journal" className="bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-[1400px] px-5 lg:px-8">
-        <div className="cx-rise text-center">
+        <CxReveal className="text-center">
           <p className="text-[13px] font-semibold uppercase tracking-[0.28em] text-[#8a8a8a]">Sub title top</p>
           <h2 className="mt-3 font-sans text-[clamp(2rem,4vw,3rem)] font-black uppercase text-[#1a1a1a]">Journal</h2>
           <p className="mx-auto mt-4 max-w-[560px] text-[15px] text-[#6b6b6b]">
             Subscribe for the latest news and style notes from our editors.
           </p>
-        </div>
+        </CxReveal>
 
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
+        <CxRevealGroup className="mt-12 grid gap-8 md:grid-cols-3">
           {POSTS.map((post, i) => (
-            <article key={post.title} className="group">
+            <CxRiseChild key={post.title}>
+            <article className="group">
               <Link href="#" className="relative block aspect-[4/5] overflow-hidden rounded-[6px] bg-[#f0eeeb]">
                 {images[i] ? (
                   <Image
@@ -62,8 +64,9 @@ export function Journal({ images }: { images: string[] }) {
                 More details
               </Link>
             </article>
+            </CxRiseChild>
           ))}
-        </div>
+        </CxRevealGroup>
       </div>
     </section>
   );

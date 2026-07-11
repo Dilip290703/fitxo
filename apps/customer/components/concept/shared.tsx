@@ -34,6 +34,8 @@ export const CX_ICONS = {
   close: "M6 6l12 12M18 6L6 18",
   clock: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
   check: "M5 13l4 4 10-10",
+  eye: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  swap: "M7 4v13m0 0l-3-3m3 3l3-3M17 20V7m0 0l3 3m-3-3l-3 3",
 };
 
 /** ARLUNE accent tan — used for buttons, marquee, active states. */
