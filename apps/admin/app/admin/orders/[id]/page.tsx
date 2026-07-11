@@ -299,9 +299,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
             </div>
             <p className="mt-2 text-[10.5px] leading-4 text-faint">
-              Margin = commission + delivery charge − rider pay. Razorpay gateway fees aren&apos;t tracked yet, and
-              prepaid orders don&apos;t collect the delivery charge through Razorpay yet, so a non-zero delivery
-              charge may overstate margin until fee collection ships.
+              Margin = commission + delivery charge − rider pay. The delivery charge is collected with the first
+              Keep payment (040) — it goes uncollected when everything is returned, and Razorpay gateway fees
+              aren&apos;t tracked yet, so margin can overstate slightly.
             </p>
           </div>
 

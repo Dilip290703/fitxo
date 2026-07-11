@@ -162,10 +162,13 @@ export function OrderTrackingView({
   order,
   items: initialItems,
   trySession,
+  pendingDeliveryFee = 0,
 }: {
   order: TrackingOrder;
   items: TrackingItem[];
   trySession: TrackingSession;
+  /** Delivery fee (₹) the next Keep charge will carry — 0 once collected or on free delivery. */
+  pendingDeliveryFee?: number;
 }) {
   const router = useRouter();
   const timeLeft = useCountdown(trySession?.deadline_at ?? null);
@@ -281,7 +284,10 @@ export function OrderTrackingView({
       amount: payment.amount,
       currency: payment.currency,
       name: "Fitzo",
-      description: `Keep — ${payment.productName}`,
+      description:
+        payment.deliveryFee > 0
+          ? `Keep — ${payment.productName} (incl. ₹${payment.deliveryFee.toLocaleString("en-IN")} delivery fee)`
+          : `Keep — ${payment.productName}`,
       order_id: payment.rzpOrderId,
       theme: { color: "#171d2b" },
       modal: {
@@ -566,6 +572,15 @@ export function OrderTrackingView({
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8b7058]">
             Items
           </p>
+          {/* Fee-on-first-keep heads-up: no surprise totals in the payment modal. */}
+          {pendingDeliveryFee > 0 &&
+            tryWindowLive &&
+            !initialItems.some((i) => decisions[i.id] === "keep") && (
+            <p className="mt-2 rounded-[10px] bg-[#fff4e5] px-3 py-2 text-[12px] text-[#b45309]">
+              The ₹{pendingDeliveryFee.toLocaleString("en-IN")} delivery fee is added to your
+              first Keep payment.
+            </p>
+          )}
           <ul className="mt-3 space-y-3">
             {initialItems.map((item) => {
               const decision = decisions[item.id];

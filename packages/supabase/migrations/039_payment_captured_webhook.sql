@@ -20,7 +20,7 @@
 -- the payments row FOR UPDATE and no-ops when it is already 'success' — whoever
 -- arrives second waits on the lock, then does nothing.
 --
--- ONE-TIME MANUAL STEPS (Dilip):
+-- ONE-TIME MANUAL STEPS (Jay — owns Razorpay):
 --   1. Razorpay Dashboard → Settings → Webhooks → Add New Webhook:
 --        URL:            https://<customer-domain>/api/razorpay/webhook
 --                        (local testing: expose :3000 via a tunnel, e.g. ngrok)
