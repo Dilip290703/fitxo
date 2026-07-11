@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DataTable, { Column } from '@/components/admin/DataTable';
+import RefundDialog from './RefundDialog';
 
 export interface PaymentRow {
   id: string;
@@ -45,6 +46,7 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
     STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as string) : 'all',
   );
   const [search, setSearch] = useState('');
+  const [refunding, setRefunding] = useState<PaymentRow | null>(null);
 
   const filtered = useMemo(() => {
     return payments.filter((p) => {
@@ -107,6 +109,23 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
       sortable: true,
       render: (_, row) => <span className="text-xs text-soft">{formatDateTime(row.paid_at ?? row.created_at)}</span>,
     },
+    {
+      key: 'actions',
+      label: '',
+      render: (_, row) =>
+        row.status === 'success' && row.payment_method === 'razorpay' && row.razorpay_payment_id ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation(); // row click navigates to the order
+              setRefunding(row);
+            }}
+            className="text-xs font-medium text-danger hover:underline"
+          >
+            Refund
+          </button>
+        ) : null,
+    },
   ];
 
   return (
@@ -142,6 +161,8 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
         emptyMessage="No payment records found."
         onRowClick={(row) => router.push(`/admin/orders/${row.order_id}`)}
       />
+
+      {refunding && <RefundDialog payment={refunding} onClose={() => setRefunding(null)} />}
     </div>
   );
 }
