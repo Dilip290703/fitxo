@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { inr, type ConceptProduct } from "@/components/concept/shared";
 import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxReveal";
+import { AutoVideo } from "@/components/concept/AutoVideo";
 
 /**
  * "Shoppable Video" row (ARLUNE reference). Each card autoplays a muted,
@@ -25,20 +26,14 @@ export function ShoppableVideo({ products }: { products: ConceptProduct[] }) {
           {cards.map((p, i) => (
             <CxRiseChild key={p.id}>
               <div className="group overflow-hidden rounded-[16px] border border-[#eee] bg-white shadow-[0_18px_44px_-28px_rgba(0,0,0,0.25)]">
-                <div className="relative aspect-[3/5] overflow-hidden bg-[#f0eeeb]">
-                  {/* Autoplaying clip; poster is the live product still until the
-                      real vertical clip is dropped at /concept/video-{n}.mp4 */}
-                  <video
-                    className="absolute inset-0 h-full w-full object-cover"
+                {/* aspect-[9/16] matches the source clips exactly, so the model
+                    is never cropped (no cut-off heads). */}
+                <div className="relative aspect-[9/16] overflow-hidden bg-[#f0eeeb]">
+                  <AutoVideo
+                    src={`/concept/video-${i + 1}.mp4`}
                     poster={p.image || undefined}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="none"
-                  >
-                    <source src={`/concept/video-${i + 1}.mp4`} type="video/mp4" />
-                  </video>
+                    className="absolute inset-0 h-full w-full object-cover object-top"
+                  />
 
                   {/* Product chip */}
                   <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-lg bg-white/95 p-2 shadow-md">

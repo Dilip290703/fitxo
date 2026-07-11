@@ -1,4 +1,5 @@
 import { CxReveal } from "@/components/concept/CxReveal";
+import { AutoVideo } from "@/components/concept/AutoVideo";
 
 /**
  * Full-bleed lifestyle band (ARLUNE "Fantastical Friends"). Plays a muted,
@@ -8,17 +9,11 @@ import { CxReveal } from "@/components/concept/CxReveal";
 export function FantasticalBand({ image }: { image: string }) {
   return (
     <section className="relative my-4 h-[440px] w-full overflow-hidden sm:h-[560px]">
-      <video
-        className="absolute inset-0 h-full w-full object-cover"
+      <AutoVideo
+        src="/concept/band.mp4"
         poster={image || undefined}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="none"
-      >
-        <source src="/concept/band.mp4" type="video/mp4" />
-      </video>
+        className="absolute inset-0 h-full w-full object-cover"
+      />
       <div className="absolute inset-0 bg-black/35" />
       <CxReveal className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
         <p className="text-[13px] font-semibold uppercase tracking-[0.28em] text-white/85">New Collection</p>

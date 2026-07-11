@@ -24,25 +24,18 @@ const RAIL_LABELS = ["Jeans", "Fancy Top", "T-Shirts", "Sweaters", "Jacket", "Sh
 
 const HERO_COPY = [
   {
-    eyebrow: "Women's Collection",
-    title: "Find Your Perfect Look",
-    body: "Book a slot, try on at your door while the rider waits, and keep only what fits.",
-    cta: "Shop Women's",
+    eyebrow: "New Collection",
+    title: "Trends & Look",
+    body: "Curated staples from stores near you — booked to your door in 60 minutes.",
+    cta: "Shop the edit",
     image: "/concept/hero-1.jpg",
   },
   {
-    eyebrow: "New In",
-    title: "Try It On First",
-    body: "No guesswork. A rider brings your picks and waits — pay only for what you love.",
-    cta: "Shop New In",
-    image: "/concept/hero-2.jpg",
-  },
-  {
-    eyebrow: "Men's Edit",
+    eyebrow: "Try at Home",
     title: "Fits, Delivered",
-    body: "Neutral staples from stores near you, at your door in 60 minutes.",
-    cta: "Shop Men's",
-    image: "/concept/hero-3.jpg",
+    body: "A rider brings your picks and waits while you try them on. Keep only what fits.",
+    cta: "How it works",
+    image: "/concept/hero-2.jpg",
   },
 ];
 
