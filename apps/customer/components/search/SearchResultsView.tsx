@@ -85,7 +85,7 @@ export function SearchResultsView({ initialQuery }: Props) {
             <button
               type="button"
               onClick={() => handleChange("")}
-              className="shrink-0 rounded-full p-1 text-[#9b8f83] hover:text-[#1f2a3c]"
+              className="shrink-0 rounded-full p-1 text-[#9b8f83] hover:text-[#221b13]"
               aria-label="Clear search"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -106,22 +106,22 @@ export function SearchResultsView({ initialQuery }: Props) {
           </div>
         ) : !query.trim() ? (
           <div className="py-16 text-center">
-            <p className="text-[15px] font-semibold text-[#1f2a3c]">What are you looking for?</p>
+            <p className="text-[15px] font-semibold text-[#221b13]">What are you looking for?</p>
             <p className="mt-2 text-[14px] text-[#6b6258]">Type a product name, brand, or style above.</p>
             <Link
               href="/products"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
             >
               Browse all products
             </Link>
           </div>
         ) : searched && results.length === 0 ? (
           <div className="py-16 text-center">
-            <p className="text-[15px] font-semibold text-[#1f2a3c]">No results for &ldquo;{query}&rdquo;</p>
+            <p className="text-[15px] font-semibold text-[#221b13]">No results for &ldquo;{query}&rdquo;</p>
             <p className="mt-2 text-[14px] text-[#6b6258]">Try a different name or browse our full catalogue.</p>
             <Link
               href="/products"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1f2a3c] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#221b13] px-6 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:-translate-y-0.5"
             >
               Browse all products
             </Link>
@@ -147,7 +147,7 @@ export function SearchResultsView({ initialQuery }: Props) {
                   )}
                   <div className="min-w-0 flex-1 py-1">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a7b6d]">{product.brand}</p>
-                    <h2 className="mt-1 truncate text-[15px] font-semibold text-[#171717] group-hover:text-[#1f2a3c]">
+                    <h2 className="mt-1 truncate text-[15px] font-semibold text-[#171717] group-hover:text-[#221b13]">
                       {product.title}
                     </h2>
                     <p className="mt-1 text-[13px] text-[#6b6258]">

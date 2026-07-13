@@ -2,14 +2,16 @@
 
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import { catalogProducts, products } from "@/lib/mockData";
+import { motion, useReducedMotion } from "framer-motion";
 import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
 import { CartItem } from "@/components/cart/CartItem";
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { useCart } from "@/components/cart/CartProvider";
+import { useLiveRecommendations } from "@/components/cart/useLiveRecommendations";
 
 export function AddToBagDrawer() {
   const { isDrawerOpen, closeDrawer, items, latestItem } = useCart();
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (!isDrawerOpen) return;
@@ -17,24 +19,19 @@ export function AddToBagDrawer() {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeDrawer();
+    };
+    window.addEventListener("keydown", onKey);
+
     return () => {
       document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
     };
-  }, [isDrawerOpen]);
+  }, [isDrawerOpen, closeDrawer]);
 
-  const recommendedProducts = useMemo(() => {
-    const source = [...catalogProducts, ...products];
-    return source.slice(0, 4).map((product) => ({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      image: product.image,
-      oldPrice:
-        "oldPrice" in product && typeof product.oldPrice === "number"
-          ? product.oldPrice
-          : product.price * 1.15,
-    }));
-  }, []);
+  const bagIds = useMemo(() => items.map((item) => item.id), [items]);
+  const recommendedProducts = useLiveRecommendations(4, bagIds);
 
   return (
     <div
@@ -50,10 +47,15 @@ export function AddToBagDrawer() {
         }`}
       />
 
-      <aside
-        className={`absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col bg-white shadow-2xl transition duration-300 ${
-          isDrawerOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+      <motion.aside
+        initial={false}
+        animate={{ x: isDrawerOpen ? "0%" : "100%" }}
+        transition={
+          reduce
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 320, damping: 34 }
+        }
+        className="absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between gap-3 border-b border-[#ece4da] px-5 py-4">
           <button
@@ -89,13 +91,15 @@ export function AddToBagDrawer() {
             )}
           </div>
 
-          <div className="mt-6">
-            <RecommendedProducts
-              title="You May Also Like"
-              products={recommendedProducts}
-              layout="grid"
-            />
-          </div>
+          {recommendedProducts.length > 0 ? (
+            <div className="mt-6">
+              <RecommendedProducts
+                title="You May Also Like"
+                products={recommendedProducts}
+                layout="grid"
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="border-t border-[#ece4da] px-5 py-4">
@@ -110,7 +114,7 @@ export function AddToBagDrawer() {
             {items.length} {items.length === 1 ? "item" : "items"} ready for try-on checkout
           </p>
         </div>
-      </aside>
+      </motion.aside>
     </div>
   );
 }

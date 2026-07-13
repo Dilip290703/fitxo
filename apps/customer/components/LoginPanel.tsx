@@ -22,8 +22,8 @@ type SignupForm = {
 type LoginErrors = Partial<Record<keyof LoginForm, string>>;
 type SignupErrors = Partial<Record<keyof SignupForm, string>>;
 
-const editorialImage =
-  "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1400&q=85";
+/** Same imagery family as the homepage hero (Jay's picks in public/hero/). */
+const editorialImage = "/hero/slide-4.jpg";
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -239,9 +239,9 @@ export function LoginPanel() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-88px)] w-full bg-[#f8f6f3] px-0 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
+    <section className="relative min-h-[calc(100vh-88px)] w-full bg-[#f4f1ea] px-0 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
       {toast ? (
-        <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#1f2a3c] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
+        <div className="fixed right-5 top-24 z-50 rounded-full border border-[#e4d7c8] bg-white px-5 py-3 text-[13px] font-semibold text-[#221b13] shadow-[0_18px_50px_rgba(23,23,23,0.12)]">
           {toast}
         </div>
       ) : null}
@@ -296,33 +296,32 @@ export function LoginPanel() {
           </div>
         </div>
 
-        <div className="flex min-h-0 items-center justify-center bg-[#fffdf9] px-5 py-7 sm:rounded-b-[2rem] sm:px-8 sm:py-8 lg:h-full lg:overflow-y-auto lg:rounded-bl-none lg:rounded-r-[2rem] lg:px-12 lg:py-8 xl:px-14">
+        <div className="flex min-h-0 items-center justify-center bg-[#fffdf9] px-5 py-6 sm:rounded-b-[2rem] sm:px-8 sm:py-6 lg:h-full lg:overflow-y-auto lg:rounded-bl-none lg:rounded-r-[2rem] lg:px-12 lg:py-5 xl:px-14">
           <div className="w-full max-w-[500px]">
             <div className="text-center">
-              <LinkLikeLogo />
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#958675]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#958675]">
                 Account access
               </p>
-              <h2 className="mt-3 font-display text-[38px] leading-none tracking-[-0.04em] text-[#171717] sm:text-[44px]">
+              <h2 className="mt-2 font-display text-[32px] leading-none tracking-[-0.04em] text-[#171717] sm:text-[36px]">
                 {mode === "login" ? "Welcome back" : "Start your Fitzo closet"}
               </h2>
-              <p className="mx-auto mt-3 max-w-sm text-[14px] leading-6 text-[#625b53]">
+              <p className="mx-auto mt-2 max-w-sm text-[13px] leading-5 text-[#625b53]">
                 {mode === "login"
                   ? "Sign in to manage orders, wishlists, addresses, and your AI style profile."
                   : "Create your account and start your try-on-at-your-door shopping experience."}
               </p>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 rounded-full bg-[#f0ebe4] p-1">
+            <div className="mt-4 grid grid-cols-2 rounded-full bg-[#f0ebe4] p-1">
               {(["login", "signup"] as AuthMode[]).map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => { setMode(item); setOtpPending(false); setOtpToken(""); }}
-                  className={`h-11 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] transition duration-200 ${
+                  className={`h-10 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] transition duration-200 ${
                     mode === item
-                      ? "bg-[#1f2a3c] text-white shadow-[0_10px_22px_rgba(31,42,60,0.18)]"
-                      : "text-[#6b6258] hover:text-[#1f2a3c]"
+                      ? "bg-[#221b13] text-white shadow-[0_10px_22px_rgba(31,42,60,0.18)]"
+                      : "text-[#6b6258] hover:text-[#221b13]"
                   }`}
                 >
                   {item === "login" ? "Login" : "Signup"}
@@ -348,7 +347,7 @@ export function LoginPanel() {
                   <button
                     type="button"
                     onClick={() => { setOtpPending(false); setOtpToken(""); }}
-                    className="block w-full text-center text-[12px] font-semibold text-[#806f5c] hover:text-[#1f2a3c]"
+                    className="block w-full text-center text-[12px] font-semibold text-[#806f5c] hover:text-[#221b13]"
                   >
                     ← Back
                   </button>
@@ -381,7 +380,7 @@ export function LoginPanel() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      className="text-[12px] font-semibold text-[#806f5c] transition duration-200 hover:text-[#1f2a3c]"
+                      className="text-[12px] font-semibold text-[#806f5c] transition duration-200 hover:text-[#221b13]"
                     >
                       Forgot password?
                     </button>
@@ -392,7 +391,7 @@ export function LoginPanel() {
                 </form>
               )
             ) : (
-              <form onSubmit={handleSignup} className="mt-5 space-y-3.5" noValidate>
+              <form onSubmit={handleSignup} className="mt-4 space-y-2.5" noValidate>
                 <Field
                   label="Full name"
                   value={signupForm.name}
@@ -441,7 +440,7 @@ export function LoginPanel() {
               </form>
             )}
 
-            <div className="my-4 flex items-center gap-4 text-[12px] text-[#9b9186]">
+            <div className="my-3 flex items-center gap-4 text-[12px] text-[#9b9186]">
               <span className="h-px flex-1 bg-[#e5ddd2]" />
               <span>or</span>
               <span className="h-px flex-1 bg-[#e5ddd2]" />
@@ -451,38 +450,30 @@ export function LoginPanel() {
               type="button"
               onClick={handleGoogle}
               disabled={isSubmitting}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-[#ded3c6] bg-white text-[13px] font-semibold text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c] disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex h-11 w-full items-center justify-center gap-3 rounded-2xl border border-[#ded3c6] bg-white text-[13px] font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <span>Continue with Google</span>
               <GoogleMark />
             </button>
 
-            <p className="mt-5 text-center text-[13px] text-[#6d655d]">
+            <p className="mt-3 text-center text-[13px] text-[#6d655d]">
               {mode === "login" ? "Do not have an account?" : "Already have an account?"}{" "}
               <button
                 type="button"
                 onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                className="font-semibold text-[#1f2a3c] underline-offset-4 hover:underline"
+                className="font-semibold text-[#221b13] underline-offset-4 hover:underline"
               >
                 {mode === "login" ? "Sign up" : "Login"}
               </button>
             </p>
 
-            <p className="mt-5 rounded-2xl bg-[#f6f1e8] px-4 py-3 text-center text-[12px] leading-6 text-[#6a6259]">
-              Secure login with Supabase Auth. Your data is protected and private.
+            <p className="mt-3 rounded-2xl bg-[#f6f1e8] px-4 py-2 text-center text-[12px] leading-5 text-[#6a6259]">
+              Secure login. Your data is protected and private.
             </p>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function LinkLikeLogo() {
-  return (
-    <div className="mx-auto inline-flex h-11 items-center justify-center rounded-full border border-[#e3d8ca] bg-white px-6 font-serif text-[21px] font-semibold tracking-[0.18em] text-[#151b28] shadow-[0_12px_30px_rgba(30,24,18,0.06)]">
-      FITZO
-    </div>
   );
 }
 
@@ -503,7 +494,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.13em] text-[#7f7469]">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.13em] text-[#7f7469]">
         {label}
       </span>
       <input
@@ -511,7 +502,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
-        className={`h-12 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#1f2a3c] outline-none transition duration-200 placeholder:text-[#aaa197] focus:border-[#1f2a3c] focus:ring-4 focus:ring-[#ffd233]/20 ${
+        className={`h-11 w-full rounded-2xl border bg-white px-4 text-[15px] text-[#221b13] outline-none transition duration-200 placeholder:text-[#aaa197] focus:border-[#221b13] focus:ring-4 focus:ring-[#a48d78]/20 ${
           error ? "border-[#c4492d]" : "border-[#ded3c6]"
         }`}
       />
@@ -531,7 +522,7 @@ function PrimaryButton({
     <button
       type="submit"
       disabled={disabled}
-      className="button-shadow h-12 w-full rounded-full bg-[#ffd233] text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1f2a3c] transition duration-200 hover:-translate-y-0.5 hover:bg-[#ffe04c] disabled:cursor-not-allowed disabled:opacity-70"
+      className="button-shadow h-12 w-full rounded-full bg-[#a48d78] text-[11px] font-semibold uppercase tracking-[0.16em] text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:bg-[#cbb9a4] disabled:cursor-not-allowed disabled:opacity-70"
     >
       {children}
     </button>

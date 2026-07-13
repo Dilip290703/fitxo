@@ -7,9 +7,24 @@ import {
   useMemo,
   useState,
 } from "react";
+import { createClient } from "@fitzo/supabase/client";
 import { AddToBagDrawer } from "@/components/cart/AddToBagDrawer";
+import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
 
-const CART_STORAGE_KEY = "fitzo-cart";
+/**
+ * The bag is persisted PER SIGNED-IN USER, never globally.
+ *
+ * A logged-out visitor can still add to the bag, but that bag lives in memory
+ * only: it is never written to storage and does not survive a reload. Signing
+ * out empties the bag on the spot.
+ *
+ * Before this, a single global `fitzo-cart` key meant one browser's bag was
+ * shared by every account that ever signed in on it, and it outlived sign-out.
+ */
+const cartStorageKey = (userId: string) => `fitzo-cart:${userId}`;
+
+/** The old global key. Removed on first load so stale bags don't linger. */
+const LEGACY_CART_KEY = "fitzo-cart";
 
 export type CartItem = {
   key: string;
@@ -31,7 +46,12 @@ type CartContextValue = {
   items: CartItem[];
   isDrawerOpen: boolean;
   latestItem: CartItem | null;
-  addItem: (item: AddCartItemInput) => void;
+  /**
+   * Adds to the bag. Returns false (and opens the login modal) when there is
+   * no session — the bag requires an account, so callers must not run their
+   * "added!" side effects unless this returns true.
+   */
+  addItem: (item: AddCartItemInput) => boolean;
   removeItem: (key: string) => void;
   moveToWishlist: (key: string) => void;
   updateQuantity: (key: string, quantity: number) => void;
@@ -56,40 +76,55 @@ export function CartProvider({
   const [items, setItems] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [latestItemKey, setLatestItemKey] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  /** `undefined` = auth not resolved yet, `null` = signed out. */
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
 
-  // Load cart from localStorage
-  useEffect(() => {
-    setMounted(true);
+  /** Opens when a guest tries to add to the bag. */
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-    const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
-
-    if (storedCart) {
-      try {
-        const parsed = JSON.parse(storedCart);
-
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-        } else {
-          setItems([]);
-          window.localStorage.removeItem(CART_STORAGE_KEY);
-        }
-      } catch {
-        setItems([]);
-        window.localStorage.removeItem(CART_STORAGE_KEY);
-      }
+  function readStoredCart(id: string): CartItem[] {
+    try {
+      const raw = window.localStorage.getItem(cartStorageKey(id));
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      window.localStorage.removeItem(cartStorageKey(id));
+      return [];
     }
+  }
+
+  // Track the session. addItem refuses without one, so a guest can never
+  // hold a bag: signed out means empty, signed in means that user's bag.
+  useEffect(() => {
+    window.localStorage.removeItem(LEGACY_CART_KEY);
+
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Save cart to localStorage
+  // Load the owner's bag; empty it the moment there is no owner.
   useEffect(() => {
-    if (!mounted) return;
+    if (userId === undefined) return; // still resolving
+    setItems(userId === null ? [] : readStoredCart(userId));
+  }, [userId]);
 
-    window.localStorage.setItem(
-      CART_STORAGE_KEY,
-      JSON.stringify(items),
-    );
-  }, [items, mounted]);
+  // Persist only for a signed-in user.
+  useEffect(() => {
+    if (!userId) return;
+    window.localStorage.setItem(cartStorageKey(userId), JSON.stringify(items));
+  }, [items, userId]);
 
   const latestItem = useMemo(() => {
     if (!Array.isArray(items)) return null;
@@ -126,6 +161,13 @@ export function CartProvider({
       latestItem,
 
       addItem: (item) => {
+        // The bag requires an account. No session (or auth still resolving):
+        // don't add — ask the guest to log in instead.
+        if (typeof userId !== "string") {
+          setShowLoginModal(true);
+          return false;
+        }
+
         const key = buildCartKey(item);
 
         setItems((current) => {
@@ -154,6 +196,7 @@ export function CartProvider({
 
         setLatestItemKey(key);
         setIsDrawerOpen(true);
+        return true;
       },
 
       removeItem: (key) => {
@@ -207,13 +250,18 @@ export function CartProvider({
       subtotal,
       totalItems,
     }),
-    [items, isDrawerOpen, latestItem, subtotal, totalItems],
+    [items, isDrawerOpen, latestItem, subtotal, totalItems, userId],
   );
 
   return (
     <CartContext.Provider value={value}>
       {children}
       <AddToBagDrawer />
+      <LoginRequiredModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Log in or create an account to add items to your bag — try-at-home orders need an account."
+      />
     </CartContext.Provider>
   );
 }

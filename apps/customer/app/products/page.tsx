@@ -6,6 +6,7 @@ type ProductsPageProps = {
     collection?: string;
     category?: string;
     liked?: string;
+    sort?: string;
   }>;
 };
 
@@ -19,6 +20,7 @@ export default async function ProductsPage({
       initialCategory={params.category}
       initialCollection={params.collection}
       initialSale={params.sale === "true"}
+      initialSort={params.sort}
     />
   );
 }

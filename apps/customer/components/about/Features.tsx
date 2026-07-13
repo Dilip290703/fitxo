@@ -19,7 +19,7 @@ const items = [
 
 export function Features() {
   return (
-    <section className="bg-[#f8f6f3] py-20">
+    <section className="bg-[#f4f1ea] py-20">
       <div className="section-frame">
         <div className="mx-auto max-w-[640px] text-center fade-up">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8b7b69]">

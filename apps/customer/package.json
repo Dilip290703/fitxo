@@ -7,12 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@fitzo/supabase": "workspace:*",
     "@fitzo/ui": "workspace:*",
     "@supabase/ssr": "^0.10.3",
+    "framer-motion": "^12.42.2",
     "next": "15.3.1",
     "razorpay": "^2.9.6",
     "react": "19.1.0",
@@ -25,6 +27,7 @@
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
     "tailwindcss": "4.1.4",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^4.1.9"
   }
 }

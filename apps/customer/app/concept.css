@@ -1,0 +1,97 @@
+/* ============================================================
+   Landing-page theme (ARLUNE-style build) — loaded by the home
+   route (app/page.tsx). All classes are `cx-` prefixed so nothing
+   here can collide with the rest of the site's styles.
+   ============================================================ */
+
+/* Seamless left-drift marquee: track holds its content twice, slides -50%. */
+@keyframes cxMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.cx-marquee {
+  animation: cxMarquee 26s linear infinite;
+}
+
+.cx-rail {
+  animation: cxMarquee 55s linear infinite;
+}
+
+.cx-rail:hover {
+  animation-play-state: paused;
+}
+
+/* Fade-up entrance for scroll sections — transform-only, so content is
+   visible even if the animation clock never advances. */
+@keyframes cxRise {
+  from {
+    transform: translateY(16px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.cx-rise {
+  animation: cxRise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-marquee,
+  .cx-rail,
+  .cx-rise {
+    animation: none;
+  }
+}
+
+/* Slow continuous Ken-Burns zoom (loops, no remount needed). */
+@keyframes cxZoom {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+.cx-kenburns {
+  animation: cxZoom 14s ease-in-out infinite alternate;
+}
+
+/* Odometer roll for countdown digits. */
+@keyframes cxRoll {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.cx-roll {
+  animation: cxRoll 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-kenburns,
+  .cx-roll {
+    animation: none;
+  }
+}
+
+/* Hide scrollbars on horizontally scrolling rails. */
+.cx-noscroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cx-noscroll::-webkit-scrollbar {
+  display: none;
+}

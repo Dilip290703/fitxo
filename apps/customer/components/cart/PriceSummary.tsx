@@ -26,10 +26,12 @@ export function PriceSummary({ subtotal, discount, delivery = 0 }: PriceSummaryP
           <span>Delivery</span>
           <span>{delivery === 0 ? "Free" : formatPrice(delivery)}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <span>Coupon Discount</span>
-          <span>- {formatPrice(discount)}</span>
-        </div>
+        {discount > 0 ? (
+          <div className="flex items-center justify-between">
+            <span>Coupon Discount</span>
+            <span>- {formatPrice(discount)}</span>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-6 border-t border-[#ece4da] pt-5">

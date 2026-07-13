@@ -8,10 +8,19 @@ import {
   useMemo,
   useState,
 } from "react";
+import { createClient } from "@fitzo/supabase/client";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { WishlistToast } from "@/components/wishlist/WishlistToast";
+import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
 
-const WISHLIST_STORAGE_KEY = "fitzo-wishlist";
+/**
+ * Persisted PER SIGNED-IN USER, like the bag — and like the bag, hearting an
+ * item REQUIRES an account: a guest tap opens the login modal instead of
+ * adding (no phantom in-memory list). The old global `fitzo-wishlist` key
+ * shared one wishlist across every account on the browser; removed on load.
+ */
+const wishlistStorageKey = (userId: string) => `fitzo-wishlist:${userId}`;
+const LEGACY_WISHLIST_KEY = "fitzo-wishlist";
 
 export type WishlistItem = {
   id: string;
@@ -39,25 +48,58 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<WishlistItem[]>([]);
-  const [mounted, setMounted] = useState(false);
+  /** `undefined` = auth not resolved yet, `null` = signed out. */
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
   const [toast, setToast] = useState("");
+  /** Opens when a guest tries to heart an item. */
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
+  // Track the session (same pattern as CartProvider).
   useEffect(() => {
-    setMounted(true);
-    const stored = getStorageItem(WISHLIST_STORAGE_KEY);
-    if (stored) {
-      try {
-        setItems(JSON.parse(stored));
-      } catch {
-        setItems([]);
-      }
-    }
+    window.localStorage.removeItem(LEGACY_WISHLIST_KEY);
+
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Load the owner's wishlist; empty it when there is no owner.
   useEffect(() => {
-    if (!mounted) return;
-    setStorageItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
-  }, [items, mounted]);
+    if (userId === undefined) return; // still resolving
+
+    if (userId === null) {
+      setItems([]);
+      return;
+    }
+
+    const stored = getStorageItem(wishlistStorageKey(userId));
+    if (!stored) {
+      setItems([]);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored);
+      setItems(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setItems([]);
+    }
+  }, [userId]);
+
+  // Persist only for a signed-in user.
+  useEffect(() => {
+    if (!userId) return;
+    setStorageItem(wishlistStorageKey(userId), JSON.stringify(items));
+  }, [items, userId]);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -66,6 +108,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   const addToWishlist = useCallback(
     (item: WishlistItem) => {
+      // Wishlist requires an account — block the add itself, don't fake it.
+      if (typeof userId !== "string") {
+        setShowLoginModal(true);
+        return;
+      }
       setItems((current) => {
         if (current.some((entry) => entry.id === item.id)) {
           return current;
@@ -74,7 +121,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       });
       showToast("Added to Wishlist");
     },
-    [showToast],
+    [showToast, userId],
   );
 
   const removeFromWishlist = useCallback(
@@ -87,6 +134,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   const toggleWishlist = useCallback(
     (item: WishlistItem) => {
+      // Same gate as the bag: no session, no heart — prompt login instead.
+      if (typeof userId !== "string") {
+        setShowLoginModal(true);
+        return;
+      }
       setItems((current) => {
         const exists = current.some((entry) => entry.id === item.id);
         if (exists) {
@@ -98,7 +150,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         return [...current, item];
       });
     },
-    [showToast],
+    [showToast, userId],
   );
 
   const value = useMemo<WishlistContextValue>(
@@ -117,6 +169,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     <WishlistContext.Provider value={value}>
       {children}
       <WishlistToast message={toast} />
+      <LoginRequiredModal
+        open={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Log in or create an account to save items to your wishlist."
+      />
     </WishlistContext.Provider>
   );
 }

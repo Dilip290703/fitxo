@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { FilterSidebar, type SelectedFilters } from "@/components/products/FilterSidebar";
@@ -17,15 +17,18 @@ import {
   type FilterOptions,
 } from "@/lib/supabase/products";
 
+import { normalizeSort, type SortOption } from "@/lib/sort";
+
 type ProductsCatalogPageProps = {
   initialCategory?: string;
   initialCollection?: string;
   initialSale?: boolean;
+  /** Preselects the sort dropdown from the URL (e.g. ?sort=popular). */
+  initialSort?: string;
 };
 
-type SortOption = "new-arrivals" | "popular" | "price-low" | "price-high";
-
-const PRODUCTS_PER_PAGE = 9;
+// 4 across × 4 down on xl — a full, unragged grid per page.
+const PRODUCTS_PER_PAGE = 16;
 
 const CATEGORY_MAP: Record<string, string> = {
   men: "men",
@@ -34,20 +37,21 @@ const CATEGORY_MAP: Record<string, string> = {
   child: "kids",
 };
 
+/** No category in the URL means "everything" — not Women. */
 function normalizeCategory(category?: string) {
-  if (!category) return "women";
+  if (!category) return "";
   return CATEGORY_MAP[category] ?? category;
 }
 
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} className="overflow-hidden border border-[#eee7de] bg-white">
-          <div className="h-[262px] animate-pulse bg-[#f0ece4] sm:h-[298px]" />
+    <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
+        <div key={i} className="overflow-hidden border border-[#e6dac8] bg-white">
+          <div className="h-[262px] animate-pulse bg-[#f4f1ea] sm:h-[298px]" />
           <div className="px-3 pb-4 pt-3 space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-[#f0ece4]" />
-            <div className="h-4 w-1/4 animate-pulse rounded bg-[#f0ece4]" />
+            <div className="h-4 w-3/4 animate-pulse rounded bg-[#f4f1ea]" />
+            <div className="h-4 w-1/4 animate-pulse rounded bg-[#f4f1ea]" />
           </div>
         </div>
       ))}
@@ -59,8 +63,9 @@ export function ProductsCatalogPage({
   initialCategory,
   initialCollection,
   initialSale = false,
+  initialSort,
 }: ProductsCatalogPageProps) {
-  const [sortBy, setSortBy] = useState<SortOption>("new-arrivals");
+  const [sortBy, setSortBy] = useState<SortOption>(normalizeSort(initialSort));
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
@@ -163,15 +168,27 @@ export function ProductsCatalogPage({
   const showingFrom = (currentPage - 1) * PRODUCTS_PER_PAGE + 1;
   const showingTo = Math.min(currentPage * PRODUCTS_PER_PAGE, total);
 
+  /** Jumping pages from the bottom of a long grid must bring you back to
+      the top of the results, not leave you stranded at the old scroll. */
+  const resultsTopRef = useRef<HTMLElement>(null);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <main className="min-h-screen bg-[#fbfaf7]">
+    <main className="min-h-screen bg-[#faf9f6]">
       <Navbar showSecondaryNav={false} searchMode="field" />
       <ProductNavbar
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
+        isSale={initialSale}
       />
 
-      <section className="mx-auto w-full max-w-[1280px] px-4 py-10 sm:px-6 lg:px-10">
+      <section
+        ref={resultsTopRef}
+        className="mx-auto w-full max-w-[1360px] scroll-mt-[128px] px-4 py-8 sm:px-6 lg:px-8"
+      >
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-[12px] text-[#4a463f]">
             {total > 0 ? (
@@ -206,8 +223,12 @@ export function ProductsCatalogPage({
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <div className="hidden lg:block">
+        <div className="grid items-start gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+          {/* Filter rail hugs the left edge and pins under the sticky navbar.
+              Only the rail scrolls its own overflow (filter lists can get
+              long); the product grid lives in the normal page flow so the
+              page scrolls as one and pagination is always reachable. */}
+          <div className="hidden lg:sticky lg:top-[96px] lg:block lg:max-h-[calc(100vh-112px)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1 [scrollbar-width:thin]">
             <FilterSidebar
               filters={filters}
               brands={filterOptions.brands}
@@ -229,11 +250,11 @@ export function ProductsCatalogPage({
               <ProductGrid products={products} />
             )}
             {!loading && totalPages > 1 ? (
-              <div className="mt-8">
+              <div className="mt-10 border-t border-[#e6dac8] pt-6">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={handlePageChange}
                 />
               </div>
             ) : null}

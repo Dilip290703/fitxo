@@ -15,7 +15,7 @@ const valueProps = [
 
 export function ValueProposition() {
   return (
-    <section id="why-fitzo" className="bg-[#fcfbf8] py-16 sm:py-20">
+    <section id="why-fitzo" className="bg-[#faf9f6] py-16 sm:py-20">
       <div className="section-frame">
         <div className="mx-auto max-w-[720px] text-center">
           <h2 className="font-display text-[38px] font-medium tracking-[-0.03em] text-black sm:text-[48px]">

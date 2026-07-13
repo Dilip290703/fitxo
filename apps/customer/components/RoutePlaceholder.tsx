@@ -26,7 +26,7 @@ export function RoutePlaceholder({
   return (
     <main className="page-shell min-h-screen">
       <Navbar />
-      <section className="bg-[#f8f6f3] px-6 py-20">
+      <section className="bg-[#f4f1ea] px-6 py-20">
         <div className="section-frame">
           <div className="max-w-3xl">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8a7b6d]">
@@ -41,13 +41,13 @@ export function RoutePlaceholder({
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={primaryHref}
-                className="inline-flex h-12 items-center justify-center rounded-full bg-[#1f2a3c] px-7 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#141d2b]"
+                className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#3a2f22]"
               >
                 {primaryLabel}
               </Link>
               <Link
                 href={secondaryHref}
-                className="inline-flex h-12 items-center justify-center rounded-full border border-[#d7cab9] bg-white px-7 text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#1f2a3c] transition duration-200 hover:bg-[#faf4eb]"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#d7cab9] bg-white px-7 text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#221b13] transition duration-200 hover:bg-[#faf4eb]"
               >
                 {secondaryLabel}
               </Link>

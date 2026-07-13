@@ -85,7 +85,7 @@ export function RecommendedCarousel({
               href={`/product/${product.id}`}
               className="min-w-[240px] overflow-hidden rounded-[22px] border border-[#ece4da] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(20,20,20,0.08)]"
             >
-              <div className="relative h-[280px] overflow-hidden bg-[#f0ece4]">
+              <div className="relative h-[280px] overflow-hidden bg-[#f4f1ea]">
                 {product.image ? (
                   <Image
                     src={product.image}
@@ -96,7 +96,7 @@ export function RecommendedCarousel({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
-                    <span className="text-[12px] text-[#b5a99a]">No image</span>
+                    <span className="text-[12px] text-[#cbb9a4]">No image</span>
                   </div>
                 )}
                 <WishlistButton

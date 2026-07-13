@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { EASE } from "@/components/motion";
 import { createClient } from "@fitzo/supabase/client";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
+import { SearchBar } from "@/components/SearchBar";
 import { useWishlist } from "@/store/wishlistStore";
 import { useLocation } from "@/store/locationStore";
 
@@ -37,24 +40,6 @@ const megaCategories = [
       { label: "Easy returns", href: "/products?category=kids" },
     ],
   },
-  {
-    title: "HOME",
-    href: "/products?category=home",
-    links: [
-      { label: "Lounge sets", href: "/products?category=home" },
-      { label: "Soft essentials", href: "/products?category=home" },
-      { label: "Nearby delivery", href: "/products?category=home" },
-    ],
-  },
-  {
-    title: "ACCESSORIES",
-    href: "/products?category=accessories",
-    links: [
-      { label: "Weekend add-ons", href: "/products?category=accessories" },
-      { label: "Event-ready extras", href: "/products?category=accessories" },
-      { label: "Trending now", href: "/products?category=accessories" },
-    ],
-  },
 ];
 
 const topLinks = [
@@ -69,24 +54,38 @@ const categoryLinks = [
   { label: "MEN", href: "/products?category=men" },
   { label: "WOMEN", href: "/products?category=women" },
   { label: "KIDS", href: "/products?category=kids" },
-  { label: "HOME", href: "/products?category=home" },
   { label: "COLLECTIONS", href: "/products?collection=summer" },
 ];
 
-function SearchIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
-      <path
-        d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
+/** Hover dropdowns for the slim secondary category bar. */
+const categoryMenus: Record<string, { label: string; href: string }[]> = {
+  MEN: [
+    { label: "Shirts", href: "/products?category=men" },
+    { label: "T-Shirts", href: "/products?category=men" },
+    { label: "Jeans & Trousers", href: "/products?category=men" },
+    { label: "Jackets", href: "/products?category=men&collection=summer" },
+    { label: "Footwear", href: "/products?category=men" },
+  ],
+  WOMEN: [
+    { label: "Dresses", href: "/products?category=women" },
+    { label: "Tops & Fancy Tops", href: "/products?category=women" },
+    { label: "Ethnic Wear", href: "/products?category=women&collection=summer" },
+    { label: "Footwear", href: "/products?category=women" },
+    { label: "Accessories", href: "/products?category=women" },
+  ],
+  KIDS: [
+    { label: "Boys", href: "/products?category=kids" },
+    { label: "Girls", href: "/products?category=kids" },
+    { label: "Festive Fits", href: "/products?category=kids" },
+    { label: "Everyday Styles", href: "/products?category=kids" },
+  ],
+  COLLECTIONS: [
+    { label: "Summer Edit", href: "/products?collection=summer" },
+    { label: "New Arrivals", href: "/products?sortBy=new-arrivals" },
+    { label: "Best Sellers", href: "/products" },
+    { label: "On Sale", href: "/products?sale=true" },
+  ],
+};
 
 function HeartIcon() {
   return (
@@ -160,12 +159,36 @@ function ChevronDown({ className = "" }: { className?: string }) {
   );
 }
 
-/** Check whether the current pathname matches a given nav href */
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  // Strip query string for matching
-  const basePath = href.split("?")[0];
-  return pathname.startsWith(basePath);
+/**
+ * Whether a nav href matches the CURRENT url, query string included.
+ * Exactly one of PRODUCTS / CATEGORIES / SALE may be active at a time:
+ * SALE owns ?sale=true, CATEGORIES owns ?category=…, and the plain
+ * PRODUCTS link only lights up when neither qualifier is present —
+ * previously all three underlined together because matching ignored
+ * the query string entirely.
+ */
+function isActive(
+  pathname: string,
+  search: URLSearchParams,
+  href: string,
+): boolean {
+  const [basePath, query] = href.split("?");
+  if (basePath === "/") return pathname === "/";
+  if (!pathname.startsWith(basePath)) return false;
+
+  const wanted = new URLSearchParams(query ?? "");
+  for (const [key, value] of wanted.entries()) {
+    if (search.get(key) !== value) return false;
+  }
+  if (!query && basePath === "/products") {
+    return search.get("sale") !== "true" && !search.get("category");
+  }
+  return true;
+}
+
+/** The CATEGORIES trigger is "active" when a category filter is applied. */
+function isCategoriesActive(pathname: string, search: URLSearchParams): boolean {
+  return pathname.startsWith("/products") && !!search.get("category");
 }
 
 function NavIconButton({
@@ -185,22 +208,17 @@ function NavIconButton({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 ${
-        active ? "text-[#1f2a3c]" : "text-[#6f6860]"
+      className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[#e3d7c5] hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 ${
+        active ? "bg-[#eadfce] text-[#221b13]" : "text-[#6f6860]"
       }`}
       aria-label={label}
     >
-      <span className="transition duration-200 group-hover:scale-105">{children}</span>
+      {children}
       {typeof badge === "number" && badge > 0 ? (
         <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
           {badge}
         </span>
       ) : null}
-      <span
-        className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
-          active ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-        }`}
-      />
     </button>
   );
 }
@@ -210,12 +228,22 @@ type NavbarProps = {
   searchMode?: "icon" | "field";
 };
 
-export function Navbar({
+/** Suspense wrapper — useSearchParams inside requires one at prerender time. */
+export function Navbar(props: NavbarProps = {}) {
+  return (
+    <Suspense fallback={null}>
+      <NavbarInner {...props} />
+    </Suspense>
+  );
+}
+
+function NavbarInner({
   showSecondaryNav = true,
   searchMode = "icon",
-}: NavbarProps = {}) {
+}: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { count } = useWishlist();
   const { totalItems } = useCart();
   const navRef = useRef<HTMLDivElement>(null);
@@ -224,6 +252,7 @@ export function Navbar({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { selectedPincode, setPincode } = useLocation();
+  const reduce = useReducedMotion();
 
   // Display label: show pincode if set, otherwise prompt
   const pincodeLabel = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Enter Pincode";
@@ -289,11 +318,15 @@ export function Navbar({
     <>
       <header
         id="top"
-        className="sticky top-0 z-40 border-b border-gray-200 bg-[#f8f6f3]/95 backdrop-blur-sm"
+        className="sticky top-0 z-40 border-b border-gray-200 bg-[#f4f1ea]/95 backdrop-blur-sm"
       >
         <div ref={navRef} className="relative border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 py-4 md:px-10 lg:px-12">
-            <nav className="hidden items-center gap-8 text-xs uppercase tracking-widest text-gray-600 md:flex">
+          {/* Three balanced grid columns: links | logo | actions. The logo used
+              to be absolutely centred, which let the right cluster slide
+              underneath it on narrower viewports. */}
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-6 py-4 md:grid-cols-[1fr_auto_1fr] md:px-10 lg:px-12">
+            <div className="flex items-center">
+            <nav className="hidden items-center gap-6 text-xs whitespace-nowrap uppercase tracking-widest text-gray-600 md:flex xl:gap-8">
               {topLinks.map((item) =>
                 item.isTrigger ? (
                   <button
@@ -301,7 +334,7 @@ export function Navbar({
                     type="button"
                     onClick={() => setIsCategoryOpen((current) => !current)}
                     className={`group relative inline-flex items-center gap-2 pb-2 transition-colors duration-200 hover:text-black ${
-                      isActive(pathname, item.href) ? "text-black" : ""
+                      isCategoriesActive(pathname, searchParams) ? "text-black" : ""
                     }`}
                     aria-expanded={isCategoryOpen}
                     aria-controls="fitzo-mega-menu"
@@ -312,7 +345,7 @@ export function Navbar({
                     />
                     <span
                       className={`pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full bg-black origin-left transition-all duration-300 ease-out ${
-                        isActive(pathname, item.href)
+                        isCategoriesActive(pathname, searchParams)
                           ? "scale-x-100 opacity-100"
                           : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
                       }`}
@@ -323,7 +356,7 @@ export function Navbar({
                     key={item.label}
                     href={item.href}
                     className={`group relative inline-block pb-2 transition-colors duration-200 hover:text-black ${
-                      isActive(pathname, item.href) ? "text-black" : ""
+                      isActive(pathname, searchParams, item.href) ? "text-black" : ""
                     }`}
                     onClick={() => {
                       setIsCategoryOpen(false);
@@ -333,7 +366,7 @@ export function Navbar({
                     <span>{item.label}</span>
                     <span
                       className={`pointer-events-none absolute bottom-0 left-0 h-[1.5px] w-full bg-black origin-left transition-all duration-300 ease-out ${
-                        isActive(pathname, item.href)
+                        isActive(pathname, searchParams, item.href)
                           ? "scale-x-100 opacity-100"
                           : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
                       }`}
@@ -352,20 +385,21 @@ export function Navbar({
             >
               <span className="block h-px w-4 bg-current shadow-[0_5px_0_0_currentColor,0_-5px_0_0_currentColor]" />
             </button>
+            </div>
 
             <button
               type="button"
               onClick={handleLogoClick}
-              className="absolute left-1/2 -translate-x-1/2 font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
+              className="justify-self-center font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
             >
               FITZO
             </button>
 
-            <div className="ml-auto flex items-center gap-3 text-gray-700 sm:gap-5">
+            <div className="flex items-center gap-3 justify-self-end text-gray-700 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setIsPincodeOpen(true)}
-                className="hidden items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition duration-200 hover:-translate-y-0.5 hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex"
+                className="hidden shrink-0 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm whitespace-nowrap text-gray-700 transition duration-200 hover:-translate-y-0.5 hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 lg:flex"
               >
                 <PinIcon />
                 <span>{pincodeLabel}</span>
@@ -374,46 +408,16 @@ export function Navbar({
 
               {searchMode === "field" ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/search")}
-                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:hidden ${
-                      isSearchActive ? "text-[#1f2a3c]" : "text-[#6f6860]"
-                    }`}
-                    aria-label="Search"
-                  >
-                    <SearchIcon />
-                    <span
-                      className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
-                        isSearchActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-                      }`}
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/search")}
-                    className={`group relative hidden h-10 items-center gap-3 rounded-md bg-white px-4 text-[13px] shadow-[inset_0_0_0_1px_rgba(215,207,198,0.85)] transition duration-200 hover:-translate-y-0.5 hover:text-[#1f2a3c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:flex ${
-                      isSearchActive ? "text-[#1f2a3c]" : "text-[#78726a]"
-                    }`}
-                    aria-label="Search"
-                  >
-                    <span>Search</span>
-                    <SearchIcon />
-                    <span
-                      className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-5 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
-                        isSearchActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-                      }`}
-                    />
-                  </button>
+                  {/* Icon on phones, full pill from md up — both expand in place. */}
+                  <div className="md:hidden">
+                    <SearchBar variant="icon" active={isSearchActive} />
+                  </div>
+                  <div className="hidden md:block">
+                    <SearchBar variant="field" active={isSearchActive} />
+                  </div>
                 </>
               ) : (
-                <NavIconButton
-                  label="Search"
-                  active={isSearchActive}
-                  onClick={() => router.push("/search")}
-                >
-                  <SearchIcon />
-                </NavIconButton>
+                <SearchBar variant="icon" active={isSearchActive} />
               )}
 
               <NavIconButton
@@ -434,37 +438,49 @@ export function Navbar({
                 <BagIcon />
               </NavIconButton>
 
-              <NavIconButton
-                label={isLoggedIn ? "Profile" : "Login"}
-                active={isProfileActive}
-                onClick={() => router.push(profileHref)}
-              >
-                <UserIcon />
-              </NavIconButton>
-
-              {!isLoggedIn ? (
+              {/* Profile icon only exists for a signed-in session — a logged-out
+                  visitor gets the Login/Signup pill instead (Jay, 2026-07-10). */}
+              {isLoggedIn ? (
+                <NavIconButton
+                  label="Profile"
+                  active={isProfileActive}
+                  onClick={() => router.push(profileHref)}
+                >
+                  <UserIcon />
+                </NavIconButton>
+              ) : (
                 <Link
                   href="/login"
-                  className={`group relative hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#1f2a3c] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-[#1f2a3c] hover:bg-[#fff9e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd233]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
-                    isLoginActive ? "border-[#1f2a3c]" : "border-[#d8cbb9]"
+                  className={`hidden h-10 items-center rounded-full border bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#221b13] shadow-[0_10px_24px_rgba(25,31,42,0.05)] transition-colors duration-200 hover:border-[#221b13] hover:bg-[#f0e7d6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/70 md:inline-flex lg:px-4 lg:text-[11px] ${
+                    isLoginActive ? "border-[#221b13]" : "border-[#d8cbb9]"
                   }`}
                 >
                   Login / Signup
-                  <span
-                    className={`pointer-events-none absolute -bottom-1 left-1/2 h-[1.5px] w-8 -translate-x-1/2 rounded-full bg-[#1f2a3c] transition duration-200 ${
-                      isLoginActive ? "opacity-100" : "opacity-0 group-hover:opacity-45"
-                    }`}
-                  />
                 </Link>
-              ) : null}
+              )}
             </div>
           </div>
 
-          {isCategoryOpen ? (
-            <div
-              id="fitzo-mega-menu"
-              className="absolute inset-x-0 top-full z-50 border-t border-[#ebe1d6] bg-[#fffdf9] shadow-[0_24px_60px_rgba(22,22,22,0.08)]"
-            >
+          <motion.div
+            id="fitzo-mega-menu"
+            initial={false}
+            animate={
+              isCategoryOpen
+                ? { opacity: 1, y: 0 }
+                : reduce
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: -10 }
+            }
+            transition={{
+              duration: isCategoryOpen ? 0.28 : 0.15,
+              ease: EASE,
+            }}
+            inert={!isCategoryOpen}
+            aria-hidden={!isCategoryOpen}
+            className={`absolute inset-x-0 top-full z-50 border-t border-[#ebe1d6] bg-[#fffdf9] shadow-[0_24px_60px_rgba(22,22,22,0.08)] ${
+              isCategoryOpen ? "pointer-events-auto" : "pointer-events-none"
+            }`}
+          >
               <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-5 md:px-10 lg:px-12">
                 {megaCategories.map((category) => (
                   <div key={category.title}>
@@ -490,11 +506,24 @@ export function Navbar({
                   </div>
                 ))}
               </div>
-            </div>
-          ) : null}
+            </motion.div>
 
-          {isMobileMenuOpen ? (
-            <div className="border-t border-[#ebe1d6] bg-[#fffdf9] px-6 py-5 md:hidden">
+          <motion.div
+            initial={false}
+            animate={
+              isMobileMenuOpen
+                ? { opacity: 1, height: "auto" }
+                : { opacity: 0, height: 0 }
+            }
+            transition={{
+              duration: isMobileMenuOpen ? 0.3 : 0.2,
+              ease: EASE,
+            }}
+            inert={!isMobileMenuOpen}
+            aria-hidden={!isMobileMenuOpen}
+            className="overflow-hidden border-t border-[#ebe1d6] bg-[#fffdf9] md:hidden"
+          >
+            <div className="px-6 py-5">
               <div className="space-y-4 text-sm uppercase tracking-[0.18em] text-[#57524b]">
                 {topLinks.map((item) =>
                   item.isTrigger ? (
@@ -503,7 +532,7 @@ export function Navbar({
                       type="button"
                       onClick={() => setIsCategoryOpen((current) => !current)}
                       className={`flex w-full items-center justify-between ${
-                        isActive(pathname, item.href) ? "text-black font-semibold" : ""
+                        isCategoriesActive(pathname, searchParams) ? "text-black font-semibold" : ""
                       }`}
                     >
                       <span>{item.label}</span>
@@ -516,7 +545,7 @@ export function Navbar({
                       key={item.label}
                       href={item.href}
                       className={`block ${
-                        isActive(pathname, item.href) ? "text-black font-semibold" : ""
+                        isActive(pathname, searchParams, item.href) ? "text-black font-semibold" : ""
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -535,8 +564,8 @@ export function Navbar({
                 {isLoggedIn ? (
                   <Link
                     href="/profile"
-                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-white px-4 py-3 font-semibold text-[#1f2a3c] ${
-                      isProfileActive ? "ring-1 ring-[#1f2a3c]" : ""
+                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-white px-4 py-3 font-semibold text-[#221b13] ${
+                      isProfileActive ? "ring-1 ring-[#221b13]" : ""
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -546,8 +575,8 @@ export function Navbar({
                 ) : (
                   <Link
                     href="/login"
-                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-[#fff9e6] px-4 py-3 font-semibold text-[#1f2a3c] ${
-                      isLoginActive ? "ring-1 ring-[#1f2a3c]" : ""
+                    className={`flex items-center justify-between rounded-2xl border border-[#e3d7c8] bg-[#fff9e6] px-4 py-3 font-semibold text-[#221b13] ${
+                      isLoginActive ? "ring-1 ring-[#221b13]" : ""
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -557,23 +586,42 @@ export function Navbar({
                 )}
               </div>
             </div>
-          ) : null}
+          </motion.div>
         </div>
 
         {showSecondaryNav ? (
           <div className="px-6 py-2 md:px-10 lg:px-12">
-            <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
+            <div className="flex items-center justify-center overflow-x-auto hide-scrollbar md:overflow-visible">
               <nav className="flex min-w-max items-center gap-8 text-sm uppercase tracking-widest text-gray-600">
-                {categoryLinks.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="flex items-center gap-2 transition duration-200 hover:text-black"
-                  >
-                    <span>{item.label}</span>
-                    <ChevronDown />
-                  </Link>
-                ))}
+                {categoryLinks.map((item) => {
+                  const submenu = categoryMenus[item.label];
+                  return (
+                    <div key={item.label} className="group relative">
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-2 py-1 transition duration-200 hover:text-black"
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown className="transition duration-200 group-hover:rotate-180" />
+                      </Link>
+                      {submenu ? (
+                        <div className="pointer-events-none absolute left-1/2 top-full z-50 hidden w-56 -translate-x-1/2 pt-3 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 md:block">
+                          <div className="translate-y-1 rounded-2xl border border-[#ebe1d6] bg-[#fffdf9] p-2 shadow-[0_24px_60px_rgba(22,22,22,0.12)] transition-transform duration-200 group-hover:translate-y-0">
+                            {submenu.map((link) => (
+                              <Link
+                                key={link.label}
+                                href={link.href}
+                                className="block rounded-xl px-4 py-2.5 text-[13px] normal-case tracking-normal text-[#6d665d] transition duration-150 hover:bg-[#f3ece1] hover:text-black"
+                              >
+                                {link.label}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </nav>
             </div>
           </div>

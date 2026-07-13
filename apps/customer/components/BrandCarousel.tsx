@@ -1,151 +1,69 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { brands } from "@/lib/mockData";
+import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion";
 
-function ArrowLeftIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
-      <path
-        d="M15 6l-6 6 6 6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
-
-function ArrowRightIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
-      <path
-        d="M9 6l6 6-6 6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
-
-function BrandBanner({
-  name,
-  logo,
-  containerClass,
-  logoClass,
-}: {
+type Brand = {
   name: string;
-  logo: string;
-  containerClass: string;
-  logoClass: string;
-}) {
+  slug: string;
+  logo_url: string | null;
+};
+
+/**
+ * "Shop by brand" — a responsive grid of the brands that actually exist in
+ * the catalogue. This used to render 10 hardcoded mock brands, 9 of whose
+ * `/brand/<slug>` links 404'd; every tile here now comes from the DB, so a
+ * tile can only link to a brand page that resolves. The section is hidden by
+ * FeaturedStores when the DB has no active brands.
+ */
+export function BrandCarousel({ brands }: { brands: Brand[] }) {
   return (
-    <div
-      className={`mt-4 flex h-[70px] w-full items-center justify-center overflow-hidden rounded-xl ${containerClass}`}
-    >
-      <img src={logo} alt={`${name} logo`} className={logoClass} />
-    </div>
-  );
-}
+    <div className="mx-auto max-w-[1240px]">
+      <Reveal className="mb-12 text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a48d78]">
+          Stores near you
+        </p>
+        <h2 className="mt-3 font-display text-3xl text-[#221b13] sm:text-4xl">
+          Shop by brand
+        </h2>
+      </Reveal>
 
-export function BrandCarousel() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-
-    const updateScrollState = () => {
-      setCanScrollLeft(element.scrollLeft > 8);
-      setCanScrollRight(
-        element.scrollLeft + element.clientWidth < element.scrollWidth - 8,
-      );
-    };
-
-    updateScrollState();
-    element.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState);
-
-    return () => {
-      element.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
-    };
-  }, []);
-
-  const scrollByAmount = (amount: number) => {
-    scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
-  return (
-    <div className="mx-auto max-w-[1240px] text-center">
-      <h2 className="mb-12 text-center font-serif text-3xl text-gray-900">
-        Shop by brand
-      </h2>
-
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => scrollByAmount(-300)}
-          disabled={!canScrollLeft}
-          className="absolute left-2 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border bg-white shadow-sm transition duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 md:flex"
-          aria-label="Scroll brands left"
-        >
-          <ArrowLeftIcon />
-        </button>
-
-        <div
-          ref={scrollRef}
-          className="hide-scrollbar flex gap-6 overflow-x-auto scroll-smooth px-1"
-        >
-          {brands.map((brand) => (
-            <Link
-              key={brand.slug}
-              href={`/brand/${brand.slug}`}
-              className="group min-w-[180px] rounded-2xl bg-white p-4 text-left shadow-sm transition duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20 sm:min-w-[210px] lg:min-w-[240px]"
-            >
-              <div className="relative h-[260px] w-full overflow-hidden rounded-xl">
+      <StaggerGroup
+        amount={0.15}
+        className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      >
+        {brands.map((brand) => (
+          <StaggerItem key={brand.slug}>
+          <Link
+            href={`/brand/${brand.slug}`}
+            className="group flex flex-col items-center justify-center gap-4 rounded-2xl border border-transparent bg-white px-4 py-10 text-center shadow-[0_10px_24px_-18px_rgba(34,27,19,0.25)] transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:border-[#e6dac8] hover:shadow-[0_28px_50px_-22px_rgba(164,141,120,0.5)] focus:outline-none focus:ring-2 focus:ring-[#221b13]/20"
+          >
+            {brand.logo_url ? (
+              <span className="relative h-16 w-28">
                 <Image
-                  src={brand.image}
-                  alt={brand.name}
+                  src={brand.logo_url}
+                  alt={`${brand.name} logo`}
                   fill
-                  className="object-cover transition duration-300 group-hover:scale-[1.03]"
-                  sizes="(max-width: 640px) 180px, (max-width: 1024px) 210px, 240px"
+                  className="object-contain transition duration-300 group-hover:scale-[1.06]"
+                  sizes="112px"
                 />
-              </div>
-              <BrandBanner
-                name={brand.name}
-                logo={brand.logo}
-                containerClass={brand.containerClass}
-                logoClass={brand.logoClass}
-              />
-            </Link>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => scrollByAmount(300)}
-          disabled={!canScrollRight}
-          className="absolute right-2 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border bg-white shadow-sm transition duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 md:flex"
-          aria-label="Scroll brands right"
-        >
-          <ArrowRightIcon />
-        </button>
-      </div>
+              </span>
+            ) : (
+              <span className="font-display text-[26px] font-semibold tracking-[-0.03em] text-black transition duration-300 group-hover:scale-[1.06]">
+                {brand.name}
+              </span>
+            )}
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a48d78] transition duration-200 group-hover:text-[#221b13]">
+              Shop {brand.name}
+            </span>
+          </Link>
+          </StaggerItem>
+        ))}
+      </StaggerGroup>
 
       <div className="mt-12 flex justify-center">
         <Link
           href="/brands"
-          className="inline-flex rounded-md bg-yellow-400 px-6 py-3 text-xs uppercase tracking-widest text-black transition duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#111111]/20"
+          className="inline-flex rounded-full bg-[#221b13] px-7 py-3 text-xs uppercase tracking-widest text-[#faf9f6] transition duration-200 hover:bg-[#3a2f22] focus:outline-none focus:ring-2 focus:ring-[#221b13]/20"
         >
           See more brands
         </Link>

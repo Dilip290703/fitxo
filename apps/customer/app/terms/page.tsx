@@ -56,7 +56,7 @@ const sections = [
     title: "6. Pricing & Payments",
     paragraphs: [
       "All prices displayed on FitZo are in Indian Rupees (₹) and include applicable GST unless otherwise stated. Prices are set by our partner stores and may change without notice.",
-      "Payment is collected only for items you choose to keep after your try-on. Accepted payment methods include UPI, credit/debit cards, net banking, digital wallets, and cash on delivery (COD) where available.",
+      "Payment is collected only for items you choose to keep after your try-on. Accepted payment methods include UPI, credit/debit cards, net banking, and digital wallets.",
       "In the event of a payment failure or dispute, FitZo will work with you and our payment partners to resolve the issue. Refunds for returned items are processed within 5–7 business days to the original payment method.",
     ],
   },
@@ -124,7 +124,7 @@ export default function TermsPage() {
       <Navbar showSecondaryNav={false} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-[#ece4d8] bg-[#f8f6f3] px-6 py-20 sm:px-10 lg:px-14">
+      <section className="relative overflow-hidden border-b border-[#ece4d8] bg-[#f4f1ea] px-6 py-20 sm:px-10 lg:px-14">
         <div className="absolute right-[-160px] top-[-100px] h-80 w-80 rounded-full bg-[#c2d6fb]/25 blur-3xl" />
         <div className="absolute bottom-[-140px] left-[-100px] h-72 w-72 rounded-full bg-[#ffd36a]/15 blur-3xl" />
 
@@ -157,7 +157,7 @@ export default function TermsPage() {
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="group flex items-center gap-3 rounded-xl px-4 py-3 text-[14px] text-[#3a3630] transition duration-200 hover:bg-[#f8f6f3]"
+                className="group flex items-center gap-3 rounded-xl px-4 py-3 text-[14px] text-[#3a3630] transition duration-200 hover:bg-[#f4f1ea]"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-[#d4c9bb] transition duration-200 group-hover:bg-[#111]" />
                 {section.title}

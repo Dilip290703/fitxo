@@ -1,7 +1,49 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { getDeliveryStatus, MOCK_DETECTED_PINCODE } from "@/lib/pincode";
+import { motion, useReducedMotion } from "framer-motion";
+import { getDeliveryStatus } from "@/lib/pincode";
+import { backdropVariants, panelVariants } from "@/components/motion";
+
+function CloseGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+/** Promisified geolocation — the callback API doesn't compose with async/await. */
+function getPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 5 * 60 * 1000,
+    });
+  });
+}
+
+function geoErrorMessage(error: unknown) {
+  if (typeof GeolocationPositionError !== "undefined" && error instanceof GeolocationPositionError) {
+    if (error.code === error.PERMISSION_DENIED) {
+      return "Location permission denied. Allow it in your browser, or enter your pincode below.";
+    }
+    if (error.code === error.POSITION_UNAVAILABLE) {
+      return "Your location isn't available right now. Enter your pincode below.";
+    }
+    if (error.code === error.TIMEOUT) {
+      return "Locating took too long. Try again, or enter your pincode below.";
+    }
+  }
+  return "Couldn't detect your location. Enter your pincode below.";
+}
 
 type PincodeModalProps = {
   isOpen: boolean;
@@ -19,6 +61,7 @@ export function PincodeModal({
   const [manualPincode, setManualPincode] = useState(currentValue);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (isOpen) {
@@ -27,7 +70,14 @@ export function PincodeModal({
     }
   }, [currentValue, isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   // Live status as the user types — shown when exactly 6 digits entered
   const liveStatus =
@@ -35,14 +85,51 @@ export function PincodeModal({
       ? getDeliveryStatus(manualPincode.trim())
       : null;
 
-  // Detect location — mocks a Pune pincode (real geo-detection deferred)
+  /**
+   * Real detection: browser geolocation -> our reverse-geocode route -> pincode.
+   * A detected pincode we don't serve is NOT saved silently — we drop it into
+   * the field so the red serviceability line explains why nothing happened.
+   */
   const handleDetect = async () => {
-    setLoading(true);
     setError("");
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    onSave(MOCK_DETECTED_PINCODE);
-    setLoading(false);
-    onClose();
+
+    if (!("geolocation" in navigator)) {
+      setError("This browser can't share your location. Enter your pincode below.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const position = await getPosition();
+      const { latitude, longitude } = position.coords;
+
+      const response = await fetch(
+        `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`,
+      );
+      const payload = (await response.json()) as {
+        pincode?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.pincode) {
+        setError(payload.error ?? "Couldn't find your pincode. Enter it below.");
+        return;
+      }
+
+      setManualPincode(payload.pincode);
+
+      if (!getDeliveryStatus(payload.pincode).available) {
+        // Serviceability message renders under the field; keep the modal open.
+        return;
+      }
+
+      onSave(payload.pincode);
+      onClose();
+    } catch (caught) {
+      setError(geoErrorMessage(caught));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -58,8 +145,25 @@ export function PincodeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="w-full max-w-md rounded-[28px] bg-[#fffdf9] p-7 shadow-[0_30px_70px_rgba(17,17,17,0.16)]">
+    <motion.div
+      initial={false}
+      animate={isOpen ? "open" : "closed"}
+      variants={backdropVariants}
+      inert={!isOpen}
+      aria-hidden={!isOpen}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 ${
+        isOpen ? "pointer-events-auto" : "pointer-events-none"
+      }`}
+      onClick={onClose}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Set your delivery pincode"
+        variants={panelVariants(reduce)}
+        className="w-full max-w-md rounded-[28px] bg-[#faf9f6] p-7 shadow-[0_30px_70px_rgba(17,17,17,0.16)]"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8a7b6d]">
@@ -75,10 +179,10 @@ export function PincodeModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-[#6f6a63] transition duration-200 hover:bg-[#f4ede4] hover:text-black"
+            className="cursor-pointer rounded-full p-2.5 text-[#6f6050] transition duration-200 hover:bg-[#f4f1ea] hover:text-[#221b13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/50"
             aria-label="Close pincode modal"
           >
-            ✕
+            <CloseGlyph />
           </button>
         </div>
 
@@ -135,13 +239,13 @@ export function PincodeModal({
 
             <button
               type="submit"
-              className="mt-4 inline-flex h-11 items-center rounded-full bg-[#1f2a3c] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#141d2b]"
+              className="mt-4 inline-flex h-11 cursor-pointer items-center rounded-full bg-[#221b13] px-6 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white transition duration-200 hover:bg-[#3a2f22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a48d78]/50"
             >
               Save pincode
             </button>
           </form>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import type { FrontendProduct } from "@/lib/supabase/products";
 import { WishlistButton } from "@/components/wishlist/WishlistButton";
 
+/** Snitch-style catalogue card: flat image tile, plain heart, name + price. */
 export function ProductCard({ product }: { product: FrontendProduct }) {
   const currentPrice = useMemo(
     () =>
@@ -28,77 +29,66 @@ export function ProductCard({ product }: { product: FrontendProduct }) {
   );
 
   return (
-    <article className="group overflow-hidden border border-[#eee7de] bg-white shadow-[0_4px_12px_rgba(16,16,16,0.03)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(16,16,16,0.08)]">
-      <Link
-        href={`/product/${product.id}`}
-        className="block focus:outline-none focus:ring-2 focus:ring-[#1f2a3c]/20"
-      >
-        <div className="relative h-[262px] overflow-hidden sm:h-[298px]">
+    <article className="group">
+      <div className="relative aspect-[3/4] overflow-hidden bg-[#f4f1ea]">
+        <Link
+          href={`/product/${product.id}`}
+          className="relative block h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#221b13]/20"
+        >
           {product.image ? (
             <Image
               src={product.image}
               alt={product.title}
               fill
-              className="object-cover transition duration-500 group-hover:scale-[1.04]"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
+              sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
             />
           ) : (
-            <div className="h-full w-full bg-[#f0ece4]" />
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="text-[12px] text-[#cbb9a4]">No image</span>
+            </div>
           )}
-          <WishlistButton
-            item={{
-              id: product.id,
-              title: product.title,
-              brand: product.brand,
-              image: product.image,
-              priceValue: product.price,
-              displayPrice: currentPrice,
-              displayOldPrice: oldPrice,
-              color: "Default",
-              size: product.sizeLabel,
-              availability: "Available nearby",
-            }}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-white/25 text-white backdrop-blur-sm transition duration-200"
-            defaultClassName="bg-[#5f716f]/70 hover:bg-[#465754]/85"
-            filledClassName="bg-[#1e293b]"
-          />
-        </div>
-      </Link>
+        </Link>
 
-      <div className="px-3 pb-4 pt-3">
+        <WishlistButton
+          item={{
+            id: product.id,
+            title: product.title,
+            brand: product.brand,
+            image: product.image,
+            priceValue: product.price,
+            displayPrice: currentPrice,
+            displayOldPrice: oldPrice,
+            color: "Default",
+            size: product.sizeLabel,
+            availability: "Available nearby",
+          }}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full shadow-[0_4px_14px_-6px_rgba(34,27,19,0.4)] transition duration-200"
+          defaultClassName="bg-white/90 text-[#221b13] backdrop-blur-sm hover:bg-white"
+          filledClassName="bg-[#221b13] text-white"
+        />
+      </div>
+
+      <div className="pt-3">
         <Link
           href={`/product/${product.id}`}
-          className="line-clamp-2 text-[13px] leading-5 text-[#1e1e1e] transition duration-200 hover:text-[#4d4d4d]"
+          className="line-clamp-1 text-[13px] leading-5 text-[#221b13] transition duration-200 hover:text-[#a48d78]"
+          title={product.title}
         >
           {product.title}
         </Link>
 
-        {product.storeName ? (
-          <p className="mt-1 truncate text-[11px] text-[#8b8178]">🏪 {product.storeName}</p>
-        ) : null}
-
-        <div className="mt-3 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[14px] font-semibold text-[#202020]">
-              {currentPrice}
-            </p>
-            {product.oldPrice !== product.price ? (
-              <p className="mt-1 text-[12px] text-[#a3a09c] line-through">
-                {oldPrice}
-              </p>
-            ) : null}
-          </div>
-          {product.orders > 0 ? (
-            <p className="text-[12px] text-[#66615a]">{product.orders} Orders</p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <p className="text-[14px] font-semibold text-[#221b13]">{currentPrice}</p>
+          {product.oldPrice !== product.price ? (
+            <p className="text-[12px] text-[#a48d78] line-through">{oldPrice}</p>
           ) : null}
         </div>
 
-        {product.badge ? (
-          <div className="mt-3">
-            <span className="inline-flex bg-[#171d2b] px-2.5 py-1 text-[10px] text-white">
-              {product.badge}
-            </span>
-          </div>
+        {product.storeName ? (
+          <p className="mt-1 truncate text-[11px] text-[#8a7a67]">
+            {product.storeName}
+          </p>
         ) : null}
       </div>
     </article>

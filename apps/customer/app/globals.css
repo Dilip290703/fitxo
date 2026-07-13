@@ -1,20 +1,31 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Fitzo palette — warm neutral, luxury-editorial.
+     Feather White  #faf9f6  page background
+     Porcelain Mist #f4f1ea  section / tile background
+     Creamed Oat    #e6dac8  borders, soft fills
+     Soft Sandstone #cbb9a4  strong borders, secondary accents
+     Desert Rock    #a48d78  primary accent, eyebrows, muted text
+   Text tones (#221b13 ink / #6f6050 warm grey) extend the palette
+   for readability — the swatch set itself has no dark value.
+   Fonts (--font-display / --font-sans) are injected on <html> by
+   next/font in app/layout.tsx (Playfair Display + Jost).
+   ============================================================ */
 :root {
-  --background: #fbfaf7;
-  --foreground: #141414;
-  --muted: #6f6f70;
+  --background: #faf9f6;
+  --foreground: #221b13;
+  --muted: #6f6050;
   --panel: #ffffff;
-  --nav-border: #e9e2d8;
-  --warm: #f5c29d;
-  --accent: #ffd233;
-  --soft-yellow: #ffe04c;
-  --hero-deep: #1d2637;
-  --hero-deeper: #162030;
-  --beige: #f6f1e8;
-  --sky: #b6dcfb;
-  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-  --font-sans: "Avenir Next", "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  --nav-border: #e6dac8;
+  --warm: #cbb9a4;
+  --accent: #a48d78;
+  --soft-yellow: #e6dac8;
+  --hero-deep: #221b13;
+  --hero-deeper: #191309;
+  --beige: #f4f1ea;
+  --sky: #e6dac8;
+  --ink: #221b13;
 }
 
 /* Base element resets live in @layer base so Tailwind utilities
@@ -44,6 +55,13 @@
 
   button {
     font: inherit;
+    /* Tailwind v4 preflight ships cursor: default on buttons — every
+       enabled button in the storefront is clickable, so restore pointer. */
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 }
 
@@ -77,7 +95,37 @@
 }
 
 .button-shadow {
-  box-shadow: 0 12px 25px rgba(255, 210, 51, 0.28);
+  box-shadow: 0 12px 25px rgba(164, 141, 120, 0.28);
+}
+
+/* ============================================================
+   Testimonials auto-marquee — the track holds the card list twice;
+   sliding -50% then looping reads as an endless belt. Hovering
+   anywhere on the track (i.e. on a card) freezes it.
+   ============================================================ */
+.marquee-track {
+  animation: marqueeScroll 38s linear infinite;
+}
+
+.marquee-track:hover,
+.marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
 }
 
 .soft-panel {
@@ -150,5 +198,173 @@
   .fade-delay-3 {
     opacity: 1;
     animation: none;
+  }
+}
+
+/* ============================================================
+   Hero micro-animations
+   Each .hero-item sets --i (its index); the stagger falls out of
+   the index rather than a delay class per child.
+   ============================================================ */
+
+.hero-item {
+  opacity: 0;
+  animation: heroRise 760ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 110ms + 80ms);
+}
+
+@keyframes heroRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   Generic rise-in — a robust CSS entrance for blocks that must
+   NEVER get stuck hidden (used on the profile). `forwards` holds
+   the final state; a per-element animation-delay gives the stagger.
+   ============================================================ */
+.rise-in {
+  animation: fitzoRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Transform-only on purpose: opacity is never animated, so the content is
+   visible even if the animation clock never advances (paused/background
+   renderers, throttled webviews). Worst case it rests 12px lower — never
+   invisible. */
+@keyframes fitzoRiseIn {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
+}
+
+/* Gold rule that draws itself under "buy." once the headline has landed. */
+.hero-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0.06em;
+  height: 3px;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.35;
+  animation: heroUnderline 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 620ms;
+}
+
+@keyframes heroUnderline {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Slow drift on the background blooms. */
+.hero-bloom {
+  animation: heroDrift 18s ease-in-out infinite alternate;
+}
+
+.hero-bloom--gold {
+  background: #cbb9a4;
+}
+
+.hero-bloom--blue {
+  background: #a48d78;
+  animation-duration: 22s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes heroDrift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(40px, -30px, 0) scale(1.12);
+  }
+}
+
+/* "Live" dot on the location pill. */
+.hero-pulse {
+  animation: heroPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes heroPulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(164, 141, 120, 0.5);
+  }
+
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 5px rgba(164, 141, 120, 0);
+  }
+}
+
+/* Very slow push-in on the hero photo — reads as "alive", not as motion. */
+.hero-kenburns {
+  animation: heroKenburns 24s ease-in-out infinite alternate;
+  transform-origin: 60% 40%;
+}
+
+@keyframes heroKenburns {
+  from {
+    transform: scale(1.04);
+  }
+
+  to {
+    transform: scale(1.13);
+  }
+}
+
+.hero-float {
+  animation: heroFloat 6s ease-in-out infinite;
+}
+
+@keyframes heroFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-item {
+    opacity: 1;
+    animation: none;
+  }
+
+  .hero-bloom,
+  .hero-pulse,
+  .hero-kenburns,
+  .hero-float {
+    animation: none;
+  }
+
+  .hero-underline::after {
+    animation: none;
+    transform: scaleX(1);
   }
 }

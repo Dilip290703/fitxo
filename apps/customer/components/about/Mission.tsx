@@ -1,6 +1,6 @@
 export function Mission() {
   return (
-    <section className="bg-[#f8f6f3] py-24">
+    <section className="bg-[#f4f1ea] py-24">
       <div className="section-frame">
         <div className="mx-auto max-w-[860px] text-center">
           <p className="fade-up text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8b7b69]">

@@ -25,28 +25,47 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+/**
+ * First / last always visible, a window of pages around the current one,
+ * ellipses only where pages are actually skipped. The old version rendered
+ * a fixed "1 2 … last" no matter where you were, so pages 3+ were
+ * unreachable except through the arrows.
+ */
+function buildPageItems(currentPage: number, totalPages: number) {
+  const items: Array<number | "ellipsis"> = [];
+  const window = new Set<number>([
+    1,
+    totalPages,
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+  ]);
+
+  let previous = 0;
+  for (let page = 1; page <= totalPages; page += 1) {
+    if (!window.has(page)) continue;
+    if (previous && page - previous > 1) items.push("ellipsis");
+    items.push(page);
+    previous = page;
+  }
+  return items;
+}
+
 export function Pagination({
   currentPage,
   totalPages,
   onPageChange,
 }: PaginationProps) {
-  const pageItems: Array<number | "ellipsis"> = [];
-
-  if (totalPages <= 4) {
-    for (let page = 1; page <= totalPages; page += 1) {
-      pageItems.push(page);
-    }
-  } else {
-    pageItems.push(1, 2, "ellipsis", totalPages);
-  }
+  const pageItems = buildPageItems(currentPage, totalPages);
 
   return (
-    <div className="flex items-center justify-end gap-2">
+    <nav aria-label="Pagination" className="flex items-center justify-center gap-2">
       <button
         type="button"
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
-        className="flex h-8 w-8 items-center justify-center border border-[#e3ddd5] bg-[#f2f0ec] text-[#353535] transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Previous page"
+        className="flex h-9 w-9 items-center justify-center border border-[#cbb9a4] bg-white text-[#221b13] transition duration-200 hover:border-[#221b13] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Chevron direction="left" />
       </button>
@@ -55,19 +74,20 @@ export function Pagination({
         item === "ellipsis" ? (
           <span
             key={`ellipsis-${index}`}
-            className="flex h-8 w-8 items-center justify-center border border-[#ece7df] text-[12px] text-[#77716a]"
+            className="flex h-9 w-9 items-end justify-center pb-2 text-[12px] text-[#a48d78]"
           >
-            ...
+            …
           </span>
         ) : (
           <button
             key={item}
             type="button"
             onClick={() => onPageChange(item)}
-            className={`flex h-8 w-8 items-center justify-center border text-[12px] transition duration-200 ${
+            aria-current={currentPage === item ? "page" : undefined}
+            className={`flex h-9 w-9 items-center justify-center border text-[12px] transition duration-200 ${
               currentPage === item
-                ? "border-[#1a2030] bg-[#1a2030] text-white"
-                : "border-[#ece7df] bg-white text-[#4a453f] hover:bg-[#f8f6f3]"
+                ? "border-[#221b13] bg-[#221b13] text-[#faf9f6]"
+                : "border-[#e6dac8] bg-white text-[#221b13] hover:border-[#221b13]"
             }`}
           >
             {item}
@@ -79,10 +99,11 @@ export function Pagination({
         type="button"
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
-        className="flex h-8 w-8 items-center justify-center border border-[#1a2030] bg-[#1a2030] text-white transition duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Next page"
+        className="flex h-9 w-9 items-center justify-center border border-[#cbb9a4] bg-white text-[#221b13] transition duration-200 hover:border-[#221b13] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Chevron direction="right" />
       </button>
-    </div>
+    </nav>
   );
 }

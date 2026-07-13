@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
         <div className="mt-6 space-y-3">
           {FAQS.map((item) => (
             <div key={item.q} className="rounded-[18px] border border-[#eadfd4] bg-white px-6 py-5 shadow-[0_10px_24px_rgba(34,28,20,0.04)]">
-              <p className="text-[15px] font-semibold text-[#1f2a3c]">{item.q}</p>
+              <p className="text-[15px] font-semibold text-[#221b13]">{item.q}</p>
               <p className="mt-2 text-[14px] leading-7 text-[#6b6258]">{item.a}</p>
             </div>
           ))}
@@ -66,7 +66,7 @@ export default function HowItWorksPage() {
         <div className="mt-10 text-center">
           <Link
             href="/products"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-[#1f2a3c] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-[#221b13] px-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition duration-200 hover:-translate-y-0.5"
           >
             Browse products
           </Link>
