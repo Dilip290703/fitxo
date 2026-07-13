@@ -4,15 +4,19 @@ import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 import type { ReactNode } from "react";
 
 /**
- * Scroll-triggered reveal for the concept page. Rises + fades in once, when
- * ~15% visible. Plays in a real browser; collapses to instant under
- * prefers-reduced-motion so content is never gated on the animation.
+ * Scroll-triggered reveals for the landing page.
+ *
+ * HARD RULE: transform-only — never animate opacity here. Content must be
+ * fully visible even if the animation clock never advances (stalled rAF,
+ * throttled tabs, embedded webviews). The rise/scale is pure enhancement;
+ * nothing is ever gated on it. Collapses to static under
+ * prefers-reduced-motion.
  */
 export function CxReveal({
   children,
   className,
   delay = 0,
-  y = 26,
+  y = 36,
   ...rest
 }: {
   children: ReactNode;
@@ -24,10 +28,10 @@ export function CxReveal({
   return (
     <motion.div
       className={className}
-      initial={reduce ? { opacity: 1 } : { opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={reduce ? false : { y }}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay }}
       {...rest}
     >
       {children}
@@ -36,12 +40,13 @@ export function CxReveal({
 }
 
 /**
- * Staggered reveal group — children wrapped in <CxRiseChild> cascade in.
+ * Staggered reveal group — children wrapped in <CxRiseChild> cascade in
+ * one-by-one as the group scrolls into view.
  */
 export function CxRevealGroup({
   children,
   className,
-  stagger = 0.08,
+  stagger = 0.1,
 }: {
   children: ReactNode;
   className?: string;
@@ -67,10 +72,14 @@ export function CxRiseChild({ children, className }: { children: ReactNode; clas
       className={className}
       variants={
         reduce
-          ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
+          ? {}
           : {
-              hidden: { opacity: 0, y: 28 },
-              show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+              hidden: { y: 44, scale: 0.97 },
+              show: {
+                y: 0,
+                scale: 1,
+                transition: { type: "spring", stiffness: 110, damping: 18, mass: 0.9 },
+              },
             }
       }
     >

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { inr, type ConceptProduct } from "@/components/concept/shared";
 import { CxReveal } from "@/components/concept/CxReveal";
+import { CxParallax } from "@/components/concept/CxParallax";
 import { CxActions } from "@/components/concept/CxActions";
 
 /**
@@ -93,7 +94,9 @@ export function FeaturedProduct({ promoImage, products }: { promoImage: string; 
           <Link href="/products" className="group relative block overflow-hidden rounded-[16px] bg-[#f0eeeb]">
             <div className="relative aspect-[4/5] lg:aspect-auto lg:h-full">
               {promoImage ? (
-                <Image src={promoImage} alt="New collection" fill className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 40vw" />
+                <CxParallax>
+                  <Image src={promoImage} alt="New collection" fill className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 40vw" />
+                </CxParallax>
               ) : null}
               <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
             </div>

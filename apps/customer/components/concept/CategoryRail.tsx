@@ -27,6 +27,7 @@ export function CategoryRail({ items }: { items: RailItem[] }) {
                     src={item.image}
                     alt={item.label}
                     fill
+                    loading="eager"
                     className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110"
                     sizes="104px"
                   />

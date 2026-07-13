@@ -74,7 +74,10 @@ export function ArchHero({ slides }: { slides: HeroSlide[] }) {
             <AnimatePresence mode="wait">
               <motion.div
                 key={active}
-                initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+                // Transform-only enter: copy must stay visible even if the
+                // animation clock never advances. Exit may fade — its failure
+                // mode is "stays visible", never "stays hidden".
+                initial={reduce ? false : { y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduce ? { opacity: 0 } : { opacity: 0, y: -16 }}
                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}

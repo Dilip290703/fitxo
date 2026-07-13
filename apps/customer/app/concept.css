@@ -1,8 +1,7 @@
 /* ============================================================
-   Concept theme (ARLUNE-style reference build) — scoped to the
-   /concept route only. All classes are `cx-` prefixed so nothing
-   here can collide with the real site's styles. Imported ONLY by
-   app/concept/page.tsx. The live site never loads this file.
+   Landing-page theme (ARLUNE-style build) — loaded by the home
+   route (app/page.tsx). All classes are `cx-` prefixed so nothing
+   here can collide with the rest of the site's styles.
    ============================================================ */
 
 /* Seamless left-drift marquee: track holds its content twice, slides -50%. */

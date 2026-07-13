@@ -57,6 +57,36 @@ const categoryLinks = [
   { label: "COLLECTIONS", href: "/products?collection=summer" },
 ];
 
+/** Hover dropdowns for the slim secondary category bar. */
+const categoryMenus: Record<string, { label: string; href: string }[]> = {
+  MEN: [
+    { label: "Shirts", href: "/products?category=men" },
+    { label: "T-Shirts", href: "/products?category=men" },
+    { label: "Jeans & Trousers", href: "/products?category=men" },
+    { label: "Jackets", href: "/products?category=men&collection=summer" },
+    { label: "Footwear", href: "/products?category=men" },
+  ],
+  WOMEN: [
+    { label: "Dresses", href: "/products?category=women" },
+    { label: "Tops & Fancy Tops", href: "/products?category=women" },
+    { label: "Ethnic Wear", href: "/products?category=women&collection=summer" },
+    { label: "Footwear", href: "/products?category=women" },
+    { label: "Accessories", href: "/products?category=women" },
+  ],
+  KIDS: [
+    { label: "Boys", href: "/products?category=kids" },
+    { label: "Girls", href: "/products?category=kids" },
+    { label: "Festive Fits", href: "/products?category=kids" },
+    { label: "Everyday Styles", href: "/products?category=kids" },
+  ],
+  COLLECTIONS: [
+    { label: "Summer Edit", href: "/products?collection=summer" },
+    { label: "New Arrivals", href: "/products?sortBy=new-arrivals" },
+    { label: "Best Sellers", href: "/products" },
+    { label: "On Sale", href: "/products?sale=true" },
+  ],
+};
+
 function HeartIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -561,18 +591,37 @@ function NavbarInner({
 
         {showSecondaryNav ? (
           <div className="px-6 py-2 md:px-10 lg:px-12">
-            <div className="flex items-center justify-center overflow-x-auto hide-scrollbar">
+            <div className="flex items-center justify-center overflow-x-auto hide-scrollbar md:overflow-visible">
               <nav className="flex min-w-max items-center gap-8 text-sm uppercase tracking-widest text-gray-600">
-                {categoryLinks.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="flex items-center gap-2 transition duration-200 hover:text-black"
-                  >
-                    <span>{item.label}</span>
-                    <ChevronDown />
-                  </Link>
-                ))}
+                {categoryLinks.map((item) => {
+                  const submenu = categoryMenus[item.label];
+                  return (
+                    <div key={item.label} className="group relative">
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-2 py-1 transition duration-200 hover:text-black"
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown className="transition duration-200 group-hover:rotate-180" />
+                      </Link>
+                      {submenu ? (
+                        <div className="pointer-events-none absolute left-1/2 top-full z-50 hidden w-56 -translate-x-1/2 pt-3 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 md:block">
+                          <div className="translate-y-1 rounded-2xl border border-[#ebe1d6] bg-[#fffdf9] p-2 shadow-[0_24px_60px_rgba(22,22,22,0.12)] transition-transform duration-200 group-hover:translate-y-0">
+                            {submenu.map((link) => (
+                              <Link
+                                key={link.label}
+                                href={link.href}
+                                className="block rounded-xl px-4 py-2.5 text-[13px] normal-case tracking-normal text-[#6d665d] transition duration-150 hover:bg-[#f3ece1] hover:text-black"
+                              >
+                                {link.label}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </nav>
             </div>
           </div>

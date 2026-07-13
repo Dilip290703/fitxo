@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxReveal";
+import { CxParallax } from "@/components/concept/CxParallax";
 
 /** "JOURNAL" — 3 editorial blog cards with date pills (ARLUNE reference). */
 const POSTS = [
@@ -39,13 +40,15 @@ export function Journal({ images }: { images: string[] }) {
             <article className="group">
               <Link href="#" className="relative block aspect-[4/5] overflow-hidden rounded-[6px] bg-[#f0eeeb]">
                 {images[i] ? (
-                  <Image
-                    src={images[i]}
-                    alt={post.title}
-                    fill
-                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
+                  <CxParallax>
+                    <Image
+                      src={images[i]}
+                      alt={post.title}
+                      fill
+                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  </CxParallax>
                 ) : null}
                 <span className="absolute left-4 top-4 flex items-center gap-1.5 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1a1a1a]">
                   {post.date[0]} <span className="text-[#b0703f]">{post.date[1]}</span> {post.date[2]}

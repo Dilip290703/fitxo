@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ConceptProduct } from "@/components/concept/shared";
 import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxReveal";
+import { CxParallax } from "@/components/concept/CxParallax";
 
 /**
  * "NEW ARRIVALS" — four tall category tiles with item counts (ARLUNE
@@ -31,13 +32,16 @@ export function NewArrivals({ products }: { products: ConceptProduct[] }) {
               <Link href="/products" className="group block text-center">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-[#f0eeeb]">
                   {p.image ? (
-                    <Image
-                      src={p.image}
-                      alt={p.title}
-                      fill
-                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                    />
+                    <CxParallax amount={16}>
+                      <Image
+                        src={p.image}
+                        alt={p.title}
+                        fill
+                        priority={i < 2}
+                        className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                      />
+                    </CxParallax>
                   ) : null}
                 </div>
                 <h3 className="mt-5 text-[19px] font-medium text-[#1a1a1a] transition group-hover:text-[#b0703f]">{p.title}</h3>
