@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
- * Auto-scrolling circular category rail (ARLUNE reference). The track holds
+ * Auto-scrolling circular category rail (Fitzo landing). The track holds
  * the list twice and slides -50% forever; hover pauses. Pure CSS (cx-rail).
  */
 export type RailItem = { label: string; image: string };

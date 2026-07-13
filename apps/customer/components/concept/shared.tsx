@@ -14,7 +14,7 @@ export function inr(value: number): string {
   }).format(value);
 }
 
-/** Minimal stroke-icon set matching the ARLUNE line style (1.5px). */
+/** Minimal stroke-icon set matching the Fitzo line style (1.5px). */
 export function CxIcon({ path, className = "h-5 w-5" }: { path: string; className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -38,7 +38,7 @@ export const CX_ICONS = {
   swap: "M7 4v13m0 0l-3-3m3 3l3-3M17 20V7m0 0l3 3m-3-3l-3 3",
 };
 
-/** ARLUNE accent tan — used for buttons, marquee, active states. */
+/** Fitzo accent tan — used for buttons, marquee, active states. */
 export const CX = {
   accent: "#b0703f",
   accentDark: "#98602f",

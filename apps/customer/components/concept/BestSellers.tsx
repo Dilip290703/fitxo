@@ -8,7 +8,7 @@ import { CxActions } from "@/components/concept/CxActions";
 import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxReveal";
 
 /**
- * "BEST SELLERS" with category tabs (ARLUNE reference). Cards show a discount
+ * "BEST SELLERS" with category tabs (Fitzo landing). Cards show a discount
  * badge, category, name, price (+ strikethrough), colour swatches, and a row
  * of hover action icons (wishlist/quick-view/compare/cart) that slide up.
  */

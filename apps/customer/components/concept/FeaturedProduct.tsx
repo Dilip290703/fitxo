@@ -9,7 +9,7 @@ import { CxParallax } from "@/components/concept/CxParallax";
 import { CxActions } from "@/components/concept/CxActions";
 
 /**
- * "FEATURED PRODUCT" split (ARLUNE reference): a large promo image card beside
+ * "FEATURED PRODUCT" split (Fitzo landing): a large promo image card beside
  * two live product cards, then a time-sensitive countdown band whose digits
  * roll (odometer) on each tick. Content is FITZO / live catalogue.
  */

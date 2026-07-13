@@ -2,7 +2,7 @@ import { CxReveal } from "@/components/concept/CxReveal";
 import { AutoVideo } from "@/components/concept/AutoVideo";
 
 /**
- * Full-bleed lifestyle band (ARLUNE "Fantastical Friends"). Plays a muted,
+ * Full-bleed lifestyle band. Plays a muted,
  * looping background video from public/concept/band.mp4 with the still image
  * as poster/fallback — so it looks right before the clip is added.
  */

@@ -1,4 +1,4 @@
-/** Tan scrolling promo strip (ARLUNE reference). Pure CSS marquee. */
+/** Tan scrolling promo strip (Fitzo landing). Pure CSS marquee. */
 const MESSAGES = [
   "Try before you buy — rider waits at your door",
   "Keep only what fits",

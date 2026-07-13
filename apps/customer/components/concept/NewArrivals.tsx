@@ -5,8 +5,8 @@ import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxRev
 import { CxParallax } from "@/components/concept/CxParallax";
 
 /**
- * "NEW ARRIVALS" — four tall category tiles with item counts (ARLUNE
- * reference), scroll-revealed with a stagger. Uses live catalogue products.
+ * "NEW ARRIVALS" — four tall category tiles with item counts,
+ * scroll-revealed with a stagger. Uses live catalogue products.
  */
 export function NewArrivals({ products }: { products: ConceptProduct[] }) {
   const tiles = products.slice(0, 4);

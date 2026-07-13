@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { CxIcon, CX_ICONS } from "@/components/concept/shared";
 
 /**
- * Full-bleed ARLUNE "Trends & Look" hero: image bleeds edge-to-edge, copy sits
+ * Full-bleed Fitzo "Trends & Look" hero: image bleeds edge-to-edge, copy sits
  * in the RIGHT column over a soft light gradient, with the left-edge
  * GET 15% OFF + COMPARE rails, circular arrows and dot nav. Auto-advances,
  * Ken-Burns zoom on the active slide, animated copy on change.

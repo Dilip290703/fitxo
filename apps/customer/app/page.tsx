@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description: "Curated fashion from stores near you. A rider brings your picks and waits while you try them on — keep only what fits.",
 };
 
-/** Short ARLUNE-style rail labels rotated over live product imagery. */
+/** Short Fitzo rail labels rotated over live product imagery. */
 const RAIL_LABELS = ["Jeans", "Fancy Top", "T-Shirts", "Sweaters", "Jacket", "Shirts", "Shorts", "Tops", "Denim", "Knits"];
 
 const HERO_COPY = [
