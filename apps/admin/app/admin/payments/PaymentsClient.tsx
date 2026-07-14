@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import RefundDialog from './RefundDialog';
+import { syncGatewayFees } from './actions';
 
 export interface PaymentRow {
   id: string;
@@ -17,6 +18,8 @@ export interface PaymentRow {
   paid_at: string | null;
   created_at: string;
   order_id: string;
+  /** Razorpay's total deduction incl. GST, rupees (migration 043). NULL = not yet reported. */
+  gateway_fee: number | null;
   orders: { order_number: string } | null;
   users: { name: string; email: string } | null;
 }
@@ -47,6 +50,27 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
   );
   const [search, setSearch] = useState('');
   const [refunding, setRefunding] = useState<PaymentRow | null>(null);
+  const [syncing, startSync] = useTransition();
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  const handleSyncFees = () => {
+    setSyncMessage(null);
+    startSync(async () => {
+      const res = await syncGatewayFees();
+      if (!res.success) {
+        setSyncMessage(res.error);
+        return;
+      }
+      setSyncMessage(
+        res.updated === 0 && res.failed === 0
+          ? 'All Razorpay rows already have their gateway fee.'
+          : `Synced ${res.updated} payment${res.updated === 1 ? '' : 's'}` +
+            (res.failed > 0 ? `, ${res.failed} failed` : '') +
+            (res.remaining ? ' — run again for older rows.' : '.'),
+      );
+      router.refresh();
+    });
+  };
 
   const filtered = useMemo(() => {
     return payments.filter((p) => {
@@ -92,9 +116,16 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
       label: 'Amount',
       sortable: true,
       render: (v, row) => (
-        <span className="text-sm font-medium text-ink">
-          {new Intl.NumberFormat('en-IN', { style: 'currency', currency: row.currency || 'INR' }).format(Number(v))}
-        </span>
+        <div>
+          <span className="text-sm font-medium text-ink">
+            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: row.currency || 'INR' }).format(Number(v))}
+          </span>
+          {row.gateway_fee !== null && (
+            <p className="text-[11px] text-muted" title="Razorpay's deduction for this capture, incl. GST (not returned on refund)">
+              fee −{new Intl.NumberFormat('en-IN', { style: 'currency', currency: row.currency || 'INR' }).format(Number(row.gateway_fee))}
+            </p>
+          )}
+        </div>
       ),
     },
     {
@@ -152,7 +183,17 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
           onChange={(e) => setSearch(e.target.value)}
           className="sm:ml-auto w-full sm:w-72 bg-white border border-line rounded-xl px-4 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
         />
+        <button
+          type="button"
+          onClick={handleSyncFees}
+          disabled={syncing}
+          title="Fetch Razorpay's fee + GST for rows that don't have it yet (backfill; the webhook stamps new captures automatically)"
+          className="shrink-0 rounded-xl border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink hover:bg-cream disabled:opacity-50"
+        >
+          {syncing ? 'Syncing…' : 'Sync gateway fees'}
+        </button>
       </div>
+      {syncMessage && <p className="text-xs text-muted">{syncMessage}</p>}
 
       <DataTable
         data={filtered}

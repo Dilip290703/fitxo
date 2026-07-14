@@ -38,6 +38,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     { data: agentPayoutRows },
     { data: settings },
     { data: logs },
+    { data: ecoRow },
   ] = await Promise.all([
     supabase
       .from('orders')
@@ -68,6 +69,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       .eq('entity_id', id)
       .order('created_at', { ascending: true })
       .limit(30),
+    // ONE money truth (migration 044): refund-aware revenue, gateway fees,
+    // earned-gated rider cost. Errors pre-044 → data null → inline fallback below.
+    supabase.from('order_economics').select('*').eq('order_id', id).maybeSingle(),
   ]);
 
   if (!order) notFound();
@@ -95,23 +99,58 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   }
 
   // ── Money reconciliation ────────────────────────────────────────────────
-  const commissionRate = Number(settings?.commission_rate ?? 15);
+  // Since migration 044 the card reads the order_economics view — refund-aware
+  // (revenue keys on live success payments, not item decisions), gateway-fee-
+  // aware, rider cost gated on delivery completion. Pre-044 the inline math
+  // below fills in (old behavior: no refund/gateway lines).
+  const eco = ecoRow as null | {
+    net_captured: number;
+    refunded_total: number;
+    kept_gross: number;
+    kept_paid_gross: number;
+    kept_unpaid_gross: number;
+    commission_rate: number;
+    commission: number;
+    store_net: number;
+    delivery_fee_collected: number;
+    gateway_cost: number;
+    gateway_cost_incomplete: boolean;
+    delivery_completed: boolean;
+    rider_cost: number;
+    margin: number;
+    store_paid: number;
+    rider_paid: number;
+  };
   const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
-  const captured = (payments ?? []).filter((p) => p.status === 'success').reduce((s, p) => s + Number(p.amount), 0);
-  const keptGross = items
+  const inlineCaptured = (payments ?? []).filter((p) => p.status === 'success').reduce((s, p) => s + Number(p.amount), 0);
+  const inlineKeptGross = items
     .filter((i) => i.decision === 'keep')
     .reduce((s, i) => s + Number(i.price_at_order ?? 0), 0);
-  const commission = Math.round(keptGross * (commissionRate / 100) * 100) / 100;
-  const storeNet = Math.round((keptGross - commission) * 100) / 100;
-  const storePaid = (storePayoutRows ?? []).reduce((s, p) => s + Number(p.amount), 0);
+  const commissionRate = eco ? Number(eco.commission_rate) : Number(settings?.commission_rate ?? 15);
+  const captured = eco ? Number(eco.net_captured) : inlineCaptured;
+  const refundedTotal = eco ? Number(eco.refunded_total) : 0;
+  const keptGross = eco ? Number(eco.kept_gross) : inlineKeptGross;
+  const keptUnpaidGross = eco ? Number(eco.kept_unpaid_gross) : 0;
+  const commission = eco
+    ? Number(eco.commission)
+    : Math.round(inlineKeptGross * (commissionRate / 100) * 100) / 100;
+  const storeNet = eco ? Number(eco.store_net) : Math.round((inlineKeptGross - commission) * 100) / 100;
+  const storePaid = eco ? Number(eco.store_paid) : (storePayoutRows ?? []).reduce((s, p) => s + Number(p.amount), 0);
   // Rider pay decoupled from the customer delivery charge (migrations 037/038):
   // orders.rider_fee is what the rider earns; orders.delivery_fee is what the customer is charged.
   const riderFee = Number(order.rider_fee ?? 0);
   const deliveryFee = Number(order.delivery_fee ?? 0);
-  const margin = Math.round((commission + deliveryFee - riderFee) * 100) / 100;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const deliveryCompleted = (order.deliveries ?? []).some((d: any) => d.status === 'completed');
-  const agentPaid = (agentPayoutRows ?? []).reduce((s, p) => s + Number(p.amount), 0);
+  const deliveryFeeCollected = eco ? Number(eco.delivery_fee_collected) : null; // null = unknown pre-044
+  const gatewayCost = eco ? Number(eco.gateway_cost) : null;
+  const gatewayIncomplete = eco ? Boolean(eco.gateway_cost_incomplete) : false;
+  const margin = eco
+    ? Number(eco.margin)
+    : Math.round((commission + deliveryFee - riderFee) * 100) / 100;
+  const deliveryCompleted = eco
+    ? Boolean(eco.delivery_completed)
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (order.deliveries ?? []).some((d: any) => d.status === 'completed');
+  const agentPaid = eco ? Number(eco.rider_paid) : (agentPayoutRows ?? []).reduce((s, p) => s + Number(p.amount), 0);
 
   // ── Timeline: one merged history from every table that touches the order ─
   const events: TimelineEvent[] = [{ at: order.created_at, label: 'Order placed', tone: 'neutral' }];
@@ -257,10 +296,24 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <span className="text-soft">Customer paid (captured)</span>
                 <span className={captured > 0 ? 'font-medium text-success' : 'text-muted'}>{formatCurrency(captured)}</span>
               </div>
+              {refundedTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-soft">Refunded</span>
+                  <span className="font-medium text-danger">−{formatCurrency(refundedTotal)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-soft">Kept items (gross)</span>
                 <span className="text-ink">{formatCurrency(keptGross)}</span>
               </div>
+              {keptUnpaidGross > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-soft pl-3">of which unpaid / refunded</span>
+                  <span className="text-[11px] text-warn font-medium" title="Kept items without a live successful payment — excluded from commission, store payout and margin">
+                    {formatCurrency(keptUnpaidGross)} excluded
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-soft">Fitzo commission ({commissionRate}%)</span>
                 <span className="text-ink">{formatCurrency(commission)}</span>
@@ -277,9 +330,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-soft">Delivery charge (customer)</span>
-                <span className="text-ink">{formatCurrency(deliveryFee)}</span>
+                <span className="text-soft">Delivery fee {deliveryFeeCollected !== null ? '(collected)' : '(customer)'}</span>
+                <span className="text-ink">
+                  {formatCurrency(deliveryFeeCollected ?? deliveryFee)}
+                  {deliveryFeeCollected !== null && deliveryFeeCollected < deliveryFee ? (
+                    <span className="text-[11px] text-faint"> · of {formatCurrency(deliveryFee)} charged</span>
+                  ) : null}
+                </span>
               </div>
+              {gatewayCost !== null && (
+                <div className="flex justify-between">
+                  <span className="text-soft">Gateway fees (Razorpay)</span>
+                  <span className="text-ink">
+                    −{formatCurrency(gatewayCost)}
+                    {gatewayIncomplete ? (
+                      <span className="text-[11px] text-warn" title="Some captured payments have no fee data yet — run Sync gateway fees on the Payments screen"> · partial</span>
+                    ) : null}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-soft">Rider pay</span>
                 <span className="text-ink">
@@ -294,14 +363,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </span>
               </div>
               <div className="flex justify-between border-t border-hairline pt-1.5">
-                <span className="font-medium text-ink">Fitzo margin (pre-fees)</span>
-                <span className="font-semibold text-ink">{formatCurrency(margin)}</span>
+                <span className="font-medium text-ink">Fitzo margin</span>
+                <span className={`font-semibold ${margin < 0 ? 'text-danger' : 'text-ink'}`}>{formatCurrency(margin)}</span>
               </div>
             </div>
             <p className="mt-2 text-[10.5px] leading-4 text-faint">
-              Margin = commission + delivery charge − rider pay. The delivery charge is collected with the first
-              Keep payment (040) — it goes uncollected when everything is returned, and Razorpay gateway fees
-              aren&apos;t tracked yet, so margin can overstate slightly.
+              {eco ? (
+                <>Margin = commission + delivery fee collected − rider pay (only once delivered) − gateway fees.
+                Refund-aware: refunded payments drop out of revenue, commission and store payout (order_economics, 044).</>
+              ) : (
+                <>Margin = commission + delivery charge − rider pay. Apply migration 044 for refund-aware,
+                gateway-fee-aware numbers from the order_economics view.</>
+              )}
             </p>
           </div>
 

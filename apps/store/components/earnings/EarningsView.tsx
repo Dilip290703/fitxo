@@ -71,6 +71,12 @@ export function EarningsView() {
               label={`Fitzo commission (${data.commissionRate}%)`}
               value={formatCurrency(data.commissionAmount)}
             />
+            {data.excludedGross > 0 && (
+              <>
+                <span className="text-[15px] text-faint">−</span>
+                <Breakdown label="Refunded / unpaid (excluded)" value={formatCurrency(data.excludedGross)} />
+              </>
+            )}
             <span className="text-[15px] text-faint">=</span>
             <Breakdown label="Net earnings" value={formatCurrency(data.netEarnings)} strong />
           </section>
