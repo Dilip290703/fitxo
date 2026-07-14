@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';
 import { computeAgentPayables } from './compute';
 
-export async function recordAgentPayout(riderId: string): Promise<{ count: number; amount: number }> {
+export async function recordAgentPayout(riderId: string, reference?: string): Promise<{ count: number; amount: number }> {
   const actorId = await requireAdmin();
 
   const admin = createAdminClient();
@@ -16,18 +16,30 @@ export async function recordAgentPayout(riderId: string): Promise<{ count: numbe
   const rider = payables.find((p) => p.riderId === riderId);
   if (!rider || rider.unpaid.length === 0) throw new Error('Nothing outstanding for this rider');
 
-  // NOTE: real Razorpay disbursement is shared infra (not built yet); this records
-  // the payout ledger entries as paid. Swap in the Razorpay payout call here later.
+  // NOTE: money moves by MANUAL bank/UPI transfer for now — RazorpayX
+  // disbursement is blocked on business registration + account, see
+  // docs/PAYOUTS-GOING-LIVE.md (where this is the "swap in the payout call"
+  // spot). reference = the transfer's UTR/txn id; paid_to snapshots the
+  // destination at record time (042).
   const now = new Date().toISOString();
+  const ref = reference?.trim() || null;
   const rows = rider.unpaid.map((u) => ({
     rider_id: riderId,
     order_id: u.orderId,
     amount: u.amount,
     status: 'paid' as const,
     paid_at: now,
+    reference: ref,
+    paid_to: rider.destination,
   }));
 
-  const { error } = await admin.from('agent_payouts').insert(rows);
+  let { error } = await admin.from('agent_payouts').insert(rows);
+  if (error && error.code === 'PGRST204') {
+    // Pre-042: reference/paid_to columns don't exist — record the old shape.
+    ({ error } = await admin
+      .from('agent_payouts')
+      .insert(rows.map(({ reference: _r, paid_to: _p, ...row }) => row)));
+  }
   if (error) {
     // 23505 = unique_violation on (rider_id, order_id) — double-payout guard
     // fired (concurrent click / stale page).
@@ -44,7 +56,7 @@ export async function recordAgentPayout(riderId: string): Promise<{ count: numbe
       action: `Recorded payout to rider ${rider.riderName}`,
       entity_type: 'agent_payout',
       entity_id: riderId,
-      new_value: { jobs: rows.length, amount: rider.netOutstanding },
+      new_value: { jobs: rows.length, amount: rider.netOutstanding, reference: ref, paid_to: rider.destination },
     },
     actorId,
   );

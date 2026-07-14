@@ -22,13 +22,19 @@ export default function PayoutsClient({ rows }: { rows: StorePayableRow[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [confirm, setConfirm] = useState<StorePayableRow | null>(null);
+  const [reference, setReference] = useState('');
+
+  const close = () => {
+    setConfirm(null);
+    setReference('');
+  };
 
   const pay = (store: StorePayableRow) => {
     startTransition(async () => {
       try {
-        const { count, amount } = await recordStorePayout(store.storeId);
+        const { count, amount } = await recordStorePayout(store.storeId, reference);
         toast(`Paid ${formatINR(amount)} to ${store.storeName} (${count} orders)`, 'success');
-        setConfirm(null);
+        close();
       } catch (e) {
         toast(e instanceof Error ? e.message : 'Payout failed', 'error');
       }
@@ -77,18 +83,32 @@ export default function PayoutsClient({ rows }: { rows: StorePayableRow[] }) {
       </div>
 
       {confirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !isPending && setConfirm(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !isPending && close()}>
           <div className="w-full max-w-md bg-white border border-line rounded-xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold text-ink">Record payout</h3>
             <p className="text-sm text-soft">
               Settle <span className="text-ink font-medium">{formatINR(confirm.netOutstanding)}</span> to{' '}
               <span className="text-ink">{confirm.storeName}</span> across {confirm.unpaidCount} kept order(s)?
             </p>
+            <div>
+              <label className="block text-xs font-medium text-soft mb-1" htmlFor="store-payout-ref">
+                Payment reference — UTR / UPI txn id (optional, audit trail)
+              </label>
+              <input
+                id="store-payout-ref"
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="e.g. 415712345678"
+                className="w-full bg-white border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink font-mono"
+              />
+            </div>
             <p className="text-xs text-warn bg-warn-bg border border-warn-accent/40 rounded-lg px-3 py-2">
-              Records the payout in the ledger. Actual Razorpay disbursement is wired separately.
+              Ledger entry only — make the bank/UPI transfer yourself and paste its reference above.
+              Automatic disbursement is blocked on the RazorpayX account (docs/PAYOUTS-GOING-LIVE.md).
             </p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirm(null)} disabled={isPending} className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:border-line-strong">
+              <button onClick={close} disabled={isPending} className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:border-line-strong">
                 Cancel
               </button>
               <button onClick={() => pay(confirm)} disabled={isPending} className="px-4 py-2 text-sm bg-ink hover:bg-ink-soft disabled:opacity-50 text-white font-medium rounded-lg">

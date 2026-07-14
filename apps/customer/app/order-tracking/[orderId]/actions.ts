@@ -28,9 +28,10 @@ export type CreateKeepPaymentResult =
       success: true;
       keyId: string;
       rzpOrderId: string;
-      amount: number; // paise
+      amount: number; // paise — item price + deliveryFee when this charge carries it
       currency: string;
       productName: string;
+      deliveryFee: number; // rupees folded into this charge (0 once collected / free delivery)
     }
   | { success: false; error: string };
 
@@ -68,7 +69,7 @@ export async function createKeepPayment(
   // Re-check the try window server-side (the UI gates it, but don't rely on that).
   const { data: order } = await supabase
     .from('orders')
-    .select('status')
+    .select('status, delivery_fee')
     .eq('id', orderId)
     .maybeSingle();
   if (!order || order.status !== 'try_window_active') {
@@ -84,7 +85,27 @@ export async function createKeepPayment(
     return { success: false, error: 'The try window has closed.' };
   }
 
-  const amountPaise = Math.round(Number(item.price_at_order) * 100);
+  // The customer delivery fee rides the FIRST Keep charge on the order
+  // (owner decision, migration 040): include orders.delivery_fee unless a
+  // successful payment already carried it. Pre-040 (column missing) the query
+  // errors → charge the bare item price, exactly the old behavior.
+  let deliveryFee = 0;
+  let feeColumnExists = false;
+  if (Number(order.delivery_fee ?? 0) > 0) {
+    const { data: feeRows, error: feeError } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('order_id', orderId)
+      .eq('status', 'success')
+      .gt('delivery_fee_component', 0)
+      .limit(1);
+    if (!feeError) {
+      feeColumnExists = true;
+      if ((feeRows ?? []).length === 0) deliveryFee = Number(order.delivery_fee);
+    }
+  }
+
+  const amountPaise = Math.round((Number(item.price_at_order) + deliveryFee) * 100);
   if (!Number.isFinite(amountPaise) || amountPaise <= 0) {
     return { success: false, error: 'Invalid item amount.' };
   }
@@ -97,7 +118,12 @@ export async function createKeepPayment(
       currency: 'INR',
       // Razorpay caps receipt at 40 chars; a bare UUID is 36, so prefix with "k_" (38).
       receipt: `k_${orderItemId}`,
-      notes: { order_id: orderId, order_item_id: orderItemId, user_id: user.id },
+      notes: {
+        order_id: orderId,
+        order_item_id: orderItemId,
+        user_id: user.id,
+        delivery_fee: String(deliveryFee),
+      },
     });
   } catch (e) {
     // Razorpay's SDK rejects with a plain object ({ statusCode, error: { description } })
@@ -114,15 +140,18 @@ export async function createKeepPayment(
   }
 
   // Record the pending payment. RLS allows insert where user_id = auth.uid().
+  // amount is the FULL charge (webhook 039 verifies captured amount against it);
+  // delivery_fee_component records the fee split (only when 040 is applied).
   const { error: payError } = await supabase.from('payments').insert({
     order_id: orderId,
     order_item_id: orderItemId,
     user_id: user.id,
-    amount: Number(item.price_at_order),
+    amount: Number(item.price_at_order) + deliveryFee,
     currency: 'INR',
     status: 'initiated',
     payment_method: 'razorpay',
     razorpay_order_id: rzpOrder.id,
+    ...(feeColumnExists ? { delivery_fee_component: deliveryFee } : {}),
   });
 
   if (payError) return { success: false, error: payError.message };
@@ -134,6 +163,7 @@ export async function createKeepPayment(
     amount: amountPaise,
     currency: 'INR',
     productName: item.product_name,
+    deliveryFee,
   };
 }
 

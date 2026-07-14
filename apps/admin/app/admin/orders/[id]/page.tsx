@@ -104,7 +104,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const commission = Math.round(keptGross * (commissionRate / 100) * 100) / 100;
   const storeNet = Math.round((keptGross - commission) * 100) / 100;
   const storePaid = (storePayoutRows ?? []).reduce((s, p) => s + Number(p.amount), 0);
-  const riderFee = Number(order.delivery_fee ?? 0);
+  // Rider pay decoupled from the customer delivery charge (migrations 037/038):
+  // orders.rider_fee is what the rider earns; orders.delivery_fee is what the customer is charged.
+  const riderFee = Number(order.rider_fee ?? 0);
+  const deliveryFee = Number(order.delivery_fee ?? 0);
+  const margin = Math.round((commission + deliveryFee - riderFee) * 100) / 100;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const deliveryCompleted = (order.deliveries ?? []).some((d: any) => d.status === 'completed');
   const agentPaid = (agentPayoutRows ?? []).reduce((s, p) => s + Number(p.amount), 0);
@@ -273,7 +277,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-soft">Rider fee (delivery)</span>
+                <span className="text-soft">Delivery charge (customer)</span>
+                <span className="text-ink">{formatCurrency(deliveryFee)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-soft">Rider pay</span>
                 <span className="text-ink">
                   {formatCurrency(riderFee)}{' '}
                   {deliveryCompleted ? (
@@ -287,12 +295,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
               <div className="flex justify-between border-t border-hairline pt-1.5">
                 <span className="font-medium text-ink">Fitzo margin (pre-fees)</span>
-                <span className="font-semibold text-ink">{formatCurrency(commission)}</span>
+                <span className="font-semibold text-ink">{formatCurrency(margin)}</span>
               </div>
             </div>
             <p className="mt-2 text-[10.5px] leading-4 text-faint">
-              Rider gets the full delivery fee, so margin = commission. Razorpay gateway fees aren&apos;t tracked yet;
-              prepaid orders don&apos;t collect the delivery fee through Razorpay (COD collects it in cash).
+              Margin = commission + delivery charge − rider pay. The delivery charge is collected with the first
+              Keep payment (040) — it goes uncollected when everything is returned, and Razorpay gateway fees
+              aren&apos;t tracked yet, so margin can overstate slightly.
             </p>
           </div>
 

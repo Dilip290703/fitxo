@@ -40,3 +40,21 @@ export function verifyPaymentSignature(
   const b = Buffer.from(signature);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
+
+/**
+ * Verify a Razorpay WEBHOOK delivery: HMAC_SHA256(raw request body) keyed by
+ * the webhook secret (configured in the Razorpay dashboard — a different
+ * secret from the key secret above), hex-encoded in the X-Razorpay-Signature
+ * header. This is only a fast pre-check: the settle RPC re-verifies the same
+ * signature in-DB (migration 039), since the anon key alone must never be
+ * enough to settle a payment.
+ */
+export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!webhookSecret) return false;
+  const expected = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}

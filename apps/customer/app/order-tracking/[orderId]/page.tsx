@@ -23,7 +23,7 @@ export default async function OrderTrackingPage({
   const { data: raw } = await supabase
     .from("orders")
     .select(
-      `id, order_number, status, final_amount, created_at,
+      `id, order_number, status, final_amount, delivery_fee, created_at,
        order_items(id, product_name, color_name, size, price_at_order, image_url, decision),
        try_sessions(deadline_at, status)`
     )
@@ -70,7 +70,30 @@ export default async function OrderTrackingPage({
     ? { deadline_at: rawSession.deadline_at, status: rawSession.status }
     : null;
 
+  // Fee-on-first-keep (migration 040): tell the view how much the next Keep
+  // charge will carry so the customer isn't surprised in the payment modal.
+  // Pre-040 the delivery_fee_component column doesn't exist → query errors →
+  // fee stays 0, matching createKeepPayment's pre-040 fallback (no fee charged).
+  let pendingDeliveryFee = 0;
+  if (Number(raw.delivery_fee ?? 0) > 0) {
+    const { data: feeRows, error: feeError } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("order_id", orderId)
+      .eq("status", "success")
+      .gt("delivery_fee_component", 0)
+      .limit(1);
+    if (!feeError && (feeRows ?? []).length === 0) {
+      pendingDeliveryFee = Number(raw.delivery_fee);
+    }
+  }
+
   return (
-    <OrderTrackingView order={order} items={items} trySession={trySession} />
+    <OrderTrackingView
+      order={order}
+      items={items}
+      trySession={trySession}
+      pendingDeliveryFee={pendingDeliveryFee}
+    />
   );
 }
