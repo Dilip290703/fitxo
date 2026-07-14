@@ -157,7 +157,7 @@ export async function placeOrder(
   // Agent Payouts read orders.rider_fee, never delivery_fee.
   const { data: settings } = await supabase
     .from('system_settings')
-    .select('delivery_fee, free_delivery_above, rider_fee')
+    .select('delivery_fee, free_delivery_above, rider_fee, try_window_minutes')
     .eq('id', 1)
     .maybeSingle();
   const feeConfig = Number(settings?.delivery_fee ?? 0);
@@ -217,13 +217,14 @@ export async function placeOrder(
     return { success: false, error: itemsError.message };
   }
 
-  // Create try_session. The real window is the rider's 7-minute wait, which
-  // starts when the customer accepts after the rider marks delivered — the agent
-  // flow resets started_at/deadline_at then. This is a placeholder until then.
-  // (TODO: move duration to Admin settings; see docs/PROGRESS.md Known issues.)
-  const TRY_WINDOW_MINUTES = 7;
+  // Create try_session. The real window is the rider's wait at the door, which
+  // starts when the customer accepts after the rider marks delivered — the
+  // start_try_window RPC resets started_at/deadline_at then. This deadline is a
+  // placeholder until that moment. Duration comes from Admin → System Settings
+  // (system_settings.try_window_minutes) — the ONE source of truth (A3).
+  const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
   const startedAt = new Date();
-  const deadlineAt = new Date(startedAt.getTime() + TRY_WINDOW_MINUTES * 60 * 1000);
+  const deadlineAt = new Date(startedAt.getTime() + tryWindowMinutes * 60 * 1000);
 
   const { error: sessionError } = await supabase.from('try_sessions').insert({
     order_id: order.id,

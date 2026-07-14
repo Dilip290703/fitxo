@@ -97,14 +97,17 @@ const STATUS_ORDER: OrderStatus[] = [
   "completed",
 ];
 
-const TIMELINE = [
-  { reachedAt: "pending",           label: "Order placed",       sub: "Your order is queued" },
-  { reachedAt: "confirmed",         label: "Confirmed",          sub: "Store is preparing your items" },
-  { reachedAt: "out_for_delivery",  label: "Out for delivery",   sub: "Rider is on the way to you" },
-  { reachedAt: "delivered",         label: "Delivered",          sub: "Your order has arrived" },
-  { reachedAt: "try_window_active", label: "Try window open",    sub: "Try on while the rider waits (7 min)" },
-  { reachedAt: "completed",         label: "Completed",          sub: "All done!" },
-] as const;
+// The try-window duration comes from Admin → System Settings
+// (system_settings.try_window_minutes) — never hardcode it in copy.
+const timeline = (tryWindowMinutes: number) =>
+  [
+    { reachedAt: "pending",           label: "Order placed",       sub: "Your order is queued" },
+    { reachedAt: "confirmed",         label: "Confirmed",          sub: "Store is preparing your items" },
+    { reachedAt: "out_for_delivery",  label: "Out for delivery",   sub: "Rider is on the way to you" },
+    { reachedAt: "delivered",         label: "Delivered",          sub: "Your order has arrived" },
+    { reachedAt: "try_window_active", label: "Try window open",    sub: `Try on while the rider waits (${tryWindowMinutes} min)` },
+    { reachedAt: "completed",         label: "Completed",          sub: "All done!" },
+  ] as const;
 
 function stepState(
   stepReachedAt: string,
@@ -163,15 +166,19 @@ export function OrderTrackingView({
   items: initialItems,
   trySession,
   pendingDeliveryFee = 0,
+  tryWindowMinutes = 7,
 }: {
   order: TrackingOrder;
   items: TrackingItem[];
   trySession: TrackingSession;
   /** Delivery fee (₹) the next Keep charge will carry — 0 once collected or on free delivery. */
   pendingDeliveryFee?: number;
+  /** From system_settings.try_window_minutes — display copy only (timers read deadline_at). */
+  tryWindowMinutes?: number;
 }) {
   const router = useRouter();
   const timeLeft = useCountdown(trySession?.deadline_at ?? null);
+  const TIMELINE = timeline(tryWindowMinutes);
 
   // Local optimistic decisions so UI updates immediately on click
   const [decisions, setDecisions] = useState<Record<string, ItemDecision>>(
@@ -363,7 +370,8 @@ export function OrderTrackingView({
               </div>
               <h2 className="mt-5 font-display text-[26px] leading-tight text-[#171717]">Your order has arrived!</h2>
               <p className="mx-auto mt-2 max-w-[330px] text-[14px] leading-6 text-[#5f5851]">
-                Your rider is at the door and waiting. Start your <strong>7-minute try-on window</strong> —
+                Your rider is at the door and waiting. Start your{" "}
+                <strong>{tryWindowMinutes}-minute try-on window</strong> —
                 try everything on, keep &amp; pay for what you love, and hand the rest back right away.
               </p>
               {actionError && (
@@ -375,7 +383,7 @@ export function OrderTrackingView({
                 disabled={startingWindow}
                 className="mt-6 w-full rounded-[14px] bg-[#171d2b] px-5 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#2a3345] disabled:opacity-60"
               >
-                {startingWindow ? "Starting…" : "Accept & start 7-min try-on"}
+                {startingWindow ? "Starting…" : `Accept & start ${tryWindowMinutes}-min try-on`}
               </button>
               <button
                 type="button"
