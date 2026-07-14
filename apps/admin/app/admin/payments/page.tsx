@@ -14,6 +14,8 @@ export default async function PaymentsPage({
   const { status } = await searchParams;
   const supabase = await createClient();
 
+  // gateway_fee queried separately so the page still renders pre-043 (the
+  // column select would 42703 the whole query if bundled).
   const { data } = await supabase
     .from('payments')
     .select(
@@ -24,6 +26,10 @@ export default async function PaymentsPage({
     .order('created_at', { ascending: false });
 
   const payments = (data ?? []) as unknown as PaymentRow[];
+
+  const { data: feeRows } = await supabase.from('payments').select('id, gateway_fee');
+  const feeById = new Map((feeRows ?? []).map((r) => [r.id as string, r.gateway_fee as number | null]));
+  for (const p of payments) p.gateway_fee = feeById.get(p.id) ?? null;
 
   const successful = payments.filter((p) => p.status === 'success');
   const captured = successful.reduce((sum, p) => sum + Number(p.amount), 0);

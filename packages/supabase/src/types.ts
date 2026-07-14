@@ -208,6 +208,8 @@ export interface Order {
   subtotal: number;
   deposit_total: number;
   delivery_fee: number;
+  /** Rider's pay for this delivery (migration 037) — decoupled from the customer delivery_fee. Optional: pre-037 rows/types. */
+  rider_fee?: number;
   discount_amount: number;
   final_amount: number;
   coupon_code: string | null;
@@ -360,6 +362,18 @@ export interface Payment {
   razorpay_signature: string | null;
   paid_at: string | null;
   created_at: string;
+  /** Per-item Keep payments (migration 009). Optional: added post-launch of this type. */
+  order_item_id?: string | null;
+  /** Rupees of this charge that are the customer delivery fee (migration 040). */
+  delivery_fee_component?: number | null;
+  /** Refund bookkeeping (migration 041). */
+  razorpay_refund_id?: string | null;
+  refunded_at?: string | null;
+  refund_reason?: string | null;
+  /** Razorpay's total deduction incl. GST, rupees (migration 043). NULL = not yet reported; kept on refunds (sunk cost). */
+  gateway_fee?: number | null;
+  /** GST portion inside gateway_fee (migration 043). Net MDR = gateway_fee − gateway_tax. */
+  gateway_tax?: number | null;
   order?: Order;
   user?: User;
 }
