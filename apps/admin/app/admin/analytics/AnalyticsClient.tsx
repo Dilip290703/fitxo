@@ -48,7 +48,7 @@ export default function AnalyticsClient({
         <StatsCard
           title="30-Day Revenue"
           value={new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalRevenue)}
-          icon="₹" color="green"
+          icon="₹" color="green" subtitle="Captured − refunds"
         />
         <StatsCard title="Total Orders" value={totalOrders} icon="🛒" color="indigo" />
         <StatsCard title="Keep Rate" value={`${keepRate}%`} icon="✓" color="green" subtitle="Items kept after try-on" />

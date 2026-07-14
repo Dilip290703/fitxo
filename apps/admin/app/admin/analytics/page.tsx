@@ -16,9 +16,11 @@ export default async function AnalyticsPage() {
     { data: decisions },
     { data: returns },
   ] = await Promise.all([
+    // Revenue truth since 044: net_captured (captured − refunded) per order
+    // from order_economics — final_amount was checkout GMV incl. returned items.
     supabase
-      .from('orders')
-      .select('created_at, final_amount, status')
+      .from('order_economics')
+      .select('created_at, net_captured, status')
       .gte('created_at', thirtyDaysAgo)
       .order('created_at', { ascending: true }),
     supabase
@@ -52,7 +54,7 @@ export default async function AnalyticsPage() {
     const key = o.created_at.slice(0, 10);
     if (dailyMap[key]) {
       dailyMap[key].orders += 1;
-      dailyMap[key].revenue += o.final_amount ?? 0;
+      dailyMap[key].revenue += Number(o.net_captured ?? 0);
     }
   });
   const dailyChartData = Object.values(dailyMap);
@@ -74,7 +76,7 @@ export default async function AnalyticsPage() {
   const keepRate = totalDecided > 0 ? Math.round(((keepData?.length ?? 0) / totalDecided) * 100) : 0;
   const returnRate = totalDecided > 0 ? Math.round(((returnData?.length ?? 0) / totalDecided) * 100) : 0;
 
-  const totalRevenue = revenueData?.reduce((s, o) => s + (o.final_amount ?? 0), 0) ?? 0;
+  const totalRevenue = revenueData?.reduce((s, o) => s + Number(o.net_captured ?? 0), 0) ?? 0;
   const completedOrders = revenueData?.filter((o) => o.status === 'completed').length ?? 0;
 
   // ── Try & Return section (merged from the former /admin/try-analytics) ──

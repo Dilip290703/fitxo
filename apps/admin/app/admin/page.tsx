@@ -85,7 +85,9 @@ export default async function AdminDashboard() {
     computeStorePayables(supabase),
     computeAgentPayables(supabase),
     supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', todayStart),
-    supabase.from('orders').select('final_amount').gte('created_at', todayStart).eq('payment_status', 'paid'),
+    // Revenue truth since 044: captured − refunded from order_economics
+    // (final_amount was the checkout total incl. returned items).
+    supabase.from('order_economics').select('net_captured').gte('created_at', todayStart),
     supabase.from('order_items').select('decision').gte('decision_at', todayStart).in('decision', ['keep', 'return']),
     supabase
       .from('deliveries')
@@ -94,8 +96,8 @@ export default async function AdminDashboard() {
       .order('assigned_at', { ascending: false })
       .limit(20),
     supabase
-      .from('orders')
-      .select('created_at, final_amount')
+      .from('order_economics')
+      .select('created_at, net_captured')
       .gte('created_at', weekAgo)
       .order('created_at', { ascending: true }),
     supabase
@@ -213,7 +215,10 @@ export default async function AdminDashboard() {
   const queues = allQueues.filter((q) => q.count > 0);
 
   // ── Today's numbers ─────────────────────────────────────────────────────
-  const todayRevenue = todayRevData?.reduce((sum, o) => sum + (o.final_amount ?? 0), 0) ?? 0;
+  // net_captured = captured − refunded (order_economics, 044). If the view
+  // isn't applied yet the query errors → data null → shows ₹0 rather than the
+  // old GMV lie; the migration is listed in PROGRESS Known-issues.
+  const todayRevenue = (todayRevData ?? []).reduce((sum, o) => sum + Number(o.net_captured ?? 0), 0);
   const keptToday = (todayDecisions ?? []).filter((d) => d.decision === 'keep').length;
   const decidedToday = todayDecisions?.length ?? 0;
   const keepRateToday = decidedToday > 0 ? Math.round((keptToday / decidedToday) * 100) : null;
@@ -231,7 +236,7 @@ export default async function AdminDashboard() {
       const key = new Date(o.created_at).toLocaleDateString('en-IN', { weekday: 'short' });
       if (days[key]) {
         days[key].orders += 1;
-        days[key].revenue += o.final_amount ?? 0;
+        days[key].revenue += Number(o.net_captured ?? 0);
       }
     });
     return Object.entries(days).map(([day, data]) => ({ day, ...data }));
@@ -296,7 +301,7 @@ export default async function AdminDashboard() {
       {/* ── 2. Today's numbers + live deliveries ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatsCard title="Today's Orders" value={todayOrders ?? 0} href="/admin/orders" />
-        <StatsCard title="Today's Revenue" value={formatCurrency(todayRevenue)} href="/admin/payments" />
+        <StatsCard title="Today's Revenue" value={formatCurrency(todayRevenue)} subtitle="Captured − refunds" href="/admin/payments" />
         <StatsCard
           title="Keep Rate Today"
           value={keepRateToday === null ? '—' : `${keepRateToday}%`}
