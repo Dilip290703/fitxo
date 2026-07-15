@@ -12,6 +12,9 @@ import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
 import { CelebrationOverlay } from "@/components/cart/CelebrationOverlay";
 import { useCart } from "@/components/cart/CartProvider";
 import { useLocation } from "@/store/locationStore";
+import { AddressSection } from "@/components/checkout/AddressSection";
+import type { DeliveryAddress } from "@/lib/addresses";
+import { getDeliveryStatus } from "@/lib/pincode";
 import { placeOrder } from "@/app/checkout/actions";
 
 // COD hidden 2026-07 (agent rework Phase 3, owner-approved): the keep-payment
@@ -23,7 +26,8 @@ const PAYMENT_METHODS = ["UPI", "Card", "Pay Later"] as const;
 export function CheckoutPageView() {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
-  const { selectedPincode, deliveryStatus, hasChecked } = useLocation();
+  const { selectedPincode } = useLocation();
+  const [address, setAddress] = useState<DeliveryAddress | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,17 +52,23 @@ export function CheckoutPageView() {
       );
   }, []);
 
-  const discount = items.length > 0 ? 300 : 0;
+  // No fake discounts — what's shown here must equal what placeOrder writes.
+  const discount = 0;
   const deliveryFee = feeCfg.freeAbove > 0 && subtotal >= feeCfg.freeAbove ? 0 : feeCfg.fee;
   const total = Math.max(0, Math.round(subtotal - discount + deliveryFee));
 
-  const deliveryBlocked = hasChecked && !deliveryStatus.available;
-  const canPay = !deliveryBlocked && items.length > 0 && selectedMethod !== null && !isProcessing;
-
-  const pincodeDisplay = /^\d{6}$/.test(selectedPincode) ? selectedPincode : "Not set";
+  // Serviceability is judged on the SELECTED ADDRESS (Blinkit-style) — the
+  // address form already refuses non-Pune pincodes, this is belt and braces.
+  const deliveryBlocked = address !== null && !getDeliveryStatus(address.pincode).available;
+  const canPay =
+    !deliveryBlocked &&
+    items.length > 0 &&
+    address !== null &&
+    selectedMethod !== null &&
+    !isProcessing;
 
   async function handlePlaceOrder() {
-    if (!canPay || !selectedMethod) return;
+    if (!canPay || !selectedMethod || !address) return;
     setIsProcessing(true);
     setError(null);
 
@@ -71,7 +81,7 @@ export function CheckoutPageView() {
       return;
     }
 
-    const result = await placeOrder(items, selectedMethod);
+    const result = await placeOrder(items, selectedMethod, address.id);
 
     if (!result.success) {
       setError(result.error);
@@ -101,28 +111,19 @@ export function CheckoutPageView() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
           <div className="space-y-5">
-            {/* Delivery details */}
-            <section className="rounded-[22px] border border-[#ece4da] bg-white p-6">
-              <h2 className="text-[20px] font-medium text-[#171717]">Delivery details</h2>
-              <p className="mt-4 text-[14px] leading-7 text-[#5f5851]">
-                Pincode: {pincodeDisplay}
+            {/* Delivery address (Blinkit-style: saved card + quick-switch + add-new) */}
+            <AddressSection
+              fallbackPincode={selectedPincode}
+              selected={address}
+              onSelect={setAddress}
+            />
+            {deliveryBlocked && (
+              <div className="rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
+                <strong>FitZo currently serves Pune locations only.</strong>
                 <br />
-                Pune, Maharashtra
-              </p>
-
-              {deliveryBlocked && (
-                <div className="mt-4 rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
-                  <strong>FitZo currently serves Pune locations only.</strong>
-                  <br />
-                  Please go back and update your pincode to a Pune area to proceed.
-                </div>
-              )}
-              {!hasChecked && (
-                <div className="mt-4 rounded-[12px] bg-[#fff8e1] px-4 py-3 text-[13px] text-[#856d00]">
-                  No pincode saved. Go back to your bag and set a delivery pincode.
-                </div>
-              )}
-            </section>
+                Pick or add an address with a Pune pincode to proceed.
+              </div>
+            )}
 
             {/* Payment method */}
             <section className="rounded-[22px] border border-[#ece4da] bg-white p-6">
@@ -202,7 +203,9 @@ export function CheckoutPageView() {
             <CheckoutButton
               label={
                 deliveryBlocked
-                  ? "Update Pincode to Continue"
+                  ? "Pick a Pune Address to Continue"
+                  : !address
+                  ? "Add a Delivery Address"
                   : !selectedMethod
                   ? "Select a Payment Method"
                   : isProcessing

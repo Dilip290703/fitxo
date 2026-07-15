@@ -2,6 +2,7 @@
 
 import { createClient } from '@fitzo/supabase/server';
 import type { CartItem } from '@/components/cart/CartProvider';
+import { isPunePincode } from '@/lib/pincode';
 
 export type PlaceOrderResult =
   | { success: true; orderId: string; orderNumber: string }
@@ -17,6 +18,7 @@ const METHOD_MAP: Record<string, 'razorpay' | 'cod' | 'wallet'> = {
 export async function placeOrder(
   items: CartItem[],
   paymentMethodLabel: string,
+  addressId: string,
 ): Promise<PlaceOrderResult> {
   const supabase = await createClient();
 
@@ -27,6 +29,24 @@ export async function placeOrder(
 
   if (items.length === 0) {
     return { success: false, error: 'Your cart is empty.' };
+  }
+
+  // The order must carry a real, deliverable address — the rider's drop card
+  // and the admin order detail read it. RLS on `addresses` means this query
+  // only returns a row the caller owns, so ownership is enforced by the DB.
+  if (!addressId) {
+    return { success: false, error: 'Please add a delivery address.' };
+  }
+  const { data: address } = await supabase
+    .from('addresses')
+    .select('id, user_id, pincode')
+    .eq('id', addressId)
+    .maybeSingle();
+  if (!address || address.user_id !== user.id) {
+    return { success: false, error: 'That delivery address could not be found.' };
+  }
+  if (!isPunePincode(String(address.pincode ?? ''))) {
+    return { success: false, error: 'FitZo currently delivers only to Pune pincodes.' };
   }
 
   const paymentMethod = METHOD_MAP[paymentMethodLabel] ?? 'razorpay';
@@ -95,6 +115,7 @@ export async function placeOrder(
     .insert({
       user_id: user.id,
       order_number: '',
+      address_id: address.id,
       status: 'pending',
       subtotal,
       deposit_total: 0,
