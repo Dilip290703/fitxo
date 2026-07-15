@@ -51,6 +51,59 @@ export async function placeOrder(
 
   const paymentMethod = METHOD_MAP[paymentMethodLabel] ?? 'razorpay';
 
+  // ── Server-side pricing (G2) ──────────────────────────────────────────────
+  // NEVER trust the client's priceValue: the browser owns the cart, so a
+  // tampered request could otherwise buy a ₹5000 item for ₹1 — and the Keep
+  // charge later trusts price_at_order verbatim. Resolve every price from the
+  // DB here. RLS already hides inactive/deleted products and inactive stores
+  // from this (customer) session, so a missing row means "not sellable".
+  const productIds = [...new Set(items.map((i) => i.id))];
+  const { data: dbProducts, error: productsError } = await supabase
+    .from('products')
+    .select('id, name, base_price, discounted_price, store_id, stores(onboarding_status, is_active)')
+    .in('id', productIds);
+  if (productsError) {
+    return { success: false, error: productsError.message };
+  }
+  const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
+
+  const pricing: Record<string, { unitPrice: number; name: string; quantity: number }> = {};
+  for (const item of items) {
+    const product = productById.get(item.id);
+    if (!product) {
+      return { success: false, error: `"${item.title}" is no longer available.` };
+    }
+
+    // The store must be live: approved through onboarding AND active. The
+    // stores row itself is RLS-hidden when inactive, so `null` fails too.
+    const store = Array.isArray(product.stores) ? product.stores[0] : product.stores;
+    if (!store || store.is_active !== true || store.onboarding_status !== 'approved') {
+      return {
+        success: false,
+        error: `"${item.title}" isn't available right now — its store is not live on Fitzo.`,
+      };
+    }
+
+    // Effective price: discounted_price when set, else base_price. A missing
+    // or non-positive price (e.g. a malformed bulk-upload row) is not sellable.
+    const unitPrice = Number(product.discounted_price ?? product.base_price);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return {
+        success: false,
+        error: `"${product.name}" can't be ordered right now. Please remove it and try again.`,
+      };
+    }
+
+    // Quantity comes from the client too — keep it a small positive integer.
+    // (Real per-customer order caps are G5; this only blocks nonsense values.)
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 25) {
+      return { success: false, error: `Invalid quantity for "${product.name}".` };
+    }
+
+    pricing[item.key] = { unitPrice, name: product.name, quantity };
+  }
+
   // Resolve a concrete product_variant for each cart item. Prefer the chosen
   // colour/size, but gracefully fall back to the product's first available
   // variant so an item added without an explicit selection doesn't block checkout.
@@ -90,7 +143,11 @@ export async function placeOrder(
     };
   }
 
-  const subtotal = items.reduce((sum, i) => sum + i.priceValue * i.quantity, 0);
+  // Money math uses ONLY server-resolved prices from here on.
+  const subtotal = items.reduce(
+    (sum, i) => sum + pricing[i.key].unitPrice * pricing[i.key].quantity,
+    0,
+  );
 
   // Fees from Admin → System Settings.
   //   • delivery_fee  = what the CUSTOMER is charged (free above the threshold).
@@ -134,18 +191,22 @@ export async function placeOrder(
     return { success: false, error: orderError?.message ?? 'Failed to create order.' };
   }
 
-  // Create one order_items row per unit (schema has no quantity column — each unit is a row)
+  // Create one order_items row per unit (schema has no quantity column — each unit is a row).
+  // product_name and price_at_order are the DB-resolved values: the Keep charge
+  // (createKeepPayment) trusts price_at_order, so nothing client-supplied may
+  // reach it.
   const orderItemRows = items.flatMap((item) => {
     const r = resolved[item.key];
-    return Array.from({ length: item.quantity }, () => ({
+    const p = pricing[item.key];
+    return Array.from({ length: p.quantity }, () => ({
       order_id: order.id,
       product_id: item.id,
       variant_id: r.variantId,
-      product_name: item.title,
+      product_name: p.name,
       color_name: r.colorName,
       size: r.size,
       image_url: item.image || null,
-      price_at_order: item.priceValue,
+      price_at_order: p.unitPrice,
       deposit_at_order: 0,
       decision: 'pending' as const,
     }));
