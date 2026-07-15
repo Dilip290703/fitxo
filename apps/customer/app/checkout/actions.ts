@@ -104,6 +104,21 @@ export async function placeOrder(
     pricing[item.key] = { unitPrice, name: product.name, quantity };
   }
 
+  // ── Single-store cart (G1) ────────────────────────────────────────────────
+  // One order = one delivery = one rider picking up from ONE store; the
+  // doorstep try-on can't span shops. The bag UI already prevents mixing
+  // (StoreConflictModal), so this only fires on tampered/legacy carts.
+  const storeIds = new Set(
+    items.map((item) => productById.get(item.id)?.store_id).filter(Boolean),
+  );
+  if (storeIds.size > 1) {
+    return {
+      success: false,
+      error:
+        'Your bag has items from more than one store. A Fitzo order is delivered from a single store — please order them separately.',
+    };
+  }
+
   // Resolve a concrete product_variant for each cart item. Prefer the chosen
   // colour/size, but gracefully fall back to the product's first available
   // variant so an item added without an explicit selection doesn't block checkout.

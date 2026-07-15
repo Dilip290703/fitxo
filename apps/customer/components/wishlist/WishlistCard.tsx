@@ -78,6 +78,8 @@ export function WishlistCard({ item }: { item: WishlistItem }) {
                 color: item.color ?? "Default",
                 size: item.size ?? "M",
                 quantity: 1,
+                storeId: item.storeId,
+                storeName: item.storeName,
               });
               if (!added) return;
               removeFromWishlist(item.id);

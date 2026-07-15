@@ -45,6 +45,8 @@ export type ProductDetailData = {
   brand: string;
   /** Owning store — the store panel that will see an order for this product. */
   storeName: string;
+  /** Owning store id — powers the single-store-cart check (G1). */
+  storeId: string;
   priceValue: number;
   price: string;
   oldPriceValue?: number;
