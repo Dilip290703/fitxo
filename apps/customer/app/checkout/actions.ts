@@ -14,6 +14,21 @@ const METHOD_MAP: Record<string, 'razorpay' | 'cod' | 'wallet'> = {
   'Cash on Delivery': 'cod',
 };
 
+/** Map place_order()'s error codes (migration 047) to customer-readable text. */
+function friendlyOrderError(message: string): string {
+  if (message.includes('MULTI_STORE_CART')) {
+    return 'Your bag mixes items from different stores — one order is one store (one rider, one doorstep visit). Please keep items from a single store and try again.';
+  }
+  const outOfStock = message.match(/OUT_OF_STOCK:(.+)/);
+  if (outOfStock) return `${outOfStock[1].trim()} just went out of stock. Remove it from your bag and try again.`;
+  const unavailable = message.match(/PRODUCT_UNAVAILABLE:(.+)/);
+  if (unavailable) return `${unavailable[1].trim()} is currently unavailable.`;
+  if (message.includes('EMPTY_CART')) return 'Your cart is empty.';
+  if (message.includes('INVALID_QUANTITY')) return 'Invalid quantity for an item in your bag.';
+  if (message.includes('not authenticated')) return 'You must be logged in to place an order.';
+  return message;
+}
+
 export async function placeOrder(
   items: CartItem[],
   paymentMethodLabel: string,
@@ -30,6 +45,31 @@ export async function placeOrder(
   }
 
   const paymentMethod = METHOD_MAP[paymentMethodLabel] ?? 'razorpay';
+
+  // Migration 047: the order is placed by ONE atomic in-DB RPC — prices
+  // resolved server-side (G2: the client's priceValue is never trusted),
+  // single-store cart enforced (G1), stock checked + reserved under row locks
+  // (G3). Pre-047 (function missing → PGRST202) falls back to the legacy
+  // client-insert path below, which has none of those guarantees.
+  const { data: placed, error: placeError } = await supabase.rpc('place_order', {
+    p_items: items.map((i) => ({
+      product_id: i.id,
+      color_name: i.color ?? null,
+      size: i.size ?? null,
+      quantity: i.quantity,
+      image_url: i.image || null,
+    })),
+    p_payment_method: paymentMethod,
+  });
+  if (!placeError && placed) {
+    const result = placed as { order_id: string; order_number: string };
+    return { success: true, orderId: result.order_id, orderNumber: result.order_number };
+  }
+  if (placeError && placeError.code !== 'PGRST202') {
+    return { success: false, error: friendlyOrderError(placeError.message) };
+  }
+
+  // ── Legacy path (pre-047 only) ───────────────────────────────────────────
 
   // Resolve a concrete product_variant for each cart item. Prefer the chosen
   // colour/size, but gracefully fall back to the product's first available
