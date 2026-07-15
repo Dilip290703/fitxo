@@ -42,6 +42,8 @@ export interface Store {
   reviewed_at: string | null;
   is_active: boolean;
   is_verified: boolean;
+  /** Per-store commission override in percent (migration 046). NULL = platform default rate. */
+  commission_rate?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -242,6 +244,9 @@ export interface OrderItem {
   decision: ItemDecision;
   decision_at: string | null;
   return_reason: string | null;
+  /** Commission frozen at Keep-settlement time (migration 046). NULL = never settled / pre-046 unpaid. */
+  commission_rate?: number | null;
+  commission_amount?: number | null;
 }
 
 export interface Rider {

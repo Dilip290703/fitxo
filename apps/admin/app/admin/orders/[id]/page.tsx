@@ -126,7 +126,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const inlineKeptGross = items
     .filter((i) => i.decision === 'keep')
     .reduce((s, i) => s + Number(i.price_at_order ?? 0), 0);
-  const commissionRate = eco ? Number(eco.commission_rate) : Number(settings?.commission_rate ?? 15);
+  // Effective rate: since 046 commission is stamped per item (store overrides
+  // possible), so derive the displayed percent from the amounts; the view's
+  // commission_rate column is only the platform default.
+  const commissionRate = eco
+    ? Number(eco.kept_paid_gross) > 0
+      ? Math.round((Number(eco.commission) / Number(eco.kept_paid_gross)) * 1000) / 10
+      : Number(eco.commission_rate)
+    : Number(settings?.commission_rate ?? 15);
   const captured = eco ? Number(eco.net_captured) : inlineCaptured;
   const refundedTotal = eco ? Number(eco.refunded_total) : 0;
   const keptGross = eco ? Number(eco.kept_gross) : inlineKeptGross;
