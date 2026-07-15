@@ -2,6 +2,7 @@
 
 import { createClient } from '@fitzo/supabase/server';
 import type { CartItem } from '@/components/cart/CartProvider';
+import { isPunePincode } from '@/lib/pincode';
 
 export type PlaceOrderResult =
   | { success: true; orderId: string; orderNumber: string }
@@ -14,7 +15,7 @@ const METHOD_MAP: Record<string, 'razorpay' | 'cod' | 'wallet'> = {
   'Cash on Delivery': 'cod',
 };
 
-/** Map place_order()'s error codes (migration 047) to customer-readable text. */
+/** Map place_order()'s error codes (migrations 047/049) to customer-readable text. */
 function friendlyOrderError(message: string): string {
   if (message.includes('MULTI_STORE_CART')) {
     return 'Your bag mixes items from different stores — one order is one store (one rider, one doorstep visit). Please keep items from a single store and try again.';
@@ -25,6 +26,8 @@ function friendlyOrderError(message: string): string {
   if (unavailable) return `${unavailable[1].trim()} is currently unavailable.`;
   if (message.includes('EMPTY_CART')) return 'Your cart is empty.';
   if (message.includes('INVALID_QUANTITY')) return 'Invalid quantity for an item in your bag.';
+  if (message.includes('ADDRESS_REQUIRED')) return 'Please add a delivery address.';
+  if (message.includes('ADDRESS_INVALID')) return 'That delivery address could not be found.';
   if (message.includes('not authenticated')) return 'You must be logged in to place an order.';
   return message;
 }
@@ -32,6 +35,7 @@ function friendlyOrderError(message: string): string {
 export async function placeOrder(
   items: CartItem[],
   paymentMethodLabel: string,
+  addressId: string,
 ): Promise<PlaceOrderResult> {
   const supabase = await createClient();
 
@@ -44,13 +48,33 @@ export async function placeOrder(
     return { success: false, error: 'Your cart is empty.' };
   }
 
+  // The order must carry a real, deliverable address — the rider's drop card
+  // and the admin order detail read it. RLS on `addresses` means this query
+  // only returns a row the caller owns, so ownership is enforced by the DB.
+  if (!addressId) {
+    return { success: false, error: 'Please add a delivery address.' };
+  }
+  const { data: address } = await supabase
+    .from('addresses')
+    .select('id, user_id, pincode')
+    .eq('id', addressId)
+    .maybeSingle();
+  if (!address || address.user_id !== user.id) {
+    return { success: false, error: 'That delivery address could not be found.' };
+  }
+  if (!isPunePincode(String(address.pincode ?? ''))) {
+    return { success: false, error: 'FitZo currently delivers only to Pune pincodes.' };
+  }
+
   const paymentMethod = METHOD_MAP[paymentMethodLabel] ?? 'razorpay';
 
-  // Migration 047: the order is placed by ONE atomic in-DB RPC — prices
-  // resolved server-side (G2: the client's priceValue is never trusted),
-  // single-store cart enforced (G1), stock checked + reserved under row locks
-  // (G3). Pre-047 (function missing → PGRST202) falls back to the legacy
-  // client-insert path below, which has none of those guarantees.
+  // Migrations 047/049: the order is placed by ONE atomic in-DB RPC —
+  // prices resolved server-side (G2: the client's priceValue is never
+  // trusted), single-store cart enforced (G1), stock checked + reserved under
+  // row locks (G3), and the delivery address re-verified against the caller +
+  // stamped onto the order (A1/049). The address was already validated above,
+  // but the RPC re-checks ownership because it runs SECURITY DEFINER. Pre-
+  // migration (function missing → PGRST202) falls back to the legacy path.
   const { data: placed, error: placeError } = await supabase.rpc('place_order', {
     p_items: items.map((i) => ({
       product_id: i.id,
@@ -60,6 +84,7 @@ export async function placeOrder(
       image_url: i.image || null,
     })),
     p_payment_method: paymentMethod,
+    p_address_id: addressId,
   });
   if (!placeError && placed) {
     const result = placed as { order_id: string; order_number: string };
@@ -69,7 +94,80 @@ export async function placeOrder(
     return { success: false, error: friendlyOrderError(placeError.message) };
   }
 
-  // ── Legacy path (pre-047 only) ───────────────────────────────────────────
+  // ── Legacy path (pre-migration only) ──────────────────────────────────────
+  // Reproduces the RPC's guarantees for a DB that predates place_order():
+  // server-side pricing (G2), single-store cart (G1), and the address stamp
+  // (the order insert below sets address_id) — a fallback order is exactly as
+  // safe as the RPC path. Stock reservation (G3) is the RPC's alone; a pre-047
+  // DB has no reserved_qty writes anyway, so behaviour matches that era.
+
+  // ── Server-side pricing (G2) ──────────────────────────────────────────────
+  // NEVER trust the client's priceValue: the browser owns the cart, so a
+  // tampered request could otherwise buy a ₹5000 item for ₹1 — and the Keep
+  // charge later trusts price_at_order verbatim. Resolve every price from the
+  // DB here. RLS already hides inactive/deleted products and inactive stores
+  // from this (customer) session, so a missing row means "not sellable".
+  const productIds = [...new Set(items.map((i) => i.id))];
+  const { data: dbProducts, error: productsError } = await supabase
+    .from('products')
+    .select('id, name, base_price, discounted_price, store_id, stores(onboarding_status, is_active)')
+    .in('id', productIds);
+  if (productsError) {
+    return { success: false, error: productsError.message };
+  }
+  const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
+
+  const pricing: Record<string, { unitPrice: number; name: string; quantity: number }> = {};
+  for (const item of items) {
+    const product = productById.get(item.id);
+    if (!product) {
+      return { success: false, error: `"${item.title}" is no longer available.` };
+    }
+
+    // The store must be live: approved through onboarding AND active. The
+    // stores row itself is RLS-hidden when inactive, so `null` fails too.
+    const store = Array.isArray(product.stores) ? product.stores[0] : product.stores;
+    if (!store || store.is_active !== true || store.onboarding_status !== 'approved') {
+      return {
+        success: false,
+        error: `"${item.title}" isn't available right now — its store is not live on Fitzo.`,
+      };
+    }
+
+    // Effective price: discounted_price when set, else base_price. A missing
+    // or non-positive price (e.g. a malformed bulk-upload row) is not sellable.
+    const unitPrice = Number(product.discounted_price ?? product.base_price);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return {
+        success: false,
+        error: `"${product.name}" can't be ordered right now. Please remove it and try again.`,
+      };
+    }
+
+    // Quantity comes from the client too — keep it a small positive integer.
+    // (Real per-customer order caps are G5; this only blocks nonsense values.)
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 25) {
+      return { success: false, error: `Invalid quantity for "${product.name}".` };
+    }
+
+    pricing[item.key] = { unitPrice, name: product.name, quantity };
+  }
+
+  // ── Single-store cart (G1) ────────────────────────────────────────────────
+  // One order = one delivery = one rider picking up from ONE store; the
+  // doorstep try-on can't span shops. The bag UI already prevents mixing
+  // (StoreConflictModal), so this only fires on tampered/legacy carts.
+  const storeIds = new Set(
+    items.map((item) => productById.get(item.id)?.store_id).filter(Boolean),
+  );
+  if (storeIds.size > 1) {
+    return {
+      success: false,
+      error:
+        'Your bag has items from more than one store. A Fitzo order is delivered from a single store — please order them separately.',
+    };
+  }
 
   // Resolve a concrete product_variant for each cart item. Prefer the chosen
   // colour/size, but gracefully fall back to the product's first available
@@ -110,7 +208,11 @@ export async function placeOrder(
     };
   }
 
-  const subtotal = items.reduce((sum, i) => sum + i.priceValue * i.quantity, 0);
+  // Money math uses ONLY server-resolved prices from here on.
+  const subtotal = items.reduce(
+    (sum, i) => sum + pricing[i.key].unitPrice * pricing[i.key].quantity,
+    0,
+  );
 
   // Fees from Admin → System Settings.
   //   • delivery_fee  = what the CUSTOMER is charged (free above the threshold).
@@ -120,7 +222,7 @@ export async function placeOrder(
   // Agent Payouts read orders.rider_fee, never delivery_fee.
   const { data: settings } = await supabase
     .from('system_settings')
-    .select('delivery_fee, free_delivery_above, rider_fee')
+    .select('delivery_fee, free_delivery_above, rider_fee, try_window_minutes')
     .eq('id', 1)
     .maybeSingle();
   const feeConfig = Number(settings?.delivery_fee ?? 0);
@@ -135,6 +237,7 @@ export async function placeOrder(
     .insert({
       user_id: user.id,
       order_number: '',
+      address_id: address.id,
       status: 'pending',
       subtotal,
       deposit_total: 0,
@@ -153,18 +256,22 @@ export async function placeOrder(
     return { success: false, error: orderError?.message ?? 'Failed to create order.' };
   }
 
-  // Create one order_items row per unit (schema has no quantity column — each unit is a row)
+  // Create one order_items row per unit (schema has no quantity column — each unit is a row).
+  // product_name and price_at_order are the DB-resolved values: the Keep charge
+  // (createKeepPayment) trusts price_at_order, so nothing client-supplied may
+  // reach it.
   const orderItemRows = items.flatMap((item) => {
     const r = resolved[item.key];
-    return Array.from({ length: item.quantity }, () => ({
+    const p = pricing[item.key];
+    return Array.from({ length: p.quantity }, () => ({
       order_id: order.id,
       product_id: item.id,
       variant_id: r.variantId,
-      product_name: item.title,
+      product_name: p.name,
       color_name: r.colorName,
       size: r.size,
       image_url: item.image || null,
-      price_at_order: item.priceValue,
+      price_at_order: p.unitPrice,
       deposit_at_order: 0,
       decision: 'pending' as const,
     }));
@@ -175,13 +282,14 @@ export async function placeOrder(
     return { success: false, error: itemsError.message };
   }
 
-  // Create try_session. The real window is the rider's 7-minute wait, which
-  // starts when the customer accepts after the rider marks delivered — the agent
-  // flow resets started_at/deadline_at then. This is a placeholder until then.
-  // (TODO: move duration to Admin settings; see docs/PROGRESS.md Known issues.)
-  const TRY_WINDOW_MINUTES = 7;
+  // Create try_session. The real window is the rider's wait at the door, which
+  // starts when the customer accepts after the rider marks delivered — the
+  // start_try_window RPC resets started_at/deadline_at then. This deadline is a
+  // placeholder until that moment. Duration comes from Admin → System Settings
+  // (system_settings.try_window_minutes) — the ONE source of truth (A3).
+  const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
   const startedAt = new Date();
-  const deadlineAt = new Date(startedAt.getTime() + TRY_WINDOW_MINUTES * 60 * 1000);
+  const deadlineAt = new Date(startedAt.getTime() + tryWindowMinutes * 60 * 1000);
 
   const { error: sessionError } = await supabase.from('try_sessions').insert({
     order_id: order.id,

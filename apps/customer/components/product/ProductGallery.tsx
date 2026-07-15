@@ -98,6 +98,8 @@ export function ProductGallery({ product }: { product: ProductDetailData }) {
                 color: product.colors[0]?.name,
                 size: product.sizes[0]?.label,
                 availability: "Available nearby",
+                storeId: product.storeId,
+                storeName: product.storeName,
               }}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 text-[#1d2330] backdrop-blur-sm transition duration-200"
               defaultClassName="bg-white/75 hover:bg-white"

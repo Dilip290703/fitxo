@@ -88,12 +88,22 @@ export default async function OrderTrackingPage({
     }
   }
 
+  // Try-window duration for display copy — one source of truth
+  // (system_settings.try_window_minutes). Live timers still read deadline_at.
+  const { data: settings } = await supabase
+    .from("system_settings")
+    .select("try_window_minutes")
+    .eq("id", 1)
+    .maybeSingle();
+  const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
+
   return (
     <OrderTrackingView
       order={order}
       items={items}
       trySession={trySession}
       pendingDeliveryFee={pendingDeliveryFee}
+      tryWindowMinutes={tryWindowMinutes}
     />
   );
 }

@@ -13,6 +13,9 @@ type AddToBagProps = {
     displayPrice: string;
     displayOldPrice?: string;
     selectedColor: string;
+    /** Owning store — the single-store-cart check needs it (G1). */
+    storeId?: string;
+    storeName?: string;
   };
   selectedSize: string;
   /** Pass true when the selected size exists but is currently sold out */
@@ -26,8 +29,9 @@ export function AddToBag({ product, selectedSize, isSoldOutSize = false }: AddTo
 
   const handleAdd = () => {
     if (!selectedSize) return;
-    // addItem returns false for a guest (it opens the login modal itself) —
-    // don't flash "Added to Bag ✓" over a bag that got nothing.
+    // addItem returns false when the provider handled the add itself (guest →
+    // login modal, or a store conflict → one-order-one-store modal) — don't
+    // flash "Added to Bag ✓" over a bag that got nothing.
     const added = addItem({
       id: product.id,
       title: product.title,
@@ -39,6 +43,8 @@ export function AddToBag({ product, selectedSize, isSoldOutSize = false }: AddTo
       color: product.selectedColor,
       size: selectedSize,
       quantity,
+      storeId: product.storeId,
+      storeName: product.storeName,
     });
     if (!added) return;
     setAdded(true);

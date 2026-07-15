@@ -53,6 +53,14 @@ export default async function OrderConfirmationPage({
       })
     : null;
 
+  // Try-window duration from Admin → System Settings — never hardcoded (A3).
+  const { data: settings } = await supabase
+    .from("system_settings")
+    .select("try_window_minutes")
+    .eq("id", 1)
+    .maybeSingle();
+  const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
+
   // Deduplicate items for display (same product+color+size shown as qty)
   const grouped = items.reduce<
     Record<string, { product_name: string; color_name: string; size: string; price_at_order: number; image_url: string | null; qty: number }>
@@ -106,8 +114,9 @@ export default async function OrderConfirmationPage({
               Try window at your door
             </p>
             <p className="mt-1 text-[14px] text-[#5f5851]">
-              When your rider arrives, you&apos;ll have 7 minutes to try everything on.
-              Keep what you love and hand the rest straight back — no return to schedule.
+              When your rider arrives, you&apos;ll have {tryWindowMinutes} minutes to try
+              everything on. Keep what you love and hand the rest straight back — no return
+              to schedule.
             </p>
           </div>
         )}

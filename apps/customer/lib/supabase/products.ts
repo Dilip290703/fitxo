@@ -35,6 +35,8 @@ export type FrontendProduct = {
   sizeLabel: string;
   /** Owning store — the store panel that will see an order for this product. */
   storeName: string;
+  /** Owning store id — powers the single-store-cart check (G1). */
+  storeId: string;
 };
 
 export type FilterOption = {
@@ -150,6 +152,7 @@ export async function queryProducts(
       orders: 0,
       sizeLabel: firstAvailableSize,
       storeName: row.stores?.name ?? '',
+    storeId: row.stores?.id ?? '',
     };
   });
 
@@ -318,6 +321,7 @@ export async function queryProductDetail(
     title: row.name,
     brand: row.brands?.name ?? '',
     storeName: row.stores?.name ?? '',
+    storeId: row.stores?.id ?? '',
     priceValue: price,
     price: `₹${price}`,
     oldPriceValue: oldPrice ?? undefined,
@@ -395,6 +399,7 @@ export async function queryFeaturedProducts(
       orders: 0,
       sizeLabel: firstAvailableSize,
       storeName: row.stores?.name ?? '',
+    storeId: row.stores?.id ?? '',
     };
   });
 }
