@@ -33,6 +33,9 @@ export type WishlistItem = {
   color?: string;
   size?: string;
   availability?: string;
+  /** Owning store — carried into the bag for the single-store check (G1). */
+  storeId?: string;
+  storeName?: string;
 };
 
 type WishlistContextValue = {

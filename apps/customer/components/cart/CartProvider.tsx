@@ -10,6 +10,8 @@ import {
 import { createClient } from "@fitzo/supabase/client";
 import { AddToBagDrawer } from "@/components/cart/AddToBagDrawer";
 import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
+import { StoreConflictModal } from "@/components/cart/StoreConflictModal";
+import { findStoreConflict, type StoreConflict } from "@/lib/storeConflict";
 
 /**
  * The bag is persisted PER SIGNED-IN USER, never globally.
@@ -38,6 +40,12 @@ export type CartItem = {
   color: string;
   size: string;
   quantity: number;
+  /**
+   * Owning store (G1 single-store cart). Optional because carts persisted
+   * before G1 lack it — the placeOrder server check is the hard guard.
+   */
+  storeId?: string;
+  storeName?: string;
 };
 
 type AddCartItemInput = Omit<CartItem, "key">;
@@ -81,6 +89,15 @@ export function CartProvider({
 
   /** Opens when a guest tries to add to the bag. */
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  /**
+   * Single-store cart (G1): when an add is refused because the item belongs
+   * to a different store than the bag, the refused item parks here and the
+   * conflict modal opens with the ways forward.
+   */
+  const [storeConflict, setStoreConflict] = useState<
+    (StoreConflict & { pendingItem: AddCartItemInput }) | null
+  >(null);
 
   function readStoredCart(id: string): CartItem[] {
     try {
@@ -165,6 +182,15 @@ export function CartProvider({
         // don't add — ask the guest to log in instead.
         if (typeof userId !== "string") {
           setShowLoginModal(true);
+          return false;
+        }
+
+        // One order = one store (G1): a rider delivers and waits at the door
+        // for a SINGLE store's picks. An item from a second store doesn't go
+        // in — the conflict modal offers checkout-first or a fresh bag.
+        const conflict = findStoreConflict(items, item);
+        if (conflict) {
+          setStoreConflict({ ...conflict, pendingItem: item });
           return false;
         }
 
@@ -261,6 +287,21 @@ export function CartProvider({
         open={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         message="Log in or create an account to add items to your bag — try-at-home orders need an account."
+      />
+      <StoreConflictModal
+        conflict={storeConflict}
+        bagCount={totalItems}
+        onStartNewBag={() => {
+          if (!storeConflict) return;
+          const pending = storeConflict.pendingItem;
+          const key = buildCartKey(pending);
+          // Fresh bag for the new store: replace everything with the refused item.
+          setItems([{ ...pending, key }]);
+          setLatestItemKey(key);
+          setStoreConflict(null);
+          setIsDrawerOpen(true);
+        }}
+        onClose={() => setStoreConflict(null)}
       />
     </CartContext.Provider>
   );

@@ -103,6 +103,8 @@ export function ProductInfo({ product }: { product: ProductDetailData }) {
           displayPrice: product.price,
           displayOldPrice: product.oldPrice,
           selectedColor,
+          storeId: product.storeId,
+          storeName: product.storeName,
         }}
       />
 

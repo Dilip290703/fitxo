@@ -62,6 +62,8 @@ export function ProductCard({ product }: { product: FrontendProduct }) {
             color: "Default",
             size: product.sizeLabel,
             availability: "Available nearby",
+            storeId: product.storeId,
+            storeName: product.storeName,
           }}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full shadow-[0_4px_14px_-6px_rgba(34,27,19,0.4)] transition duration-200"
           defaultClassName="bg-white/90 text-[#221b13] backdrop-blur-sm hover:bg-white"
