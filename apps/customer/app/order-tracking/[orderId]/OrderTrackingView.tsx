@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@fitzo/supabase/client";
-import { createKeepPayment, confirmKeepPayment, returnItem, startTryWindow } from "./actions";
+import {
+  createKeepPayment,
+  confirmKeepPayment,
+  returnItem,
+  startTryWindow,
+  createDeliveryFeePayment,
+  refundDeliveryFeeIfEligible,
+} from "./actions";
 import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
 
 // ─────────────────────────────────────────────
@@ -166,15 +173,28 @@ export function OrderTrackingView({
   items: initialItems,
   trySession,
   pendingDeliveryFee = 0,
+  canPayFeeUpfront = false,
+  feeRefunded = false,
   tryWindowMinutes = 7,
+  bill,
 }: {
   order: TrackingOrder;
   items: TrackingItem[];
   trySession: TrackingSession;
-  /** Delivery fee (₹) the next Keep charge will carry — 0 once collected or on free delivery. */
+  /** Delivery fee (₹) still due — 0 once collected, waived, or refunded. */
   pendingDeliveryFee?: number;
+  /** Migration 050 live: fee is paid upfront via its own Razorpay payment (else legacy 040 first-Keep fold). */
+  canPayFeeUpfront?: boolean;
+  /** The upfront fee came back — kept value crossed the free-delivery threshold. */
+  feeRefunded?: boolean;
   /** From system_settings.try_window_minutes — display copy only (timers read deadline_at). */
   tryWindowMinutes?: number;
+  /** Swiggy-style bill state: fee amount + where it stands + what's been captured so far. */
+  bill?: {
+    deliveryFee: number;
+    feeStatus: "free" | "due" | "paid" | "refunded" | "first_keep";
+    totalPaid: number;
+  };
 }) {
   const router = useRouter();
   const timeLeft = useCountdown(trySession?.deadline_at ?? null);
@@ -259,15 +279,100 @@ export function OrderTrackingView({
   const tryWindowLive =
     order.status === "try_window_active" && !!timeLeft && !timeLeft.expired;
 
+  // ── G9: upfront delivery-fee payment (migration 050) ────────────────────
+  const [payingFee, setPayingFee] = useState(false);
+
+  async function handlePayDeliveryFee() {
+    if (payingFee) return;
+    setPayingFee(true);
+    setActionError(null);
+
+    const payment = await createDeliveryFeePayment(order.id);
+    if (!payment.success) {
+      setActionError(payment.error);
+      setPayingFee(false);
+      return;
+    }
+
+    const ready = await loadRazorpayScript();
+    if (!ready || !window.Razorpay) {
+      setActionError("Couldn't load the payment window. Check your connection and try again.");
+      setPayingFee(false);
+      return;
+    }
+
+    const rzp = new window.Razorpay({
+      key: payment.keyId,
+      amount: payment.amount,
+      currency: payment.currency,
+      name: "Fitzo",
+      description: `Delivery fee — refunded if you keep ₹ worth over the free-delivery limit`,
+      order_id: payment.rzpOrderId,
+      theme: { color: "#171d2b" },
+      modal: {
+        ondismiss: () => {
+          setActionError("Payment cancelled — the store can't confirm your order until the delivery fee is paid.");
+          setPayingFee(false);
+        },
+      },
+      handler: async (response) => {
+        // Same verified settle path as Keep payments (HMAC + in-DB settle).
+        const result = await confirmKeepPayment({
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+          orderId: order.id,
+        });
+        setPayingFee(false);
+        if (!result.success) {
+          setActionError(result.error);
+          return;
+        }
+        router.refresh();
+      },
+    });
+
+    rzp.on("payment.failed", (resp) => {
+      setActionError(resp.error?.description ?? "Payment failed. Please try again.");
+      setPayingFee(false);
+    });
+
+    rzp.open();
+  }
+
+  // Catch-up for the kept-value fee refund: if the rider completed the order
+  // (auto-return path — no customer action ran finalize), fire the eligibility
+  // check once when the customer next opens the page. The action verifies
+  // everything itself and no-ops when not eligible.
+  const refundChecked = useRef(false);
+  useEffect(() => {
+    if (refundChecked.current) return;
+    if (order.status !== "completed" || feeRefunded || !canPayFeeUpfront) return;
+    refundChecked.current = true;
+    refundDeliveryFeeIfEligible(order.id).then((r) => {
+      if (r.refunded) router.refresh();
+    });
+  }, [order.status, feeRefunded, canPayFeeUpfront, order.id, router]);
+
+  // ── Keep flow: tap Keep → bill sheet (Swiggy-style breakdown) → Razorpay ──
+  // The amounts in the sheet are the SERVER-computed ones from
+  // createKeepPayment, so what's shown is exactly what Razorpay will charge.
+  const [keepConfirm, setKeepConfirm] = useState<{
+    itemId: string;
+    productName: string;
+    itemPrice: number; // rupees
+    deliveryFee: number; // rupees folded into THIS charge (legacy 040 path; 0 normally)
+    totalRupees: number;
+    keyId: string;
+    rzpOrderId: string;
+    amount: number; // paise
+    currency: string;
+  } | null>(null);
+
   async function handleKeep(itemId: string) {
     if (pendingId) return;
     setPendingId(itemId);
     setActionError(null);
-
-    const reset = () => {
-      setPendingId(null);
-      setDecisions((prev) => ({ ...prev, [itemId]: "pending" }));
-    };
 
     // 1. Create the Razorpay order + pending payment row (amount is server-computed).
     const payment = await createKeepPayment(itemId, order.id);
@@ -277,7 +382,38 @@ export function OrderTrackingView({
       return;
     }
 
-    // 2. Make sure the Checkout script is available.
+    // 2. Show the bill before any money moves — payment proceeds from the sheet.
+    const totalRupees = payment.amount / 100;
+    setKeepConfirm({
+      itemId,
+      productName: payment.productName,
+      itemPrice: totalRupees - payment.deliveryFee,
+      deliveryFee: payment.deliveryFee,
+      totalRupees,
+      keyId: payment.keyId,
+      rzpOrderId: payment.rzpOrderId,
+      amount: payment.amount,
+      currency: payment.currency,
+    });
+  }
+
+  function cancelKeepConfirm() {
+    // The initiated payments row simply stays unconsumed — same as dismissing
+    // the Razorpay modal. Nothing was charged.
+    setKeepConfirm(null);
+    setPendingId(null);
+  }
+
+  async function proceedKeepPayment() {
+    if (!keepConfirm) return;
+    const sheet = keepConfirm;
+    setKeepConfirm(null);
+
+    const reset = () => {
+      setPendingId(null);
+      setDecisions((prev) => ({ ...prev, [sheet.itemId]: "pending" }));
+    };
+
     const ready = await loadRazorpayScript();
     if (!ready || !window.Razorpay) {
       setActionError("Couldn't load the payment window. Check your connection and try again.");
@@ -285,17 +421,17 @@ export function OrderTrackingView({
       return;
     }
 
-    // 3. Open Checkout. The item only flips to "keep" after the server verifies payment.
+    // Open Checkout. The item only flips to "keep" after the server verifies payment.
     const rzp = new window.Razorpay({
-      key: payment.keyId,
-      amount: payment.amount,
-      currency: payment.currency,
+      key: sheet.keyId,
+      amount: sheet.amount,
+      currency: sheet.currency,
       name: "Fitzo",
       description:
-        payment.deliveryFee > 0
-          ? `Keep — ${payment.productName} (incl. ₹${payment.deliveryFee.toLocaleString("en-IN")} delivery fee)`
-          : `Keep — ${payment.productName}`,
-      order_id: payment.rzpOrderId,
+        sheet.deliveryFee > 0
+          ? `Keep — ${sheet.productName} (incl. ₹${sheet.deliveryFee.toLocaleString("en-IN")} delivery fee)`
+          : `Keep — ${sheet.productName}`,
+      order_id: sheet.rzpOrderId,
       theme: { color: "#171d2b" },
       modal: {
         ondismiss: () => {
@@ -315,7 +451,7 @@ export function OrderTrackingView({
           setActionError(result.error);
           return;
         }
-        setDecisions((prev) => ({ ...prev, [itemId]: "keep" }));
+        setDecisions((prev) => ({ ...prev, [sheet.itemId]: "keep" }));
         router.refresh();
       },
     });
@@ -568,6 +704,109 @@ export function OrderTrackingView({
           </div>
         )}
 
+        {/* ── Delivery fee due (G9/050): its own upfront payment — the store
+               can't confirm the order until it's paid ── */}
+        {canPayFeeUpfront && pendingDeliveryFee > 0 && order.status !== "cancelled" && (
+          <div className="mt-4 rounded-[16px] border border-[#f0d9b5] bg-[#fff8ec] p-4">
+            <p className="text-[14px] font-semibold text-[#1c1712]">
+              Pay the ₹{pendingDeliveryFee.toLocaleString("en-IN")} delivery fee to get your order moving
+            </p>
+            <p className="mt-1 text-[12.5px] leading-5 text-[#8b7058]">
+              The store confirms your order once the fee is paid. Keep items worth over the
+              free-delivery limit and this fee comes straight back to you.
+            </p>
+            <button
+              type="button"
+              onClick={handlePayDeliveryFee}
+              disabled={payingFee}
+              className="mt-3 w-full rounded-[12px] bg-[#171d2b] px-4 py-3 text-[14px] font-semibold text-white disabled:opacity-60 sm:w-auto sm:px-8"
+            >
+              {payingFee ? "Opening payment…" : `Pay ₹${pendingDeliveryFee.toLocaleString("en-IN")} delivery fee`}
+            </button>
+          </div>
+        )}
+
+        {/* ── Fee refunded (kept-value free delivery) ── */}
+        {feeRefunded && (
+          <div className="mt-4 rounded-[12px] bg-[#e8f5ec] px-4 py-3 text-[13px] text-[#2f7d46]">
+            Free delivery unlocked — your delivery fee has been refunded (3–7 working days back
+            on your payment method).
+          </div>
+        )}
+
+        {/* ── Keep bill sheet: exactly what this payment is, before it happens ── */}
+        {keepConfirm && (
+          <div
+            className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+            onClick={cancelKeepConfirm}
+          >
+            <div
+              className="w-full max-w-md rounded-[20px] bg-white p-5 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-[15px] font-semibold text-[#1c1712]">Confirm &amp; pay</p>
+              <p className="mt-0.5 text-[12.5px] text-[#8b7058]">
+                Keeping — {keepConfirm.productName}
+              </p>
+
+              <div className="mt-4 space-y-2 text-[13.5px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#5f5851]">Item price</span>
+                  <span className="text-[#171717]">
+                    ₹{keepConfirm.itemPrice.toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#5f5851]">Delivery fee</span>
+                  {keepConfirm.deliveryFee > 0 ? (
+                    <span className="text-[#171717]">
+                      + ₹{keepConfirm.deliveryFee.toLocaleString("en-IN")}
+                    </span>
+                  ) : (
+                    <span className="text-[12.5px] font-medium text-[#2f7d46]">
+                      {bill?.feeStatus === "refunded"
+                        ? "Refunded — free delivery"
+                        : bill?.feeStatus === "paid"
+                          ? "Already paid — not charged again"
+                          : "Free"}
+                    </span>
+                  )}
+                </div>
+                <div className="border-t border-[#ece4da] pt-2">
+                  <div className="flex items-center justify-between text-[15px] font-semibold text-[#1c1712]">
+                    <span>To pay now</span>
+                    <span>₹{keepConfirm.totalRupees.toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="mt-3 text-[11.5px] leading-4 text-[#bdb5ab]">
+                No hidden charges — this is the full and final amount for this item.
+                {bill && bill.deliveryFee > 0 && bill.feeStatus === "paid"
+                  ? " Your ₹" + bill.deliveryFee.toLocaleString("en-IN") + " delivery fee was paid separately."
+                  : ""}
+              </p>
+
+              <div className="mt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={cancelKeepConfirm}
+                  className="flex-1 rounded-[12px] border border-[#ece4da] px-4 py-3 text-[14px] font-medium text-[#5f5851]"
+                >
+                  Not now
+                </button>
+                <button
+                  type="button"
+                  onClick={proceedKeepPayment}
+                  className="flex-1 rounded-[12px] bg-[#171d2b] px-4 py-3 text-[14px] font-semibold text-white"
+                >
+                  Pay ₹{keepConfirm.totalRupees.toLocaleString("en-IN")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Action error ── */}
         {actionError && (
           <div className="mt-4 rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
@@ -580,8 +819,9 @@ export function OrderTrackingView({
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8b7058]">
             Items
           </p>
-          {/* Fee-on-first-keep heads-up: no surprise totals in the payment modal. */}
-          {pendingDeliveryFee > 0 &&
+          {/* Legacy 040 heads-up (pre-050 only): fee rides the first Keep charge. */}
+          {!canPayFeeUpfront &&
+            pendingDeliveryFee > 0 &&
             tryWindowLive &&
             !initialItems.some((i) => decisions[i.id] === "keep") && (
             <p className="mt-2 rounded-[10px] bg-[#fff4e5] px-3 py-2 text-[12px] text-[#b45309]">
@@ -690,30 +930,96 @@ export function OrderTrackingView({
           </p>
         )}
 
-        {/* ── Amount summary ── */}
+        {/* ── Bill details (Swiggy-style: every rupee accounted for) ── */}
         <div className="mt-6 rounded-[16px] border border-[#ece4da] bg-white px-5 py-4">
-          {allDecided ? (
-            <>
-              <div className="flex items-center justify-between text-[14px]">
-                <span className="text-[#5f5851]">Items you&apos;re keeping</span>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8b7058]">
+            Bill details
+          </p>
+          <div className="mt-3 space-y-2 text-[13.5px]">
+            {initialItems.map((item) => {
+              const d = decisions[item.id];
+              return (
+                <div key={item.id} className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-[#5f5851]">
+                    {item.product_name}
+                    <span className="ml-1.5 text-[11px] text-[#bdb5ab]">
+                      {d === "keep" ? "· keeping" : d === "return" ? "· returned" : "· deciding"}
+                    </span>
+                  </span>
+                  <span
+                    className={
+                      d === "return"
+                        ? "shrink-0 text-[#bdb5ab] line-through"
+                        : "shrink-0 text-[#171717]"
+                    }
+                  >
+                    ₹{item.price_at_order.toLocaleString("en-IN")}
+                  </span>
+                </div>
+              );
+            })}
+
+            <div className="border-t border-[#f2ece3] pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[#5f5851]">
+                  {allDecided ? "Items you're keeping" : "Items total (if you keep everything)"}
+                </span>
                 <span className="font-medium text-[#171717]">
-                  ₹{keptTotal.toLocaleString("en-IN")}
+                  ₹{(allDecided ? keptTotal : order.final_amount - (bill?.deliveryFee ?? 0)).toLocaleString("en-IN")}
                 </span>
               </div>
-              {keptTotal === 0 && (
-                <p className="mt-2 text-[12px] text-[#8b7058]">
-                  Returning everything — a pickup will be scheduled.
-                </p>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-between text-[14px]">
-              <span className="text-[#5f5851]">Total (if you keep everything)</span>
-              <span className="font-medium text-[#171717]">
-                ₹{order.final_amount.toLocaleString("en-IN")}
-              </span>
             </div>
-          )}
+
+            {bill && (
+              <div className="flex items-center justify-between">
+                <span className="text-[#5f5851]">Delivery fee</span>
+                {bill.feeStatus === "free" && (
+                  <span className="text-[12.5px] font-medium text-[#2f7d46]">Free</span>
+                )}
+                {bill.feeStatus === "due" && (
+                  <span className="text-[#171717]">
+                    ₹{bill.deliveryFee.toLocaleString("en-IN")}
+                    <span className="ml-1 text-[11px] text-[#b45309]">to pay</span>
+                  </span>
+                )}
+                {bill.feeStatus === "paid" && (
+                  <span className="text-[#171717]">
+                    ₹{bill.deliveryFee.toLocaleString("en-IN")}
+                    <span className="ml-1 text-[11px] text-[#2f7d46]">paid</span>
+                  </span>
+                )}
+                {bill.feeStatus === "refunded" && (
+                  <span className="text-[12.5px] font-medium text-[#2f7d46]">
+                    <span className="mr-1 text-[#bdb5ab] line-through">
+                      ₹{bill.deliveryFee.toLocaleString("en-IN")}
+                    </span>
+                    refunded
+                  </span>
+                )}
+                {bill.feeStatus === "first_keep" && (
+                  <span className="text-[#171717]">
+                    ₹{bill.deliveryFee.toLocaleString("en-IN")}
+                    <span className="ml-1 text-[11px] text-[#b45309]">with first Keep</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            {bill && bill.totalPaid > 0 && (
+              <div className="border-t border-[#ece4da] pt-2">
+                <div className="flex items-center justify-between text-[14px] font-semibold text-[#1c1712]">
+                  <span>Paid so far</span>
+                  <span>₹{bill.totalPaid.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            )}
+
+            {allDecided && keptTotal === 0 && (
+              <p className="pt-1 text-[12px] text-[#8b7058]">
+                Returning everything — hand the items back to your rider.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* ── Footer CTA ── */}

@@ -35,26 +35,58 @@ export function CheckoutPageView() {
   const [celebrating, setCelebrating] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
 
-  // Delivery fee from Admin → System Settings (free above the threshold). Mirrors
-  // the server-side calc in placeOrder so what the customer sees matches the order.
-  const [feeCfg, setFeeCfg] = useState<{ fee: number; freeAbove: number }>({ fee: 0, freeAbove: 0 });
+  // Delivery fee from Admin → System Settings. Mirrors the server-side calc in
+  // place_order so what the customer sees matches the order:
+  //   • G9 (migration 050): the fee is charged on EVERY order and paid upfront;
+  //     free_delivery_above is a KEPT-value refund threshold, not a checkout
+  //     waiver. first_order_free zeroes a customer's first order.
+  //   • Pre-050 (probe fails): legacy display — waived when ordered subtotal
+  //     crosses the threshold, matching the 049 RPC.
+  const [feeCfg, setFeeCfg] = useState<{
+    fee: number;
+    freeAbove: number;
+    upfront: boolean; // 050 applied
+    firstFree: boolean; // first_order_free ON and this user has no prior orders
+  }>({ fee: 0, freeAbove: 0, upfront: false, firstFree: false });
   useEffect(() => {
-    createClient()
-      .from("system_settings")
-      .select("delivery_fee, free_delivery_above")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) =>
-        setFeeCfg({
-          fee: Number(data?.delivery_fee ?? 0),
-          freeAbove: Number(data?.free_delivery_above ?? 0),
-        }),
-      );
+    const supabase = createClient();
+    (async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("delivery_fee, free_delivery_above")
+        .eq("id", 1)
+        .maybeSingle();
+      const base = {
+        fee: Number(data?.delivery_fee ?? 0),
+        freeAbove: Number(data?.free_delivery_above ?? 0),
+      };
+      // 050 probe (separate query so a missing column can't blank the basics).
+      const { data: g9, error: g9Error } = await supabase
+        .from("system_settings")
+        .select("first_order_free")
+        .eq("id", 1)
+        .maybeSingle();
+      let firstFree = false;
+      if (!g9Error && g9?.first_order_free) {
+        const { count } = await supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .neq("status", "cancelled");
+        firstFree = (count ?? 0) === 0;
+      }
+      setFeeCfg({ ...base, upfront: !g9Error, firstFree });
+    })();
   }, []);
 
   // No fake discounts — what's shown here must equal what placeOrder writes.
   const discount = 0;
-  const deliveryFee = feeCfg.freeAbove > 0 && subtotal >= feeCfg.freeAbove ? 0 : feeCfg.fee;
+  const deliveryFee = feeCfg.upfront
+    ? feeCfg.firstFree
+      ? 0
+      : feeCfg.fee
+    : feeCfg.freeAbove > 0 && subtotal >= feeCfg.freeAbove
+      ? 0
+      : feeCfg.fee;
   const total = Math.max(0, Math.round(subtotal - discount + deliveryFee));
 
   // Serviceability is judged on the SELECTED ADDRESS (Blinkit-style) — the
@@ -199,6 +231,17 @@ export function CheckoutPageView() {
             </div>
 
             <PriceSummary subtotal={subtotal} discount={discount} delivery={deliveryFee} />
+            {feeCfg.upfront && feeCfg.firstFree && (
+              <p className="mt-2 text-[12px] font-medium text-[#2f7d46]">
+                First order — delivery is on us 🎉
+              </p>
+            )}
+            {feeCfg.upfront && !feeCfg.firstFree && deliveryFee > 0 && feeCfg.freeAbove > 0 && (
+              <p className="mt-2 text-[12px] leading-5 text-[#8b7058]">
+                Keep items worth ₹{feeCfg.freeAbove.toLocaleString("en-IN")}+ after your try-on and
+                the ₹{deliveryFee.toLocaleString("en-IN")} delivery fee is refunded.
+              </p>
+            )}
 
             <CheckoutButton
               label={

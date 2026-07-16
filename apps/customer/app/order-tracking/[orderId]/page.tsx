@@ -70,32 +70,67 @@ export default async function OrderTrackingPage({
     ? { deadline_at: rawSession.deadline_at, status: rawSession.status }
     : null;
 
-  // Fee-on-first-keep (migration 040): tell the view how much the next Keep
-  // charge will carry so the customer isn't surprised in the payment modal.
-  // Pre-040 the delivery_fee_component column doesn't exist → query errors →
-  // fee stays 0, matching createKeepPayment's pre-040 fallback (no fee charged).
+  // One payments fetch drives both the delivery-fee state (G9/050, with 040
+  // as legacy fallback) and the Swiggy-style bill card:
+  //   pendingDeliveryFee > 0  → fee due, nothing collected yet
+  //   feeRefunded             → the upfront fee came back (kept-value waiver)
+  //   totalPaid               → Σ successful captures (what the customer has
+  //                             actually paid so far, incl. any fee)
   let pendingDeliveryFee = 0;
-  if (Number(raw.delivery_fee ?? 0) > 0) {
-    const { data: feeRows, error: feeError } = await supabase
+  let feeRefunded = false;
+  let feePaid = false;
+  let totalPaid = 0;
+  {
+    const { data: payRows, error: payError } = await supabase
       .from("payments")
-      .select("id")
+      .select("amount, status, order_item_id, delivery_fee_component")
       .eq("order_id", orderId)
-      .eq("status", "success")
-      .gt("delivery_fee_component", 0)
-      .limit(1);
-    if (!feeError && (feeRows ?? []).length === 0) {
-      pendingDeliveryFee = Number(raw.delivery_fee);
+      .in("status", ["success", "refunded"]);
+    if (!payError) {
+      const rows = payRows ?? [];
+      totalPaid = rows
+        .filter((r) => r.status === "success")
+        .reduce((s, r) => s + Number(r.amount ?? 0), 0);
+      const feeRows = rows.filter((r) => Number(r.delivery_fee_component ?? 0) > 0);
+      feePaid = feeRows.some((r) => r.status === "success");
+      feeRefunded = feeRows.some((r) => r.status === "refunded" && r.order_item_id === null);
+      // A refunded fee with no live success carrier is settled history, not a
+      // new debt — don't re-ask for it.
+      if (Number(raw.delivery_fee ?? 0) > 0 && !feePaid && !feeRefunded) {
+        pendingDeliveryFee = Number(raw.delivery_fee);
+      }
     }
   }
 
   // Try-window duration for display copy — one source of truth
   // (system_settings.try_window_minutes). Live timers still read deadline_at.
+  // The same row probes migration 050: first_order_free resolving means the
+  // upfront-fee flow (pay card + fee-only settle guard) is live.
   const { data: settings } = await supabase
     .from("system_settings")
     .select("try_window_minutes")
     .eq("id", 1)
     .maybeSingle();
   const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
+  const { error: probe050 } = await supabase
+    .from("system_settings")
+    .select("first_order_free")
+    .eq("id", 1)
+    .maybeSingle();
+  const canPayFeeUpfront = !probe050;
+
+  // Swiggy-style bill state for the view's Bill Details card.
+  const deliveryFeeAmount = Number(raw.delivery_fee ?? 0);
+  const feeStatus =
+    deliveryFeeAmount <= 0
+      ? ("free" as const)
+      : feeRefunded
+        ? ("refunded" as const)
+        : feePaid
+          ? ("paid" as const)
+          : canPayFeeUpfront
+            ? ("due" as const)
+            : ("first_keep" as const);
 
   return (
     <OrderTrackingView
@@ -103,7 +138,10 @@ export default async function OrderTrackingPage({
       items={items}
       trySession={trySession}
       pendingDeliveryFee={pendingDeliveryFee}
+      canPayFeeUpfront={canPayFeeUpfront}
+      feeRefunded={feeRefunded}
       tryWindowMinutes={tryWindowMinutes}
+      bill={{ deliveryFee: deliveryFeeAmount, feeStatus, totalPaid }}
     />
   );
 }

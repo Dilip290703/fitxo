@@ -31,6 +31,7 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
     delivery_fee: String(initial.delivery_fee),
     free_delivery_above: String(initial.free_delivery_above),
     offer_expiry_minutes: String(initial.offer_expiry_minutes),
+    first_order_free: Boolean(initial.first_order_free),
   });
 
   const [commission, setCommission] = useState({
@@ -88,8 +89,26 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
           <input type="number" value={delivery.delivery_fee} min={0} onChange={(e) => setDelivery((f) => ({ ...f, delivery_fee: e.target.value }))} className={inputClass} />
         </div>
         <div>
-          <label className={labelClass}>Free Delivery Above (₹)</label>
+          <label className={labelClass}>Free Delivery Above (₹, KEPT value)</label>
+          <p className="text-xs text-muted mb-1.5">
+            Since migration 050 this is judged on what the customer KEEPS, not what they order —
+            the upfront fee is auto-refunded when kept value crosses it. 0 disables the waiver.
+          </p>
           <input type="number" value={delivery.free_delivery_above} min={0} onChange={(e) => setDelivery((f) => ({ ...f, free_delivery_above: e.target.value }))} className={inputClass} />
+        </div>
+        <div>
+          <label className="flex items-center gap-2 text-sm text-body cursor-pointer">
+            <input
+              type="checkbox"
+              checked={delivery.first_order_free}
+              onChange={(e) => setDelivery((f) => ({ ...f, first_order_free: e.target.checked }))}
+              className="accent-ink"
+            />
+            First order ships free
+          </label>
+          <p className="text-xs text-muted mt-1">
+            Acquisition lever (050): a customer&apos;s first non-cancelled order carries no delivery fee.
+          </p>
         </div>
         <div>
           <label className={labelClass}>
@@ -105,6 +124,7 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
               delivery_fee: Number(delivery.delivery_fee),
               free_delivery_above: Number(delivery.free_delivery_above),
               offer_expiry_minutes: Number(delivery.offer_expiry_minutes),
+              first_order_free: delivery.first_order_free,
             })
           }
           disabled={isPending}
