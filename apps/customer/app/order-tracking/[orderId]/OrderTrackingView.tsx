@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@fitzo/supabase/client";
-import { createKeepPayment, confirmKeepPayment, returnItem, startTryWindow } from "./actions";
+import {
+  createKeepPayment,
+  confirmKeepPayment,
+  returnItem,
+  startTryWindow,
+  createDeliveryFeePayment,
+  refundDeliveryFeeIfEligible,
+} from "./actions";
 import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
 
 // ─────────────────────────────────────────────
@@ -166,13 +173,19 @@ export function OrderTrackingView({
   items: initialItems,
   trySession,
   pendingDeliveryFee = 0,
+  canPayFeeUpfront = false,
+  feeRefunded = false,
   tryWindowMinutes = 7,
 }: {
   order: TrackingOrder;
   items: TrackingItem[];
   trySession: TrackingSession;
-  /** Delivery fee (₹) the next Keep charge will carry — 0 once collected or on free delivery. */
+  /** Delivery fee (₹) still due — 0 once collected, waived, or refunded. */
   pendingDeliveryFee?: number;
+  /** Migration 050 live: fee is paid upfront via its own Razorpay payment (else legacy 040 first-Keep fold). */
+  canPayFeeUpfront?: boolean;
+  /** The upfront fee came back — kept value crossed the free-delivery threshold. */
+  feeRefunded?: boolean;
   /** From system_settings.try_window_minutes — display copy only (timers read deadline_at). */
   tryWindowMinutes?: number;
 }) {
@@ -258,6 +271,81 @@ export function OrderTrackingView({
 
   const tryWindowLive =
     order.status === "try_window_active" && !!timeLeft && !timeLeft.expired;
+
+  // ── G9: upfront delivery-fee payment (migration 050) ────────────────────
+  const [payingFee, setPayingFee] = useState(false);
+
+  async function handlePayDeliveryFee() {
+    if (payingFee) return;
+    setPayingFee(true);
+    setActionError(null);
+
+    const payment = await createDeliveryFeePayment(order.id);
+    if (!payment.success) {
+      setActionError(payment.error);
+      setPayingFee(false);
+      return;
+    }
+
+    const ready = await loadRazorpayScript();
+    if (!ready || !window.Razorpay) {
+      setActionError("Couldn't load the payment window. Check your connection and try again.");
+      setPayingFee(false);
+      return;
+    }
+
+    const rzp = new window.Razorpay({
+      key: payment.keyId,
+      amount: payment.amount,
+      currency: payment.currency,
+      name: "Fitzo",
+      description: `Delivery fee — refunded if you keep ₹ worth over the free-delivery limit`,
+      order_id: payment.rzpOrderId,
+      theme: { color: "#171d2b" },
+      modal: {
+        ondismiss: () => {
+          setActionError("Payment cancelled — the store can't confirm your order until the delivery fee is paid.");
+          setPayingFee(false);
+        },
+      },
+      handler: async (response) => {
+        // Same verified settle path as Keep payments (HMAC + in-DB settle).
+        const result = await confirmKeepPayment({
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+          orderId: order.id,
+        });
+        setPayingFee(false);
+        if (!result.success) {
+          setActionError(result.error);
+          return;
+        }
+        router.refresh();
+      },
+    });
+
+    rzp.on("payment.failed", (resp) => {
+      setActionError(resp.error?.description ?? "Payment failed. Please try again.");
+      setPayingFee(false);
+    });
+
+    rzp.open();
+  }
+
+  // Catch-up for the kept-value fee refund: if the rider completed the order
+  // (auto-return path — no customer action ran finalize), fire the eligibility
+  // check once when the customer next opens the page. The action verifies
+  // everything itself and no-ops when not eligible.
+  const refundChecked = useRef(false);
+  useEffect(() => {
+    if (refundChecked.current) return;
+    if (order.status !== "completed" || feeRefunded || !canPayFeeUpfront) return;
+    refundChecked.current = true;
+    refundDeliveryFeeIfEligible(order.id).then((r) => {
+      if (r.refunded) router.refresh();
+    });
+  }, [order.status, feeRefunded, canPayFeeUpfront, order.id, router]);
 
   async function handleKeep(itemId: string) {
     if (pendingId) return;
@@ -568,6 +656,36 @@ export function OrderTrackingView({
           </div>
         )}
 
+        {/* ── Delivery fee due (G9/050): its own upfront payment — the store
+               can't confirm the order until it's paid ── */}
+        {canPayFeeUpfront && pendingDeliveryFee > 0 && order.status !== "cancelled" && (
+          <div className="mt-4 rounded-[16px] border border-[#f0d9b5] bg-[#fff8ec] p-4">
+            <p className="text-[14px] font-semibold text-[#1c1712]">
+              Pay the ₹{pendingDeliveryFee.toLocaleString("en-IN")} delivery fee to get your order moving
+            </p>
+            <p className="mt-1 text-[12.5px] leading-5 text-[#8b7058]">
+              The store confirms your order once the fee is paid. Keep items worth over the
+              free-delivery limit and this fee comes straight back to you.
+            </p>
+            <button
+              type="button"
+              onClick={handlePayDeliveryFee}
+              disabled={payingFee}
+              className="mt-3 w-full rounded-[12px] bg-[#171d2b] px-4 py-3 text-[14px] font-semibold text-white disabled:opacity-60 sm:w-auto sm:px-8"
+            >
+              {payingFee ? "Opening payment…" : `Pay ₹${pendingDeliveryFee.toLocaleString("en-IN")} delivery fee`}
+            </button>
+          </div>
+        )}
+
+        {/* ── Fee refunded (kept-value free delivery) ── */}
+        {feeRefunded && (
+          <div className="mt-4 rounded-[12px] bg-[#e8f5ec] px-4 py-3 text-[13px] text-[#2f7d46]">
+            Free delivery unlocked — your delivery fee has been refunded (3–7 working days back
+            on your payment method).
+          </div>
+        )}
+
         {/* ── Action error ── */}
         {actionError && (
           <div className="mt-4 rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
@@ -580,8 +698,9 @@ export function OrderTrackingView({
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#8b7058]">
             Items
           </p>
-          {/* Fee-on-first-keep heads-up: no surprise totals in the payment modal. */}
-          {pendingDeliveryFee > 0 &&
+          {/* Legacy 040 heads-up (pre-050 only): fee rides the first Keep charge. */}
+          {!canPayFeeUpfront &&
+            pendingDeliveryFee > 0 &&
             tryWindowLive &&
             !initialItems.some((i) => decisions[i.id] === "keep") && (
             <p className="mt-2 rounded-[10px] bg-[#fff4e5] px-3 py-2 text-[12px] text-[#b45309]">

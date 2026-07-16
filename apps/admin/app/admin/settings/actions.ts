@@ -15,6 +15,8 @@ export interface SystemSettings {
   offer_expiry_minutes: number;
   rider_fee: number;
   commission_rate: number;
+  /** G9 (migration 050): a customer's first order ships free. */
+  first_order_free: boolean;
 }
 
 // Mirrors the migration 011 defaults — used if the singleton row is somehow missing.
@@ -28,6 +30,7 @@ const DEFAULTS: SystemSettings = {
   offer_expiry_minutes: 120,
   rider_fee: 40,
   commission_rate: 15,
+  first_order_free: false,
 };
 
 export async function getSettings(): Promise<SystemSettings> {
@@ -40,7 +43,14 @@ export async function getSettings(): Promise<SystemSettings> {
     .eq('id', 1)
     .maybeSingle();
 
-  return { ...DEFAULTS, ...(data ?? {}) } as SystemSettings;
+  // 050 column probed separately so a pre-050 DB still loads the rest.
+  const { data: g9 } = await supabase
+    .from('system_settings')
+    .select('first_order_free')
+    .eq('id', 1)
+    .maybeSingle();
+
+  return { ...DEFAULTS, ...(data ?? {}), ...(g9 ?? {}) } as SystemSettings;
 }
 
 function validate(patch: Partial<SystemSettings>) {
@@ -81,7 +91,23 @@ export async function updateSettings(patch: Partial<SystemSettings>): Promise<vo
     .update({ ...patch, updated_by: actorId })
     .eq('id', 1);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Pre-050 degrade (042 pattern): don't lose the other fields because the
+    // first_order_free column doesn't exist yet.
+    if ('first_order_free' in patch) {
+      const { first_order_free: _drop, ...rest } = patch;
+      void _drop;
+      const retry = await admin
+        .from('system_settings')
+        .update({ ...rest, updated_by: actorId })
+        .eq('id', 1);
+      if (!retry.error) {
+        revalidatePath('/admin/settings');
+        throw new Error('Saved — except “First order ships free”, which needs migration 050 applied first.');
+      }
+    }
+    throw new Error(error.message);
+  }
 
   revalidatePath('/admin/settings');
 }

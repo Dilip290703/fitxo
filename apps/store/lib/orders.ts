@@ -194,5 +194,14 @@ export async function confirmOrder(orderId: string): Promise<void> {
   const { error } = await supabase.rpc("store_confirm_order", {
     p_order_id: orderId,
   });
-  if (error) throw error;
+  if (error) {
+    // G9 gate (migration 050): the customer pays the delivery fee upfront;
+    // the order can't be confirmed until they have.
+    if (error.message?.includes("DELIVERY_FEE_UNPAID")) {
+      throw new Error(
+        "The customer hasn't paid the delivery fee yet — they pay it on their tracking page, then you can confirm.",
+      );
+    }
+    throw error;
+  }
 }

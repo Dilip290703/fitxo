@@ -70,32 +70,46 @@ export default async function OrderTrackingPage({
     ? { deadline_at: rawSession.deadline_at, status: rawSession.status }
     : null;
 
-  // Fee-on-first-keep (migration 040): tell the view how much the next Keep
-  // charge will carry so the customer isn't surprised in the payment modal.
-  // Pre-040 the delivery_fee_component column doesn't exist → query errors →
-  // fee stays 0, matching createKeepPayment's pre-040 fallback (no fee charged).
+  // Delivery-fee state (G9, migration 050 — with 040 as legacy fallback):
+  //   pendingDeliveryFee > 0  → fee due, nothing collected yet
+  //   feeRefunded             → the upfront fee came back (kept-value waiver)
   let pendingDeliveryFee = 0;
+  let feeRefunded = false;
   if (Number(raw.delivery_fee ?? 0) > 0) {
     const { data: feeRows, error: feeError } = await supabase
       .from("payments")
-      .select("id")
+      .select("id, status, order_item_id")
       .eq("order_id", orderId)
-      .eq("status", "success")
-      .gt("delivery_fee_component", 0)
-      .limit(1);
-    if (!feeError && (feeRows ?? []).length === 0) {
-      pendingDeliveryFee = Number(raw.delivery_fee);
+      .in("status", ["success", "refunded"])
+      .gt("delivery_fee_component", 0);
+    if (!feeError) {
+      const rows = feeRows ?? [];
+      if (!rows.some((r) => r.status === "success")) {
+        pendingDeliveryFee = Number(raw.delivery_fee);
+      }
+      feeRefunded = rows.some((r) => r.status === "refunded" && r.order_item_id === null);
+      // A refunded fee with no live success carrier is settled history, not a
+      // new debt — don't re-ask for it.
+      if (feeRefunded) pendingDeliveryFee = 0;
     }
   }
 
   // Try-window duration for display copy — one source of truth
   // (system_settings.try_window_minutes). Live timers still read deadline_at.
+  // The same row probes migration 050: first_order_free resolving means the
+  // upfront-fee flow (pay card + fee-only settle guard) is live.
   const { data: settings } = await supabase
     .from("system_settings")
     .select("try_window_minutes")
     .eq("id", 1)
     .maybeSingle();
   const tryWindowMinutes = Number(settings?.try_window_minutes ?? 7);
+  const { error: probe050 } = await supabase
+    .from("system_settings")
+    .select("first_order_free")
+    .eq("id", 1)
+    .maybeSingle();
+  const canPayFeeUpfront = !probe050;
 
   return (
     <OrderTrackingView
@@ -103,6 +117,8 @@ export default async function OrderTrackingPage({
       items={items}
       trySession={trySession}
       pendingDeliveryFee={pendingDeliveryFee}
+      canPayFeeUpfront={canPayFeeUpfront}
+      feeRefunded={feeRefunded}
       tryWindowMinutes={tryWindowMinutes}
     />
   );

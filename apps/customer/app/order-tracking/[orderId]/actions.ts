@@ -203,6 +203,11 @@ export async function confirmKeepPayment(args: {
   // and stop the try-window clock.
   await supabase.rpc('finalize_order_if_decided', { p_order_id: args.orderId });
 
+  // G9 waiver (050): if the order just completed with kept value over the
+  // free-delivery threshold, auto-refund the upfront fee. Best-effort — the
+  // action verifies eligibility itself and never throws.
+  await refundDeliveryFeeIfEligible(args.orderId);
+
   revalidatePath(`/order-tracking/${args.orderId}`);
   return { success: true };
 }
@@ -235,6 +240,206 @@ export async function returnItem(orderItemId: string, orderId: string): Promise<
   // and stop the try-window clock.
   await supabase.rpc('finalize_order_if_decided', { p_order_id: orderId });
 
+  // G9 waiver (050): the last decision may have completed the order with kept
+  // value over the threshold — settle the fee refund. Best-effort.
+  await refundDeliveryFeeIfEligible(orderId);
+
   revalidatePath(`/order-tracking/${orderId}`);
   return { success: true };
+}
+
+export type CreateFeePaymentResult =
+  | {
+      success: true;
+      keyId: string;
+      rzpOrderId: string;
+      amount: number; // paise
+      currency: string;
+      deliveryFee: number; // rupees
+    }
+  | { success: false; error: string };
+
+/**
+ * G9 (migration 050): the delivery fee is its own upfront Razorpay payment,
+ * collected right after checkout — whether the customer later keeps or
+ * returns. Mirrors createKeepPayment: server-computed amount, pending
+ * payments row (order_item_id NULL + delivery_fee_component = fee, which is
+ * exactly what 040's fee-carried check and store_confirm_order's gate read).
+ * Settlement reuses confirmKeepPayment / the 039 webhook — settle_keep_payment
+ * handles item-less payments since 050.
+ */
+export async function createDeliveryFeePayment(orderId: string): Promise<CreateFeePaymentResult> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated.' };
+
+  // Pre-050 guard: without the migration, a fee-only settle would wrongly
+  // mark the order paid — refuse until 050 is applied (the tracking page
+  // falls back to the 040 fold-into-first-Keep note).
+  const { error: probeError } = await supabase
+    .from('system_settings')
+    .select('first_order_free')
+    .eq('id', 1)
+    .maybeSingle();
+  if (probeError) {
+    return { success: false, error: 'Upfront fee payment not enabled yet — apply migration 050.' };
+  }
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id, status, delivery_fee')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (!order) return { success: false, error: 'Order not found.' };
+  if (order.status === 'cancelled') {
+    return { success: false, error: 'This order was cancelled.' };
+  }
+  const fee = Number(order.delivery_fee ?? 0);
+  if (fee <= 0) return { success: false, error: 'No delivery fee is due on this order.' };
+
+  // Already collected (upfront payment, or a legacy 040 first-Keep carry)?
+  const { data: carried, error: carriedError } = await supabase
+    .from('payments')
+    .select('id')
+    .eq('order_id', orderId)
+    .eq('status', 'success')
+    .gt('delivery_fee_component', 0)
+    .limit(1);
+  if (carriedError) return { success: false, error: carriedError.message };
+  if ((carried ?? []).length > 0) {
+    return { success: false, error: 'The delivery fee is already paid.' };
+  }
+
+  const amountPaise = Math.round(fee * 100);
+  let rzpOrder;
+  try {
+    rzpOrder = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      // Razorpay caps receipt at 40 chars; "f_" + 36-char UUID = 38.
+      receipt: `f_${orderId}`,
+      notes: {
+        order_id: orderId,
+        user_id: user.id,
+        purpose: 'delivery_fee',
+        delivery_fee: String(fee),
+      },
+    });
+  } catch (e) {
+    console.error('[createDeliveryFeePayment] razorpay.orders.create failed:', e);
+    let msg = 'Could not start payment.';
+    if (e instanceof Error) {
+      msg = e.message;
+    } else if (e && typeof e === 'object') {
+      const err = e as { error?: { description?: string }; statusCode?: number };
+      msg = err.error?.description ?? (err.statusCode ? `HTTP ${err.statusCode}` : msg);
+    }
+    return { success: false, error: `Razorpay: ${msg}` };
+  }
+
+  const { error: payError } = await supabase.from('payments').insert({
+    order_id: orderId,
+    user_id: user.id,
+    amount: fee,
+    currency: 'INR',
+    status: 'initiated',
+    payment_method: 'razorpay',
+    razorpay_order_id: rzpOrder.id,
+    delivery_fee_component: fee,
+  });
+  if (payError) return { success: false, error: payError.message };
+
+  return {
+    success: true,
+    keyId: RAZORPAY_KEY_ID,
+    rzpOrderId: rzpOrder.id,
+    amount: amountPaise,
+    currency: 'INR',
+    deliveryFee: fee,
+  };
+}
+
+/**
+ * G9 kept-value waiver: when the order has finished with kept-and-paid value
+ * ≥ system_settings.free_delivery_above, refund the standalone upfront fee
+ * payment. Money moves via Razorpay's refund API first; the guarded RPC
+ * record_delivery_fee_refund (050) then flips the ledger row after
+ * re-verifying eligibility in-DB. Best-effort by design: any failure leaves
+ * the fee row 'success' and the admin Refund path (041) as backstop — it
+ * never blocks the keep/return that triggered it.
+ */
+export async function refundDeliveryFeeIfEligible(
+  orderId: string,
+): Promise<{ refunded: boolean }> {
+  try {
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { refunded: false };
+
+    // Cheap pre-checks under the caller's own RLS (the RPC re-verifies all of
+    // this in-DB; these just avoid pointless Razorpay calls).
+    const [{ data: settings }, { data: items }, { data: feePayments }] = await Promise.all([
+      supabase.from('system_settings').select('free_delivery_above').eq('id', 1).maybeSingle(),
+      supabase.from('order_items').select('price_at_order, decision').eq('order_id', orderId),
+      supabase
+        .from('payments')
+        .select('id, status, razorpay_payment_id, order_item_id, delivery_fee_component')
+        .eq('order_id', orderId)
+        .is('order_item_id', null)
+        .gt('delivery_fee_component', 0)
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const threshold = Number(settings?.free_delivery_above ?? 0);
+    if (threshold <= 0) return { refunded: false };
+    const all = items ?? [];
+    if (all.length === 0 || all.some((i) => i.decision === 'pending')) return { refunded: false };
+    const kept = all
+      .filter((i) => i.decision === 'keep')
+      .reduce((s, i) => s + Number(i.price_at_order ?? 0), 0);
+    if (kept < threshold) return { refunded: false };
+
+    const fee = (feePayments ?? []).find((p) => p.status === 'success');
+    if (!fee?.razorpay_payment_id) return { refunded: false };
+
+    // Move the money. "Already fully refunded" (e.g. via the Razorpay
+    // dashboard) reconciles our row instead of failing — same as 041.
+    let refundId = 'reconciled';
+    try {
+      const refund = await razorpay.payments.refund(fee.razorpay_payment_id, {
+        notes: { reason: 'free_delivery_kept_threshold', order_id: orderId },
+      });
+      refundId = refund.id ?? refundId;
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : ((e as { error?: { description?: string } })?.error?.description ?? '');
+      if (!/fully refunded/i.test(msg)) {
+        console.error('[refundDeliveryFee] razorpay refund failed:', e);
+        return { refunded: false };
+      }
+    }
+
+    const { error: rpcError } = await supabase.rpc('record_delivery_fee_refund', {
+      p_order_id: orderId,
+      p_refund_id: refundId,
+    });
+    if (rpcError) {
+      // Refund WAS issued — say so loudly in the logs; admin reconciles via 041.
+      console.error(
+        `[refundDeliveryFee] refund ${refundId} issued at Razorpay but ledger flip failed:`,
+        rpcError.message,
+      );
+      return { refunded: false };
+    }
+
+    revalidatePath(`/order-tracking/${orderId}`);
+    return { refunded: true };
+  } catch (e) {
+    console.error('[refundDeliveryFee] unexpected failure:', e);
+    return { refunded: false };
+  }
 }
