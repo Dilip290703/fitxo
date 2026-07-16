@@ -123,6 +123,28 @@ expectations, one truth.
 Final manual check: place one test order against prod through the deployed apps
 (W5.4's dry-run does this properly).
 
+## RLS probe (W4.1 — the 2026-06-08 incident guard)
+
+`scripts/supabase/rls-probe.mjs` proves, over the anon key, that no sensitive
+table leaks a row — the automated backstop for the day RLS was found silently
+disabled. Run locally against either env:
+
+```bash
+SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… pnpm rls-probe
+```
+
+The service-role key is optional but makes results *evidence* (proves "N rows
+exist, anon sees 0" instead of "anon sees 0, maybe just empty"). In CI it runs
+on every push to main + daily, once these repo secrets are set (Settings →
+Secrets and variables → Actions):
+
+- `RLS_PROBE_URL` — the DEV project URL (probe the env that changes most)
+- `RLS_PROBE_ANON_KEY`
+- `RLS_PROBE_SERVICE_KEY` (optional)
+
+Until the secrets exist the CI job no-ops green. Run it by hand against **prod**
+before go-live (W5).
+
 ---
 
 ## Going forward — migration workflow after the split

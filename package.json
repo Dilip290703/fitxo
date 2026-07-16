@@ -14,6 +14,7 @@
     "build:customer": "pnpm --filter @fitzo/customer build",
     "build:admin": "pnpm --filter @fitzo/admin build",
     "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "rls-probe": "node scripts/supabase/rls-probe.mjs"
   }
 }
