@@ -1,0 +1,90 @@
+# CI — runs on every push to main and every PR into main.
+# Gates merges on the checks that are real and green today:
+#   • typecheck  (tsc --noEmit across all 4 apps)
+#   • test       (vitest — customer + store)
+#   • build      (next build for all 4 apps, in parallel via a matrix)
+#
+# NOT gated yet: lint. `next lint` has no ESLint config in any app, so it drops
+# into an interactive setup prompt (would hang in CI). Add a `lint` job here once
+# ESLint is actually configured — see the follow-up task.
+#
+# The build step uses PLACEHOLDER Supabase/Razorpay env values on purpose: the
+# goal is to catch compile/bundle breakage, not to talk to a real backend. No
+# repo secrets are required. Real env is wired at deploy time (Netlify), not here.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A newer push to the same branch/PR cancels the older, still-running run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Placeholders — enough for `next build` to compile without a real backend.
+  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key-not-real
+  SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-not-real
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_placeholder
+  RAZORPAY_KEY_ID: rzp_test_placeholder
+  RAZORPAY_KEY_SECRET: placeholder
+  RAZORPAY_WEBHOOK_SECRET: placeholder
+
+jobs:
+  check:
+    name: Typecheck & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Test
+        run: pnpm -r test
+
+  build:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [customer, admin, agent, store]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm --filter @fitzo/${{ matrix.app }} build
