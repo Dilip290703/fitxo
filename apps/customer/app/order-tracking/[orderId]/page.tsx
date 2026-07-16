@@ -70,27 +70,35 @@ export default async function OrderTrackingPage({
     ? { deadline_at: rawSession.deadline_at, status: rawSession.status }
     : null;
 
-  // Delivery-fee state (G9, migration 050 — with 040 as legacy fallback):
+  // One payments fetch drives both the delivery-fee state (G9/050, with 040
+  // as legacy fallback) and the Swiggy-style bill card:
   //   pendingDeliveryFee > 0  → fee due, nothing collected yet
   //   feeRefunded             → the upfront fee came back (kept-value waiver)
+  //   totalPaid               → Σ successful captures (what the customer has
+  //                             actually paid so far, incl. any fee)
   let pendingDeliveryFee = 0;
   let feeRefunded = false;
-  if (Number(raw.delivery_fee ?? 0) > 0) {
-    const { data: feeRows, error: feeError } = await supabase
+  let feePaid = false;
+  let totalPaid = 0;
+  {
+    const { data: payRows, error: payError } = await supabase
       .from("payments")
-      .select("id, status, order_item_id")
+      .select("amount, status, order_item_id, delivery_fee_component")
       .eq("order_id", orderId)
-      .in("status", ["success", "refunded"])
-      .gt("delivery_fee_component", 0);
-    if (!feeError) {
-      const rows = feeRows ?? [];
-      if (!rows.some((r) => r.status === "success")) {
-        pendingDeliveryFee = Number(raw.delivery_fee);
-      }
-      feeRefunded = rows.some((r) => r.status === "refunded" && r.order_item_id === null);
+      .in("status", ["success", "refunded"]);
+    if (!payError) {
+      const rows = payRows ?? [];
+      totalPaid = rows
+        .filter((r) => r.status === "success")
+        .reduce((s, r) => s + Number(r.amount ?? 0), 0);
+      const feeRows = rows.filter((r) => Number(r.delivery_fee_component ?? 0) > 0);
+      feePaid = feeRows.some((r) => r.status === "success");
+      feeRefunded = feeRows.some((r) => r.status === "refunded" && r.order_item_id === null);
       // A refunded fee with no live success carrier is settled history, not a
       // new debt — don't re-ask for it.
-      if (feeRefunded) pendingDeliveryFee = 0;
+      if (Number(raw.delivery_fee ?? 0) > 0 && !feePaid && !feeRefunded) {
+        pendingDeliveryFee = Number(raw.delivery_fee);
+      }
     }
   }
 
@@ -111,6 +119,19 @@ export default async function OrderTrackingPage({
     .maybeSingle();
   const canPayFeeUpfront = !probe050;
 
+  // Swiggy-style bill state for the view's Bill Details card.
+  const deliveryFeeAmount = Number(raw.delivery_fee ?? 0);
+  const feeStatus =
+    deliveryFeeAmount <= 0
+      ? ("free" as const)
+      : feeRefunded
+        ? ("refunded" as const)
+        : feePaid
+          ? ("paid" as const)
+          : canPayFeeUpfront
+            ? ("due" as const)
+            : ("first_keep" as const);
+
   return (
     <OrderTrackingView
       order={order}
@@ -120,6 +141,7 @@ export default async function OrderTrackingPage({
       canPayFeeUpfront={canPayFeeUpfront}
       feeRefunded={feeRefunded}
       tryWindowMinutes={tryWindowMinutes}
+      bill={{ deliveryFee: deliveryFeeAmount, feeStatus, totalPaid }}
     />
   );
 }
