@@ -20,6 +20,8 @@ function friendlyOrderError(message: string): string {
   if (message.includes('MULTI_STORE_CART')) {
     return 'Your bag mixes items from different stores — one order is one store (one rider, one doorstep visit). Please keep items from a single store and try again.';
   }
+  const paused = message.match(/STORE_PAUSED:(.+)/);
+  if (paused) return `${paused[1].trim()} is temporarily closed and not taking new orders right now. Please try again a little later.`;
   const outOfStock = message.match(/OUT_OF_STOCK:(.+)/);
   if (outOfStock) return `${outOfStock[1].trim()} just went out of stock. Remove it from your bag and try again.`;
   const unavailable = message.match(/PRODUCT_UNAVAILABLE:(.+)/);

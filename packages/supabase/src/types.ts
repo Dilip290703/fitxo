@@ -44,6 +44,8 @@ export interface Store {
   is_verified: boolean;
   /** Per-store commission override in percent (migration 046). NULL = platform default rate. */
   commission_rate?: number | null;
+  /** Manager-controlled pause (migration 052): true = taking no NEW orders. Distinct from is_active (admin kill switch). Optional: absent pre-052. */
+  is_paused?: boolean;
   created_at: string;
   updated_at: string;
 }

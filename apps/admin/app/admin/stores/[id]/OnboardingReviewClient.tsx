@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
+import { isPunePincode } from '@fitzo/pincode';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
 import type { StoreBusinessDetails, StoreOnboardingStatus } from '@fitzo/supabase/types';
@@ -21,6 +22,7 @@ export default function OnboardingReviewClient({
   submittedAt,
   rejectionReason,
   business,
+  pincode,
 }: {
   storeId: string;
   storeName: string;
@@ -28,6 +30,7 @@ export default function OnboardingReviewClient({
   submittedAt: string | null;
   rejectionReason: string | null;
   business: StoreBusinessDetails | null;
+  pincode: string | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -35,10 +38,21 @@ export default function OnboardingReviewClient({
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
+  const [overriding, setOverriding] = useState(false);
 
   const pill = STATUS_PILL[status] ?? STATUS_PILL.draft;
 
-  const approve = async () => {
+  // G6: riders pick up FROM the store, so the store itself must sit inside the
+  // delivery area — the same Pune list the customer app checks (@fitzo/pincode).
+  // A store outside it (or with no pincode) is operationally undeliverable.
+  const serviceable = !!pincode && isPunePincode(pincode);
+
+  const approve = async (override = false) => {
+    // Unserviceable → first click opens the override confirm instead of approving.
+    if (!serviceable && !override) {
+      setOverriding(true);
+      return;
+    }
     setBusy(true);
     const { error } = await supabase
       .from('stores')
@@ -56,11 +70,16 @@ export default function OnboardingReviewClient({
       return;
     }
     await logActivity(supabase, {
-      action: 'Approved store onboarding',
+      action: override
+        ? 'Approved store onboarding (OVERRIDE: pincode outside delivery area)'
+        : 'Approved store onboarding',
       entity_type: 'store',
       entity_id: storeId,
-      new_value: { onboarding_status: 'approved' },
+      new_value: override
+        ? { onboarding_status: 'approved', serviceability_override: true, store_pincode: pincode || null }
+        : { onboarding_status: 'approved' },
     });
+    setOverriding(false);
     toast(`${storeName} approved & activated`, 'success');
     router.refresh();
   };
@@ -99,6 +118,12 @@ export default function OnboardingReviewClient({
   };
 
   const rows: [string, string | null | undefined][] = [
+    [
+      'Pincode',
+      pincode
+        ? `${pincode} · ${serviceable ? 'in the delivery area (Pune)' : 'OUTSIDE the delivery area'}`
+        : 'Not provided',
+    ],
     ['Legal name', business?.legal_name],
     ['Entity type', business?.entity_type],
     ['PAN', business?.pan_number],
@@ -164,24 +189,57 @@ export default function OnboardingReviewClient({
             </button>
           </div>
         </div>
-      ) : (
-        <div className="flex gap-2">
-          <button
-            onClick={approve}
-            disabled={busy}
-            className="flex-1 py-2 text-sm bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white font-medium rounded-lg"
-          >
-            {status === 'approved' ? 'Re-activate' : 'Approve & activate'}
-          </button>
-          {status !== 'rejected' && (
+      ) : overriding ? (
+        <div className="space-y-2">
+          <p className="text-xs text-warn bg-warn-bg border border-warn-accent/40 rounded-lg px-3 py-2">
+            {pincode
+              ? `Pincode ${pincode} is outside FitZo's delivery area — riders can't pick up from this store, so its orders can never be fulfilled. Approve only if delivery coverage is expanding here.`
+              : 'This store has no pincode on file, so serviceability can’t be checked. Ask the store to complete its address, or approve only if you’ve verified the location yourself.'}
+          </p>
+          <div className="flex gap-2">
             <button
-              onClick={() => setRejecting(true)}
+              onClick={() => approve(true)}
               disabled={busy}
-              className="px-4 py-2 text-sm border border-red-500/40 text-danger rounded-lg hover:bg-danger-bg"
+              className="flex-1 py-2 text-sm bg-warn-accent hover:opacity-90 disabled:opacity-60 text-white font-medium rounded-lg"
             >
-              Reject
+              {busy ? 'Approving…' : 'Approve anyway'}
             </button>
+            <button
+              onClick={() => setOverriding(false)}
+              disabled={busy}
+              className="px-4 py-2 text-sm border border-line-strong text-body rounded-lg hover:bg-hairline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {!serviceable && (
+            <p className="text-xs text-warn bg-warn-bg border border-warn-accent/40 rounded-lg px-3 py-2">
+              {pincode
+                ? `⚠ Pincode ${pincode} is outside the delivery area — approval will ask for an override.`
+                : '⚠ No pincode on file — approval will ask for an override.'}
+            </p>
           )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => approve()}
+              disabled={busy}
+              className="flex-1 py-2 text-sm bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white font-medium rounded-lg"
+            >
+              {status === 'approved' ? 'Re-activate' : 'Approve & activate'}
+            </button>
+            {status !== 'rejected' && (
+              <button
+                onClick={() => setRejecting(true)}
+                disabled={busy}
+                className="px-4 py-2 text-sm border border-red-500/40 text-danger rounded-lg hover:bg-danger-bg"
+              >
+                Reject
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
