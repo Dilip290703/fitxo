@@ -17,6 +17,12 @@ export interface SystemSettings {
   commission_rate: number;
   /** G9 (migration 050): a customer's first order ships free. */
   first_order_free: boolean;
+  /** G5 (migration 053): max total units in one order. 0 = no cap. */
+  max_items_per_order: number;
+  /** G5 (migration 053): max not-yet-completed/cancelled orders per customer. 0 = no cap. */
+  max_active_orders: number;
+  /** G5 (migration 053): max orders per customer per rolling 24h (cancelled excluded). 0 = no cap. */
+  max_orders_per_day: number;
 }
 
 // Mirrors the migration 011 defaults — used if the singleton row is somehow missing.
@@ -31,6 +37,9 @@ const DEFAULTS: SystemSettings = {
   rider_fee: 40,
   commission_rate: 15,
   first_order_free: false,
+  max_items_per_order: 8,
+  max_active_orders: 1,
+  max_orders_per_day: 0,
 };
 
 export async function getSettings(): Promise<SystemSettings> {
@@ -50,7 +59,14 @@ export async function getSettings(): Promise<SystemSettings> {
     .eq('id', 1)
     .maybeSingle();
 
-  return { ...DEFAULTS, ...(data ?? {}), ...(g9 ?? {}) } as SystemSettings;
+  // 053 cap columns probed separately for the same reason.
+  const { data: g5 } = await supabase
+    .from('system_settings')
+    .select('max_items_per_order, max_active_orders, max_orders_per_day')
+    .eq('id', 1)
+    .maybeSingle();
+
+  return { ...DEFAULTS, ...(data ?? {}), ...(g9 ?? {}), ...(g5 ?? {}) } as SystemSettings;
 }
 
 function validate(patch: Partial<SystemSettings>) {
@@ -78,6 +94,12 @@ function validate(patch: Partial<SystemSettings>) {
   if (patch.commission_rate !== undefined && (!Number.isFinite(patch.commission_rate) || patch.commission_rate < 0 || patch.commission_rate > 100)) {
     throw new Error('Commission rate must be between 0 and 100');
   }
+  for (const key of ['max_items_per_order', 'max_active_orders', 'max_orders_per_day'] as const) {
+    const v = patch[key];
+    if (v !== undefined && (!Number.isInteger(v) || v < 0)) {
+      throw new Error('Order limits must be whole numbers (0 disables a limit)');
+    }
+  }
 }
 
 export async function updateSettings(patch: Partial<SystemSettings>): Promise<void> {
@@ -92,6 +114,12 @@ export async function updateSettings(patch: Partial<SystemSettings>): Promise<vo
     .eq('id', 1);
 
   if (error) {
+    // Pre-053 degrade: the caps section saves ONLY cap keys, so there's
+    // nothing to salvage from the patch — just name the missing migration.
+    const capKeys = ['max_items_per_order', 'max_active_orders', 'max_orders_per_day'];
+    if (Object.keys(patch).some((k) => capKeys.includes(k))) {
+      throw new Error(`Order limits need migration 053 applied first (${error.message})`);
+    }
     // Pre-050 degrade (042 pattern): don't lose the other fields because the
     // first_order_free column doesn't exist yet.
     if ('first_order_free' in patch) {
