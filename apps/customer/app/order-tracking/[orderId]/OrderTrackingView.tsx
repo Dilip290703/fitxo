@@ -11,6 +11,7 @@ import {
   startTryWindow,
   createDeliveryFeePayment,
   refundDeliveryFeeIfEligible,
+  cancelOrder,
 } from "./actions";
 import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
 
@@ -175,6 +176,7 @@ export function OrderTrackingView({
   pendingDeliveryFee = 0,
   canPayFeeUpfront = false,
   feeRefunded = false,
+  canCancel = false,
   tryWindowMinutes = 7,
   bill,
 }: {
@@ -187,6 +189,8 @@ export function OrderTrackingView({
   canPayFeeUpfront?: boolean;
   /** The upfront fee came back — kept value crossed the free-delivery threshold. */
   feeRefunded?: boolean;
+  /** G4 (054): order is still self-cancellable (pending, or confirmed with no rider claimed). */
+  canCancel?: boolean;
   /** From system_settings.try_window_minutes — display copy only (timers read deadline_at). */
   tryWindowMinutes?: number;
   /** Swiggy-style bill state: fee amount + where it stands + what's been captured so far. */
@@ -208,6 +212,26 @@ export function OrderTrackingView({
   const [actionError, setActionError] = useState<string | null>(null);
   const [startingWindow, setStartingWindow] = useState(false);
   const [windowDismissed, setWindowDismissed] = useState(false);
+
+  // G4 (054): self-cancel — a confirm sheet then the guarded RPC.
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
+  async function handleCancelOrder() {
+    setCancelling(true);
+    setCancelError(null);
+    const result = await cancelOrder(order.id);
+    if (!result.success) {
+      setCancelError(result.error);
+      setCancelling(false);
+      return;
+    }
+    // Re-fetch so the page reflects the cancelled state (banner + no button).
+    setCancelOpen(false);
+    setCancelling(false);
+    router.refresh();
+  }
 
   // Live updates: when the rider marks the order delivered, or the window
   // starts, refresh the server data so the prompt / countdown appears instantly.
@@ -489,6 +513,50 @@ export function OrderTrackingView({
 
   return (
     <main className="min-h-screen bg-[#fbfaf7]">
+      {/* ── Cancel confirmation (G4) ── */}
+      {cancelOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitzo-fade-in 180ms ease-out both" }}>
+          <div className="absolute inset-0 bg-[#171d2b]/50 backdrop-blur-[3px]" onClick={() => !cancelling && setCancelOpen(false)} />
+          <div
+            className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.5)]"
+            style={{ animation: "fitzo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
+          >
+            <div className="px-7 pb-7 pt-7 text-center">
+              <h2 className="font-display text-[24px] leading-tight text-[#171717]">Cancel this order?</h2>
+              <p className="mx-auto mt-2 max-w-[330px] text-[14px] leading-6 text-[#5f5851]">
+                We&apos;ll release your items and let the store know.
+                {bill && bill.feeStatus === "paid"
+                  ? " Your delivery fee will be refunded to your original payment method."
+                  : ""}
+              </p>
+              {cancelError && (
+                <p className="mt-3 rounded-[10px] bg-[#fdecea] px-3 py-2 text-[12px] text-[#c0392b]">{cancelError}</p>
+              )}
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                disabled={cancelling}
+                className="mt-6 w-full rounded-[14px] bg-[#c0392b] px-5 py-3.5 text-[14px] font-semibold text-white transition hover:bg-[#a93226] disabled:opacity-60"
+              >
+                {cancelling ? "Cancelling…" : "Yes, cancel my order"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCancelOpen(false)}
+                disabled={cancelling}
+                className="mt-2 w-full rounded-[14px] px-5 py-3 text-[13px] font-medium text-[#8b7058] transition hover:text-[#171717] disabled:opacity-60"
+              >
+                Keep my order
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes fitzo-fade-in { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes fitzo-pop-in { 0% { opacity: 0; transform: translateY(12px) scale(0.96) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
+          `}</style>
+        </div>
+      )}
+
       {/* ── Doorstep prompt: rider delivered → start the 7-min window ── */}
       {awaitingTryStart && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitzo-fade-in 180ms ease-out both" }}>
@@ -626,6 +694,22 @@ export function OrderTrackingView({
                 );
               })}
             </ol>
+          </div>
+        )}
+
+        {/* ── Self-cancel (G4): only while the order hasn't left the shelf ── */}
+        {canCancel && (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-[14px] border border-[#ece4da] bg-white px-5 py-4">
+            <p className="text-[13px] leading-5 text-[#5f5851]">
+              Ordered by mistake? You can cancel while the store hasn&apos;t sent it out yet.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setCancelError(null); setCancelOpen(true); }}
+              className="flex-none rounded-[12px] border border-[#e0b4ad] px-4 py-2 text-[13px] font-semibold text-[#c0392b] transition hover:bg-[#fdecea]"
+            >
+              Cancel order
+            </button>
           </div>
         )}
 
