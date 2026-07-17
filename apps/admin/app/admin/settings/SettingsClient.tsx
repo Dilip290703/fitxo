@@ -39,6 +39,12 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
     rider_fee: String(initial.rider_fee),
   });
 
+  const [caps, setCaps] = useState({
+    max_items_per_order: String(initial.max_items_per_order),
+    max_active_orders: String(initial.max_active_orders),
+    max_orders_per_day: String(initial.max_orders_per_day),
+  });
+
   function save(label: string, patch: Partial<SystemSettings>) {
     startTransition(async () => {
       try {
@@ -149,6 +155,45 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
         </div>
         <button onClick={() => save('Commission settings', { commission_rate: Number(commission.commission_rate), rider_fee: Number(commission.rider_fee) })} disabled={isPending} className={buttonClass}>
           {isPending ? 'Saving…' : 'Save Commission Settings'}
+        </button>
+      </section>
+
+      {/* Order limits (G5 abuse caps) */}
+      <section className="bg-white border border-line rounded-xl p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-ink">Order Limits (abuse caps)</h3>
+        <p className="text-xs text-muted">
+          Enforced server-side when an order is placed (migration 053). Every trip costs a rider run +
+          store handling, so these bound the free-try-on abuse loop. <strong>0 disables a limit.</strong>
+        </p>
+        <div>
+          <label className={labelClass}>Max items per order</label>
+          <p className="text-xs text-muted mb-1.5">Total units one order may contain</p>
+          <input type="number" value={caps.max_items_per_order} min={0} step={1} onChange={(e) => setCaps((f) => ({ ...f, max_items_per_order: e.target.value }))} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Max active orders per customer</label>
+          <p className="text-xs text-muted mb-1.5">
+            Orders not yet completed or cancelled — 1 means one live doorstep try-on at a time
+          </p>
+          <input type="number" value={caps.max_active_orders} min={0} step={1} onChange={(e) => setCaps((f) => ({ ...f, max_active_orders: e.target.value }))} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Max orders per day per customer</label>
+          <p className="text-xs text-muted mb-1.5">Rolling 24 hours; cancelled orders don&apos;t count against it</p>
+          <input type="number" value={caps.max_orders_per_day} min={0} step={1} onChange={(e) => setCaps((f) => ({ ...f, max_orders_per_day: e.target.value }))} className={inputClass} />
+        </div>
+        <button
+          onClick={() =>
+            save('Order limits', {
+              max_items_per_order: Number(caps.max_items_per_order),
+              max_active_orders: Number(caps.max_active_orders),
+              max_orders_per_day: Number(caps.max_orders_per_day),
+            })
+          }
+          disabled={isPending}
+          className={buttonClass}
+        >
+          {isPending ? 'Saving…' : 'Save Order Limits'}
         </button>
       </section>
 

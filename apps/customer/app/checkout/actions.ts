@@ -22,6 +22,16 @@ function friendlyOrderError(message: string): string {
   }
   const paused = message.match(/STORE_PAUSED:(.+)/);
   if (paused) return `${paused[1].trim()} is temporarily closed and not taking new orders right now. Please try again a little later.`;
+  const tooMany = message.match(/ORDER_TOO_MANY_ITEMS:(\d+)/);
+  if (tooMany) return `A try-on order can include at most ${tooMany[1]} items — please remove a few and order the rest separately.`;
+  const activeLimit = message.match(/ORDER_LIMIT_ACTIVE:(\d+)/);
+  if (activeLimit) {
+    return Number(activeLimit[1]) === 1
+      ? 'You already have an order in progress — finish that doorstep try-on before placing a new one.'
+      : `You already have ${activeLimit[1]} orders in progress — finish one before placing another.`;
+  }
+  const dailyLimit = message.match(/ORDER_LIMIT_DAILY:(\d+)/);
+  if (dailyLimit) return `You've reached the limit of ${dailyLimit[1]} orders in 24 hours. Fresh picks tomorrow!`;
   const outOfStock = message.match(/OUT_OF_STOCK:(.+)/);
   if (outOfStock) return `${outOfStock[1].trim()} just went out of stock. Remove it from your bag and try again.`;
   const unavailable = message.match(/PRODUCT_UNAVAILABLE:(.+)/);
