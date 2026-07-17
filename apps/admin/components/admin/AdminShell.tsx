@@ -38,6 +38,7 @@ const NAV: NavSection[] = [
     label: 'Money',
     items: [
       { label: 'Revenue', icon: 'revenue', href: '/admin/analytics' },
+      { label: 'Finance (P&L)', icon: 'revenue', href: '/admin/finance' },
       { label: 'Payments', icon: 'payments', href: '/admin/payments' },
       { label: 'Store Payouts', icon: 'payouts', href: '/admin/payouts' },
       { label: 'Agent Payouts', icon: 'payouts', href: '/admin/agent-payouts' },
