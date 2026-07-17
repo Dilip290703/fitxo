@@ -23,6 +23,85 @@ export async function startTryWindow(orderId: string): Promise<ActionResult> {
   return { success: true };
 }
 
+/**
+ * G4 (migration 054): the customer cancels their own order from the tracking
+ * page while it's still cancellable (pending, or confirmed-but-no-rider-
+ * claimed). The guarded RPC does the whole state teardown atomically — flips
+ * the order to 'cancelled' (the 047 trigger frees reserved stock), fails the
+ * live delivery, expires the try session, and notifies the store. If an
+ * upfront delivery fee (G9/050) was paid, the RPC hands back its Razorpay
+ * payment id and we refund it here (keys are server-side), then record the
+ * ledger flip — the same app-then-RPC shape as refundDeliveryFeeIfEligible.
+ */
+export async function cancelOrder(orderId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated.' };
+
+  const { data, error } = await supabase.rpc('cancel_order_by_customer', {
+    p_order_id: orderId,
+  });
+  if (error) {
+    const msg = error.message;
+    if (msg.includes('CANCEL_RIDER_ASSIGNED')) {
+      return { success: false, error: 'A rider has already picked up your order — please contact support to cancel.' };
+    }
+    if (msg.includes('CANCEL_TOO_LATE')) {
+      return { success: false, error: 'This order is too far along to cancel here — please contact support.' };
+    }
+    if (msg.includes('not authorised')) {
+      return { success: false, error: 'You can only cancel your own order.' };
+    }
+    return { success: false, error: msg };
+  }
+
+  // Refund the upfront delivery fee if one was paid. Best-effort: a failure
+  // here leaves the order cancelled (the important part) and the fee for the
+  // admin 041 refund path — it never turns a successful cancel into an error.
+  const result = data as { fee_refund_payment_id?: string | null } | null;
+  const feePaymentId = result?.fee_refund_payment_id ?? null;
+  if (feePaymentId) {
+    try {
+      let refundId = 'reconciled';
+      try {
+        const refund = await razorpay.payments.refund(feePaymentId, {
+          notes: { reason: 'order_cancelled_by_customer', order_id: orderId },
+        });
+        refundId = refund.id ?? refundId;
+      } catch (e) {
+        const emsg =
+          e instanceof Error
+            ? e.message
+            : ((e as { error?: { description?: string } })?.error?.description ?? '');
+        // "already fully refunded" reconciles the row; anything else, leave
+        // the fee for admin and don't block the cancel.
+        if (!/fully refunded/i.test(emsg)) {
+          console.error('[cancelOrder] fee refund failed:', e);
+          refundId = '';
+        }
+      }
+      if (refundId) {
+        const { error: rpcError } = await supabase.rpc('record_cancel_fee_refund', {
+          p_order_id: orderId,
+          p_refund_id: refundId,
+        });
+        if (rpcError) {
+          console.error(
+            `[cancelOrder] refund ${refundId} issued but ledger flip failed:`,
+            rpcError.message,
+          );
+        }
+      }
+    } catch (e) {
+      console.error('[cancelOrder] unexpected fee-refund failure:', e);
+    }
+  }
+
+  revalidatePath(`/order-tracking/${orderId}`);
+  return { success: true };
+}
+
 export type CreateKeepPaymentResult =
   | {
       success: true;
