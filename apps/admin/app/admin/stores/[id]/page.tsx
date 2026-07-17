@@ -60,6 +60,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
             submittedAt={store.submitted_at}
             rejectionReason={store.rejection_reason}
             business={business ?? null}
+            pincode={store.pincode ?? null}
           />
 
           {/* Managers */}
