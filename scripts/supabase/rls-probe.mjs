@@ -56,6 +56,7 @@ const SENSITIVE = [
   'notifications',
   'system_settings',         // commission/fee config — authenticated-read only
   'delivery_declines',
+  'coupons',                 // promo codes are secrets — locked down by migration 051 (validate_coupon RPC is the only door)
 ];
 
 /** The storefront. Anon SHOULD read these — over-locking is a bug too. */
@@ -76,10 +77,8 @@ const PUBLIC_OK = [
  * the fix's acceptance test.
  */
 const KNOWN_EXCEPTIONS = [
-  {
-    table: 'coupons',
-    why: 'schema.sql coupons_select = "is_active = true OR is_admin()" → every active promo code is publicly enumerable (incl. limited-use ones). Fix belongs with W3.2 lean coupons: validate a submitted code via an RPC instead of exposing the table.',
-  },
+  // (empty — coupons was here until migration 051 locked the table down;
+  //  it now lives in SENSITIVE above, so a regression fails CI.)
 ];
 
 async function probe(table, key) {
