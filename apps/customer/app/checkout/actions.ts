@@ -90,8 +90,10 @@ export async function placeOrder(
   const { data: placed, error: placeError } = await supabase.rpc('place_order', {
     p_items: items.map((i) => ({
       product_id: i.id,
-      color_name: i.color ?? null,
-      size: i.size ?? null,
+      // '' means "no explicit choice" (e.g. single-colour product page) — the
+      // RPC must see NULL, else it filters on color_name = '' and finds nothing.
+      color_name: i.color || null,
+      size: i.size || null,
       quantity: i.quantity,
       image_url: i.image || null,
     })),
