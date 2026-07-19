@@ -3,7 +3,8 @@ import CouponsClient from './CouponsClient';
 
 export default async function CouponsPage() {
   const supabase = await createClient();
-  const { data: coupons } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+  // coupons has no created_at column — ordering by it errors and blanked the list
+  const { data: coupons } = await supabase.from('coupons').select('*').order('valid_from', { ascending: false });
 
   return (
     <div className="space-y-4 max-w-5xl">

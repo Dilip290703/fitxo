@@ -20,6 +20,18 @@ function friendlyOrderError(message: string): string {
   if (message.includes('MULTI_STORE_CART')) {
     return 'Your bag mixes items from different stores — one order is one store (one rider, one doorstep visit). Please keep items from a single store and try again.';
   }
+  const paused = message.match(/STORE_PAUSED:(.+)/);
+  if (paused) return `${paused[1].trim()} is temporarily closed and not taking new orders right now. Please try again a little later.`;
+  const tooMany = message.match(/ORDER_TOO_MANY_ITEMS:(\d+)/);
+  if (tooMany) return `A try-on order can include at most ${tooMany[1]} items — please remove a few and order the rest separately.`;
+  const activeLimit = message.match(/ORDER_LIMIT_ACTIVE:(\d+)/);
+  if (activeLimit) {
+    return Number(activeLimit[1]) === 1
+      ? 'You already have an order in progress — finish that doorstep try-on before placing a new one.'
+      : `You already have ${activeLimit[1]} orders in progress — finish one before placing another.`;
+  }
+  const dailyLimit = message.match(/ORDER_LIMIT_DAILY:(\d+)/);
+  if (dailyLimit) return `You've reached the limit of ${dailyLimit[1]} orders in 24 hours. Fresh picks tomorrow!`;
   const outOfStock = message.match(/OUT_OF_STOCK:(.+)/);
   if (outOfStock) return `${outOfStock[1].trim()} just went out of stock. Remove it from your bag and try again.`;
   const unavailable = message.match(/PRODUCT_UNAVAILABLE:(.+)/);
@@ -78,8 +90,10 @@ export async function placeOrder(
   const { data: placed, error: placeError } = await supabase.rpc('place_order', {
     p_items: items.map((i) => ({
       product_id: i.id,
-      color_name: i.color ?? null,
-      size: i.size ?? null,
+      // '' means "no explicit choice" (e.g. single-colour product page) — the
+      // RPC must see NULL, else it filters on color_name = '' and finds nothing.
+      color_name: i.color || null,
+      size: i.size || null,
       quantity: i.quantity,
       image_url: i.image || null,
     })),

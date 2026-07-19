@@ -119,6 +119,21 @@ export default async function OrderTrackingPage({
     .maybeSingle();
   const canPayFeeUpfront = !probe050;
 
+  // G4 (054): the customer can self-cancel while the order hasn't left the
+  // shelf — 'pending' (store hasn't confirmed) or 'confirmed' with no rider
+  // yet claimed the delivery. Once a rider accepts, cancelling is support's
+  // call. The RPC re-checks all of this; this only decides button visibility.
+  let canCancel = order.status === "pending";
+  if (order.status === "confirmed") {
+    const { data: del } = await supabase
+      .from("deliveries")
+      .select("rider_id")
+      .eq("order_id", orderId)
+      .eq("type", "delivery")
+      .maybeSingle();
+    canCancel = !del?.rider_id;
+  }
+
   // Swiggy-style bill state for the view's Bill Details card.
   const deliveryFeeAmount = Number(raw.delivery_fee ?? 0);
   const feeStatus =
@@ -140,6 +155,7 @@ export default async function OrderTrackingPage({
       pendingDeliveryFee={pendingDeliveryFee}
       canPayFeeUpfront={canPayFeeUpfront}
       feeRefunded={feeRefunded}
+      canCancel={canCancel}
       tryWindowMinutes={tryWindowMinutes}
       bill={{ deliveryFee: deliveryFeeAmount, feeStatus, totalPaid }}
     />

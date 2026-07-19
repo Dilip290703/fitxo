@@ -15,6 +15,7 @@ import {
   markAllItemsPrepared,
   type StoreOrderDetail,
 } from "@/lib/orders";
+import { loadPauseState, setStorePaused } from "@/lib/storeStatus";
 import { formatCurrency, timeAgo } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
@@ -36,6 +37,9 @@ export function StoreDashboard() {
   const [error, setError] = useState("");
   const [busyOrder, setBusyOrder] = useState<string | null>(null);
   const [progress, setProgress] = useState("");
+  // null = unknown OR pre-052 DB (no is_paused column) — control stays hidden.
+  const [paused, setPaused] = useState<boolean | null>(null);
+  const [pauseBusy, setPauseBusy] = useState(false);
 
   const reload = useCallback(async () => {
     try {
@@ -63,6 +67,37 @@ export function StoreDashboard() {
     lastPending.current = pendingCount;
     reload();
   }, [reload, pendingCount, data]);
+
+  // Open/Paused state — loaded once; a pre-052 DB returns null and the
+  // control simply doesn't render.
+  useEffect(() => {
+    let cancelled = false;
+    loadPauseState(storeId).then((s) => {
+      if (!cancelled && s) setPaused(s.paused);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeId]);
+
+  const togglePause = async () => {
+    if (paused === null) return;
+    setPauseBusy(true);
+    try {
+      await setStorePaused(storeId, !paused);
+      setPaused(!paused);
+      toast(
+        !paused
+          ? "Store paused — customers can't place new orders until you resume."
+          : "Store is open again — customers can place orders.",
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg ? `Couldn't update store status: ${msg}` : "Couldn't update store status. Please try again.");
+    } finally {
+      setPauseBusy(false);
+    }
+  };
 
   const readyAndConfirm = async (order: StoreOrderDetail) => {
     setBusyOrder(order.id);
@@ -98,6 +133,44 @@ export function StoreDashboard() {
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
       <PageHeader eyebrow={today} title="Dashboard" />
+
+      {/* ——— Open/Paused (G6, migration 052) — hidden on a pre-052 DB ——— */}
+      {paused !== null && (
+        <div
+          className={`mt-6 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+            paused ? "border-danger-line bg-danger-bg" : "border-line bg-white"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className={`h-2.5 w-2.5 shrink-0 rounded-full ${paused ? "bg-danger" : "bg-success"}`}
+              aria-hidden
+            />
+            <div>
+              <p className={`text-[13px] font-semibold ${paused ? "text-danger" : "text-ink"}`}>
+                {paused ? "Store paused — not taking new orders" : "Store open — taking new orders"}
+              </p>
+              <p className={`text-[12px] ${paused ? "text-danger/80" : "text-muted"}`}>
+                {paused
+                  ? "Customers can browse but can't order. Orders already placed still need fulfilling."
+                  : "Pause if you need a break — new orders stop instantly; nothing already placed is affected."}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={togglePause}
+            disabled={pauseBusy}
+            className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] transition disabled:opacity-50 ${
+              paused
+                ? "bg-success text-white hover:opacity-90"
+                : "border border-line-strong text-body hover:border-ink hover:text-ink"
+            }`}
+          >
+            {pauseBusy ? "Updating…" : paused ? "Resume orders" : "Pause store"}
+          </button>
+        </div>
+      )}
 
       {error ? (
         <Banner variant="error" className="mt-6">{error}</Banner>
