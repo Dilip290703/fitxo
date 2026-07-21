@@ -59,8 +59,12 @@ certificate of prod.
    - **Storage bucket + policies** — re-run **migration 030** (creates the
      `product-images` bucket; bucket rows are data, not schema).
    - **pg_cron sweeps (W2.9)** — enable the `pg_cron` extension (Database →
-     Extensions), then run the commented schedule blocks in **migrations 027 + 036**
-     (`expire_try_windows`, `expire_stale_offers`).
+     Extensions), then run **migration 056**. Do NOT hand-run the commented
+     schedule blocks in 027/036: 056 supersedes them and deliberately schedules
+     only `expire_try_windows`. `expire_stale_offers` stays unscheduled because
+     it cancels `confirmed` orders, and since G9/050 every such order has a
+     **paid** delivery fee it does not refund — 056 also makes the function skip
+     those, and `verify-env.sh` fails if anything re-schedules it.
 3. **Seed the config singleton** (the ONLY data row prod starts with):
    ```sql
    INSERT INTO system_settings (id, site_name, contact_email, support_phone,
@@ -101,10 +105,26 @@ never in git. Matrix:
 Local `.env.local`s keep pointing at **dev**. Never point a local app at prod unless
 you are doing the cutover checks.
 
-## Part F — backups 🧑
+## Part F — backups 🧑 (W2.9 / B8)
 
-- Prod: enable PITR if on a paid plan, else confirm daily backups are on
-  (Settings → Database → Backups). Dev needs nothing.
+**Prod is on the Free plan, so PITR is not available** — it is a paid add-on
+(Pro plan + PITR). What Free gives you is **daily backups with 7-day retention**,
+taken automatically. Dev needs nothing.
+
+1. Settings → Database → Backups → confirm daily backups are listed and the most
+   recent one is < 24h old. There is nothing to switch on; the check is that
+   backups are actually being produced.
+2. **Know the exposure and write it down** rather than assuming it away: with
+   daily-only backups, a restore loses **up to 24 hours** of orders, payments,
+   and payouts. Razorpay is the independent record of money actually moved, so a
+   restore is reconcilable — but order/try-session state is not, and
+   `order_economics` is derived from rows that would be gone.
+3. **Before anything destructive on prod** (a migration that drops or rewrites
+   data, a bulk fix), take a manual backup first — Free-plan dailies are not a
+   safety net for a mistake made at 3pm.
+4. Revisit at the Razorpay live cutover (W5.2): once real money flows daily,
+   Pro + PITR (~7-day window) stops being optional. Track it as a launch cost,
+   not a nice-to-have.
 
 ## Part G — verify 💻
 
