@@ -81,14 +81,87 @@ certificate of prod.
 5. **First admin user**: sign up via the admin login page pointed at prod, then in SQL:
    `UPDATE users SET role='admin' WHERE email='<you>';` (do this before inviting anyone).
 
-## Part D — auth settings 🧑 (Authentication → settings, prod project)
+## Part D — auth settings 🧑 (Authentication, **both projects** — W4.4 / D4)
 
-- Email provider ON; **custom SMTP** (Resend/Brevo — B6/W2.4; the built-in sender is
-  rate-limited to a handful of mails per hour and will break signup).
-- Phone provider OFF until DLT/SMS is ready (B7) — email+password soft launch.
-- Redirect URLs: `https://fitzo.in/**`, `https://store.fitzo.in/**`,
-  `https://agent.fitzo.in/**`, `https://admin.fitzo.in/**` (plus staging aliases).
-- Enable leaked-password protection; review OTP/token expiries and rate limits (D4).
+**Read the current state first, don't assume it** — this endpoint is public and
+needs only the anon key:
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/settings" -H "apikey: $ANON_KEY" | python3 -m json.tool
+```
+
+It returns which providers are actually on, plus `mailer_autoconfirm` and
+`disable_signup`. Dev on 2026-07-21 read: `email: true`, `phone: false`,
+`google: false`, `mailer_autoconfirm: true`.
+
+### Providers — keep the dashboard and the app in step
+
+A provider that is off while the UI still offers it produces a dead button and a
+raw error toast. The customer login is gated on env flags for exactly this
+reason (W4.4); **flip the flag only when the provider is genuinely live.**
+
+| Provider | State | App flag (`apps/customer`) | Unblocked by |
+|---|---|---|---|
+| Email + password | **ON** | — (always available) | — |
+| Phone OTP | **OFF** | `NEXT_PUBLIC_PHONE_AUTH_ENABLED` | SMS provider + DLT registration (W1.2/B7) |
+| Google OAuth | **OFF** | `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED` | a Google Cloud OAuth client on the project |
+
+If Google is ever enabled: callback is `https://<ref>.supabase.co/auth/v1/callback`
+on the Google side, and `/auth/callback` must be in the redirect allowlist below.
+
+### Email confirmation — currently OFF, and that is a sequenced decision
+
+`mailer_autoconfirm: true` means signups get an instant session and **no
+verification email**, so every account today is unverified. Turning confirmation
+on without custom SMTP breaks signup outright — the built-in sender is limited to
+a handful of mails an hour. Order matters:
+
+**W2.4 custom SMTP live → turn confirmation ON → then W4.2 transactional emails.**
+
+Until then, accept unverified emails (soft launch, low volume) and know that a
+mistyped address means the customer silently never receives order mail.
+
+### Redirect URLs — derived from the code, not guessed
+
+Only three call sites pass a `redirectTo`, all using `window.location.origin`:
+
+| App | Path | Source |
+|---|---|---|
+| customer | `/auth/callback` | `components/LoginPanel.tsx` (OAuth) + `app/auth/callback/route.ts` (PKCE exchange) |
+| store | `/reset-password` | `components/StoreLoginPanel.tsx` |
+| agent | `/reset-password` | `app/login/page.tsx` |
+| admin | — | no reset/OAuth flow exists; it needs no redirect entry |
+
+**Prod allowlist** (exact paths beat `/**` wildcards — a wildcard lets any path on
+the domain be a redirect target):
+
+```
+https://fitzo.in/auth/callback
+https://store.fitzo.in/reset-password
+https://agent.fitzo.in/reset-password
+```
+
+**Dev allowlist** (ports from `.claude/launch.json`):
+
+```
+http://localhost:3000/auth/callback
+http://localhost:3003/reset-password
+http://localhost:3002/reset-password
+```
+
+Add Netlify preview/staging aliases alongside these when W2.2 lands. Site URL:
+`https://fitzo.in` on prod, `http://localhost:3000` on dev.
+
+### Hardening (D4)
+
+- **Leaked-password protection ON** (both projects) — rejects passwords found in
+  known breach corpora. Affects signup and password change, not existing logins.
+- **OTP / token expiry ≤ 3600s.** Supabase's own advisor flags anything longer.
+- **Review rate limits** (Authentication → Rate Limits): the defaults are tuned
+  for a busy app, not a soft launch — token, signup, and email-send limits are
+  the ones that matter before real traffic.
+- Password minimum length: the customer signup form enforces 6 characters
+  client-side; set the project minimum to match or raise both together.
 
 ## Part E — app env wiring 💻
 

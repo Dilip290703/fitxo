@@ -33,6 +33,17 @@ function isPhone(value: string) {
   return /^\+?\d[\d\s-]{8,}$/.test(value);
 }
 
+// W4.4: only offer a sign-in method the Supabase project actually has enabled.
+// Both are OFF by default and were dead in the UI until this gate — phone OTP
+// answered "Unsupported phone provider" (phone_provider_disabled) and Google
+// answered HTTP 400, each surfacing as a raw error toast.
+//   • phone  — needs an SMS provider + DLT registration (W1.2 / B7)
+//   • google — needs a Google Cloud OAuth client configured on the project
+// Flip the matching env var to "true" per environment once the provider is
+// genuinely live; the code paths below are kept intact for exactly that.
+const PHONE_AUTH_ENABLED = process.env.NEXT_PUBLIC_PHONE_AUTH_ENABLED === "true";
+const GOOGLE_AUTH_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+
 function GoogleMark() {
   return (
     <span className="inline-grid h-5 w-5 place-items-center rounded-full bg-white text-[15px] font-bold shadow-[inset_0_0_0_1px_rgba(20,20,20,0.08)]">
@@ -63,8 +74,10 @@ export function LoginPanel() {
   const [otpPending, setOtpPending] = useState(false);
   const [otpToken, setOtpToken] = useState("");
 
+  // With phone auth off there is only one kind of credential, so the form must
+  // never branch into the OTP shape (which hides the password field entirely).
   const contactLooksLikeEmail = useMemo(
-    () => loginForm.contact.includes("@"),
+    () => !PHONE_AUTH_ENABLED || loginForm.contact.includes("@"),
     [loginForm.contact],
   );
 
@@ -78,9 +91,13 @@ export function LoginPanel() {
     const contact = loginForm.contact.trim();
 
     if (!contact) {
-      nextErrors.contact = "Enter your phone number or email.";
-    } else if (!isEmail(contact) && !isPhone(contact)) {
-      nextErrors.contact = "Use a valid email or mobile number.";
+      nextErrors.contact = PHONE_AUTH_ENABLED
+        ? "Enter your phone number or email."
+        : "Enter your email address.";
+    } else if (PHONE_AUTH_ENABLED ? !isEmail(contact) && !isPhone(contact) : !isEmail(contact)) {
+      nextErrors.contact = PHONE_AUTH_ENABLED
+        ? "Use a valid email or mobile number."
+        : "Use a valid email address.";
     }
 
     if (contactLooksLikeEmail && !loginForm.password.trim()) {
@@ -355,10 +372,10 @@ export function LoginPanel() {
               ) : (
                 <form onSubmit={handleLogin} className="mt-5 space-y-3.5" noValidate>
                   <Field
-                    label="Phone or email"
+                    label={PHONE_AUTH_ENABLED ? "Phone or email" : "Email"}
                     value={loginForm.contact}
                     error={loginErrors.contact}
-                    autoComplete="username"
+                    autoComplete={PHONE_AUTH_ENABLED ? "username" : "email"}
                     onChange={(value) => {
                       setLoginForm((current) => ({ ...current, contact: value }));
                       setLoginErrors((current) => ({ ...current, contact: undefined }));
@@ -440,21 +457,25 @@ export function LoginPanel() {
               </form>
             )}
 
-            <div className="my-3 flex items-center gap-4 text-[12px] text-[#9b9186]">
-              <span className="h-px flex-1 bg-[#e5ddd2]" />
-              <span>or</span>
-              <span className="h-px flex-1 bg-[#e5ddd2]" />
-            </div>
+            {GOOGLE_AUTH_ENABLED ? (
+              <>
+                <div className="my-3 flex items-center gap-4 text-[12px] text-[#9b9186]">
+                  <span className="h-px flex-1 bg-[#e5ddd2]" />
+                  <span>or</span>
+                  <span className="h-px flex-1 bg-[#e5ddd2]" />
+                </div>
 
-            <button
-              type="button"
-              onClick={handleGoogle}
-              disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-2xl border border-[#ded3c6] bg-white text-[13px] font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <span>Continue with Google</span>
-              <GoogleMark />
-            </button>
+                <button
+                  type="button"
+                  onClick={handleGoogle}
+                  disabled={isSubmitting}
+                  className="flex h-11 w-full items-center justify-center gap-3 rounded-2xl border border-[#ded3c6] bg-white text-[13px] font-semibold text-[#221b13] transition duration-200 hover:-translate-y-0.5 hover:border-[#221b13] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  <span>Continue with Google</span>
+                  <GoogleMark />
+                </button>
+              </>
+            ) : null}
 
             <p className="mt-3 text-center text-[13px] text-[#6d655d]">
               {mode === "login" ? "Do not have an account?" : "Already have an account?"}{" "}
