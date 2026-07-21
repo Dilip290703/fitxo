@@ -68,6 +68,35 @@ RI="$("${PSQL[@]}" -c "SELECT relreplident FROM pg_class c JOIN pg_namespace n O
                         WHERE n.nspname='public' AND c.relname='deliveries';")" || RI=""
 if [[ "$RI" == "f" ]]; then ok "deliveries replica identity FULL"; else fail "deliveries replica identity is '$RI' — run: ALTER TABLE deliveries REPLICA IDENTITY FULL;"; fi
 
+echo "== 9. abandoned-order sweeps scheduled (W2.9, migration 056) =="
+HAS_CRON="$("${PSQL[@]}" -c "SELECT 1 FROM pg_extension WHERE extname='pg_cron';")" || HAS_CRON=""
+if [[ "$HAS_CRON" != "1" ]]; then
+  fail "pg_cron not installed — enable it (Database → Extensions) and re-run migration 056"
+else
+  ok "pg_cron installed"
+  TRY_JOB="$("${PSQL[@]}" -c "SELECT active FROM cron.job WHERE jobname='expire-try-windows';")" || TRY_JOB=""
+  case "$TRY_JOB" in
+    t) ok "expire-try-windows scheduled and active" ;;
+    f) fail "expire-try-windows exists but is INACTIVE — abandoned try windows will hang open" ;;
+    *) fail "expire-try-windows not scheduled — re-run migration 056" ;;
+  esac
+
+  # Guard, not a nicety: expire_stale_offers cancels confirmed orders, and since
+  # G9/050 every such order has a PAID delivery fee. Until an app-side runner
+  # refunds it first, an unattended schedule keeps customers' money. See 056.
+  OFFER_JOB="$("${PSQL[@]}" -c "SELECT 1 FROM cron.job WHERE jobname='expire-stale-offers';")" || OFFER_JOB=""
+  if [[ "$OFFER_JOB" == "1" ]]; then
+    fail "expire-stale-offers IS scheduled — it cancels paid orders without refunding the delivery fee. Unschedule it (see migration 056) unless the app-side refund runner shipped."
+  else
+    ok "expire-stale-offers correctly not scheduled"
+  fi
+
+  STUCK="$("${PSQL[@]}" -c "SELECT count(*) FROM stale_offers_needing_refund();")" || STUCK=""
+  if [[ -n "$STUCK" && "$STUCK" != "0" ]]; then
+    echo "  ⚠️  $STUCK stale unclaimed order(s) hold a paid delivery fee — cancel + refund via Admin (not a failure)"
+  fi
+fi
+
 echo
 if [[ $FAILURES -gt 0 ]]; then
   echo "❌ $FAILURES check(s) failed — see docs/ENVIRONMENTS.md Part C."
