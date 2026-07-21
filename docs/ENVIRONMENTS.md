@@ -240,6 +240,84 @@ before go-live (W5).
 
 ---
 
+## Rotating the Razorpay keys (W4.9 / C4 — and the W5.2 live cutover)
+
+**Why the test secret is being rotated:** it was shared in chat (plan item D2 —
+"rotate anything ever shared in chat"). It was **not** committed — a scan of the
+full git history found only placeholders (`rzp_test_xxxxxxxx`) in the deleted
+`docs/HANDOFF-payment.md`, and `.env*` files have never been tracked. So there
+is **no history to rewrite**; regenerating the key is the whole fix.
+
+### The secret lives in four places, and they must move together
+
+| # | Location | Used for |
+|---|---|---|
+| 1 | `apps/customer/.env.local` | creating the Razorpay order at checkout/Keep |
+| 2 | `apps/admin/.env.local` | refunds (migration 041) |
+| 3 | Vault `razorpay_key_secret` — **dev** | in-DB HMAC verification |
+| 4 | Vault `razorpay_key_secret` — **prod** | in-DB HMAC verification |
+
+The app and the database hold the same secret for *different* reasons: the app
+calls Razorpay's API with it, and `confirm_keep_payment` (009) /
+`razorpay_webhook_captured` (039) re-verify Razorpay's signature **inside
+Postgres** with it, so a compromised client cannot forge a settlement.
+
+⚠️ **That is why a half-finished rotation is dangerous.** Update the app but not
+the Vault and the app charges with the new key, Razorpay signs with the new
+secret, and the database checks against the old one — **the money moves and the
+order never settles**, leaving only `invalid payment signature` in a log. On
+test keys that is a lost afternoon; at the live cutover it is a real customer
+charged for an order that stays open.
+
+### Order of operations
+
+1. **Razorpay dashboard → Settings → API Keys → Regenerate Test Key.** Note that
+   this issues a **new key id AND a new secret** — both change, and the old pair
+   stops working immediately.
+2. Update **both** app envs (all four values, not just the secrets):
+   - `apps/customer/.env.local` — `NEXT_PUBLIC_RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
+   - `apps/admin/.env.local` — `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
+3. Update the Vault on **each project** (dev and prod are separate):
+   ```sql
+   SELECT vault.update_secret(
+     (SELECT id FROM vault.secrets WHERE name = 'razorpay_key_secret'),
+     '<new secret>'
+   );
+   ```
+4. Restart the dev servers — `NEXT_PUBLIC_*` is inlined at build time, so a
+   running server keeps serving the old key id to the browser. After W2.2, the
+   Netlify env vars need the same update **and a redeploy**, not just a save.
+5. **Verify** (see below) before doing anything else.
+
+### Verify — `pnpm razorpay:check`
+
+```bash
+SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… pnpm razorpay:check
+```
+
+Compares every copy **by HMAC fingerprint**, so no secret is printed, logged, or
+transmitted. It checks the two app envs against each other (secret *and* key id)
+and against the Vault via `razorpay_secret_fingerprints()` (migration **057**).
+Run it once per project — the Vault half is per-environment.
+
+Then the behavioural check the plan asks for: **one test payment end-to-end**
+(order → Keep → UPI `success@razorpay`) and confirm the payment row reaches
+`success`. That exercises the in-DB HMAC path the fingerprints only *predict*.
+
+### Two things that bite
+
+- **In-flight payments die.** Any `payments` row left at `status='initiated'`
+  from before the rotation can never be verified — its Razorpay order was signed
+  with the old secret. Rotate when nothing is mid-checkout, and expect stale
+  `initiated` rows on dev to stay stuck.
+- **The webhook secret is a separate credential.** Regenerating API keys does
+  **not** change `razorpay_webhook_secret`. If it was also shared in chat, rotate
+  it separately: Razorpay dashboard → Webhooks → edit the endpoint → new secret,
+  then update `RAZORPAY_WEBHOOK_SECRET` in `apps/customer/.env.local` **and** the
+  Vault copy on both projects. `pnpm razorpay:check` covers this one too.
+
+---
+
 ## Going forward — migration workflow after the split
 
 - **One migrations directory stays the truth**: `packages/supabase/migrations/NNN_*.sql`,

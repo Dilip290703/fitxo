@@ -15,6 +15,7 @@
     "build:admin": "pnpm --filter @fitzo/admin build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "rls-probe": "node scripts/supabase/rls-probe.mjs"
+    "rls-probe": "node scripts/supabase/rls-probe.mjs",
+    "razorpay:check": "node scripts/razorpay/check-key-sync.mjs"
   }
 }
