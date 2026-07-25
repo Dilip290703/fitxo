@@ -316,6 +316,15 @@ Then the behavioural check the plan asks for: **one test payment end-to-end**
   then update `RAZORPAY_WEBHOOK_SECRET` in `apps/customer/.env.local` **and** the
   Vault copy on both projects. `pnpm razorpay:check` covers this one too.
 
+  **Three copies must agree, not two.** Razorpay's webhook endpoint holds the
+  authoritative value; `RAZORPAY_WEBHOOK_SECRET` (used by the route) and Vault's
+  `razorpay_webhook_secret` (used by the in-DB re-verification) must **both**
+  equal it. Fixing only one side just moves the failure: a wrong **env** value
+  makes the route reject genuine webhooks with **401**, and a wrong **Vault**
+  value lets the route pass and the RPC reject. If you are unsure which copy is
+  stale, set a fresh secret on the Razorpay webhook endpoint and paste that one
+  value into all copies — guessing costs more than resetting.
+
   ⚠️ **The mistake to avoid, found live on dev 2026-07-25:** Vault's
   `razorpay_webhook_secret` had been set to a copy of the **API key secret** —
   the two live in different dashboard screens and are easy to confuse. The

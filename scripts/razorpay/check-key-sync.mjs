@@ -102,13 +102,22 @@ if (cId && aId) {
 }
 
 console.log('== 3. Vault copies match the apps (per project) ==');
-const URL_BASE = process.env.SUPABASE_URL?.replace(/\/$/, '');
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Default to the admin app's own env: it is the one app that legitimately holds
+// a service-role key, and it is already parsed above — so the common case (dev)
+// needs no arguments. Explicit env vars override, which is how prod is checked.
+const URL_BASE = (process.env.SUPABASE_URL || admin?.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || admin?.SUPABASE_SERVICE_ROLE_KEY;
+let vaultChecked = false;
 
 if (!URL_BASE || !SERVICE) {
-  skip('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — Vault half skipped');
-  skip('run again per project: the Vault is separate on dev and prod');
+  skip('no Supabase URL / service-role key — Vault half skipped');
+  skip('set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY, or fill apps/admin/.env.local');
 } else {
+  vaultChecked = true;
+  // Always say WHICH project was checked — "it passed" is meaningless without it,
+  // and dev vs prod is a single env var apart.
+  const ref = URL_BASE.match(/https?:\/\/([^.]+)\./)?.[1] ?? URL_BASE;
+  console.log(`  › project: ${ref}`);
   const res = await fetch(`${URL_BASE}/rest/v1/rpc/razorpay_secret_fingerprints`, {
     method: 'POST',
     headers: {
@@ -174,4 +183,18 @@ if (failures > 0) {
   console.log(`❌ ${failures} problem(s). See docs/ENVIRONMENTS.md → "Rotating the Razorpay keys".`);
   process.exit(1);
 }
-console.log('✅ Every checked copy of the Razorpay secrets agrees.');
+
+// A skipped Vault check must NEVER read as a pass. The Vault half is the one
+// that decides whether payments actually settle, so "the app envs agree" on its
+// own proves nothing about a rotation — and a green tick here before the W5.2
+// live cutover would be actively misleading.
+if (!vaultChecked) {
+  console.log('⚠️  INCOMPLETE — the app envs agree, but the Vault half did NOT run.');
+  console.log('   A rotation is NOT verified until the Vault copy is compared, on EACH project:');
+  console.log('     dev : pnpm razorpay:check            (reads apps/admin/.env.local)');
+  console.log('     prod: SUPABASE_URL=https://<prod-ref>.supabase.co \\');
+  console.log('           SUPABASE_SERVICE_ROLE_KEY=<prod service key> pnpm razorpay:check');
+  process.exit(2);
+}
+
+console.log('✅ Every copy of the Razorpay secrets agrees, including Vault.');
