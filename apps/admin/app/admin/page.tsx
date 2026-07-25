@@ -6,6 +6,7 @@ import ActiveDeliveries from './ActiveDeliveries';
 import { ACTIVE_DELIVERY_SELECT, ACTIVE_DELIVERY_STATUSES, mapRow } from './active-deliveries-lib';
 import { computeStorePayables } from './payouts/compute';
 import { computeAgentPayables } from './agent-payouts/compute';
+import { getPendingFeeRefunds, FEE_REFUND_LABEL } from '@/lib/fee-refunds';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -127,12 +128,39 @@ export default async function AdminDashboard() {
     }
   }
 
+  // Orders sitting on a paid delivery fee that should have come back (058).
+  const { rows: feeRefunds, unavailable: feeRefundsUnavailable } = await getPendingFeeRefunds();
+
   const storesOwed = storePayables.filter((p) => p.netOutstanding > 0);
   const ridersOwed = agentPayables.filter((p) => p.netOutstanding > 0);
   const storeOwedTotal = storesOwed.reduce((s, p) => s + p.netOutstanding, 0);
   const riderOwedTotal = ridersOwed.reduce((s, p) => s + p.netOutstanding, 0);
 
+  const feeRefundTotal = feeRefunds.reduce((s, r) => s + Number(r.fee_amount ?? 0), 0);
+
   const allQueues: QueueRow[] = [
+    {
+      key: 'fee-refunds',
+      tone: 'red',
+      count: feeRefunds.length,
+      title: `${feeRefunds.length} order${feeRefunds.length === 1 ? '' : 's'} holding ${formatCurrency(feeRefundTotal)} in delivery fees`,
+      sub:
+        feeRefunds
+          .slice(0, 3)
+          .map((r) => `${r.order_number ?? '—'} (${FEE_REFUND_LABEL[r.reason] ?? r.reason})`)
+          .join(' · ') || 'Cancelled or stuck orders whose fee was never returned',
+      href: '/admin/payments?status=success',
+    },
+    {
+      // Only ever shows when the check itself couldn't run — an empty queue and
+      // a broken queue must not look the same.
+      key: 'fee-refunds-unavailable',
+      tone: 'amber',
+      count: feeRefundsUnavailable ? 1 : 0,
+      title: 'Delivery-fee refund check unavailable',
+      sub: 'pending_fee_refunds() did not run — apply migration 058',
+      href: '/admin/payments',
+    },
     {
       key: 'expired-try',
       tone: 'red',

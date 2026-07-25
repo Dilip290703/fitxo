@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@fitzo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
+import { cancelOrderWithRefund } from '../actions';
 import type { OrderStatus } from '@fitzo/supabase/types';
 
 interface Order {
@@ -53,6 +54,27 @@ export default function OrderActions({
     setLoading(true);
     const status = pending.status;
 
+    // Cancelling moves MONEY (the G9/050 delivery fee is paid upfront), so it
+    // goes through the guarded server action + RPC (058) rather than a bare
+    // table update — it also notifies the customer and the stores.
+    if (status === 'cancelled') {
+      const res = await cancelOrderWithRefund(order.id, reason.trim());
+      if (!res.success) {
+        toast(res.error, 'error');
+      } else if (res.warning) {
+        toast(res.warning, 'error');
+      } else if (res.feeRefunded) {
+        toast(`Order cancelled — ₹${res.feeAmount ?? ''} delivery fee refunded.`, 'success');
+      } else {
+        toast('Order cancelled.', 'success');
+      }
+      setPending(null);
+      setReason('');
+      setLoading(false);
+      router.refresh();
+      return;
+    }
+
     const patch: Record<string, unknown> = { status };
     if (status === 'try_window_active') {
       patch.try_deadline = new Date(Date.now() + tryWindowMinutes * 60 * 1000).toISOString();
@@ -64,21 +86,8 @@ export default function OrderActions({
       return;
     }
 
-    // Cancelling mid-flow leaves live rows dangling — close them out so the
-    // rider/customer apps don't keep acting on a dead order.
-    if (status === 'cancelled') {
-      const [{ error: delErr }, { error: tryErr }] = await Promise.all([
-        supabase
-          .from('deliveries')
-          .update({ status: 'failed' })
-          .eq('order_id', order.id)
-          .not('status', 'in', '(completed,failed)'),
-        supabase.from('try_sessions').update({ status: 'expired' }).eq('order_id', order.id).eq('status', 'active'),
-      ]);
-      if (delErr || tryErr) {
-        toast('Order cancelled, but cleanup of delivery/try session failed — check them manually', 'error');
-      }
-    }
+    // (Cancel no longer reaches here — it returns above via the 058 server
+    // action, which closes out the delivery/try rows inside the RPC.)
 
     await logActivity(supabase, {
       action: `Order status → ${status.replace(/_/g, ' ')}`,
