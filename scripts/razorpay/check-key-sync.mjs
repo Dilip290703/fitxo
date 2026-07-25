@@ -150,6 +150,22 @@ if (!URL_BASE || !SERVICE) {
     } else {
       bad('Vault razorpay_webhook_secret DIFFERS from apps/customer — webhooks will 401');
     }
+
+    // Found live on dev, 2026-07-25: Vault's webhook secret was a copy of the
+    // API KEY secret — pasted from the wrong field in the Razorpay dashboard.
+    // The route verifies against the env value and passes, then the in-DB
+    // re-verification (039) rejects it, so payment.captured never settles and
+    // the "phone died right after paying" recovery path silently does nothing.
+    // Two distinct credentials can never legitimately be equal, so say so by
+    // name rather than leaving it as a bare "DIFFERS".
+    if (keyRow?.configured && hookRow?.configured && keyRow.fingerprint === hookRow.fingerprint) {
+      bad(
+        'Vault razorpay_webhook_secret is the SAME value as razorpay_key_secret — ' +
+          'almost certainly pasted from the wrong dashboard field. The webhook secret comes from ' +
+          'Razorpay → Settings → Webhooks (the endpoint\'s own secret), NOT Settings → API Keys. ' +
+          'Fix: vault.update_secret((SELECT id FROM vault.secrets WHERE name = \'razorpay_webhook_secret\'), \'<webhook secret>\')',
+      );
+    }
   }
 }
 

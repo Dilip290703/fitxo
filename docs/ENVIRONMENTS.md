@@ -316,6 +316,18 @@ Then the behavioural check the plan asks for: **one test payment end-to-end**
   then update `RAZORPAY_WEBHOOK_SECRET` in `apps/customer/.env.local` **and** the
   Vault copy on both projects. `pnpm razorpay:check` covers this one too.
 
+  ⚠️ **The mistake to avoid, found live on dev 2026-07-25:** Vault's
+  `razorpay_webhook_secret` had been set to a copy of the **API key secret** —
+  the two live in different dashboard screens and are easy to confuse. The
+  failure is silent and asymmetric: `/api/razorpay/webhook` verifies the
+  signature against the **env** value and passes, then `razorpay_webhook_captured`
+  (039) re-verifies against **Vault** and rejects it. So `payment.captured` never
+  settles, and the whole reason 039 exists — settling when the browser handler
+  never runs (phone died, tab closed) — quietly does nothing. `razorpay:check`
+  now names this case explicitly, because two distinct credentials can never
+  legitimately be equal. The webhook secret comes from **Settings → Webhooks**
+  (the endpoint's own secret), not **Settings → API Keys**.
+
 ---
 
 ## Going forward — migration workflow after the split
