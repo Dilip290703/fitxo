@@ -16,12 +16,22 @@ import { AddressSection } from "@/components/checkout/AddressSection";
 import type { DeliveryAddress } from "@/lib/addresses";
 import { getDeliveryStatus } from "@/lib/pincode";
 import { placeOrder } from "@/app/checkout/actions";
+import { loadRazorpayScript } from "@/lib/razorpayCheckout";
+import {
+  createDeliveryFeePayment,
+  confirmKeepPayment,
+} from "@/app/order-tracking/[orderId]/actions";
 
 // COD hidden 2026-07 (agent rework Phase 3, owner-approved): the keep-payment
 // flow is Razorpay-only and riders have no cash-collection step, so a COD order
 // could never settle. Re-add "Cash on Delivery" only alongside a rider cash
 // ledger. (checkout/actions.ts keeps the 'cod' mapping for old orders.)
-const PAYMENT_METHODS = ["UPI", "Card", "Pay Later"] as const;
+//
+// "Pay Later" dropped 2026-07-26 alongside the upfront fee move: the delivery
+// fee is charged here and now via Razorpay, so offering "Pay Later" and then
+// immediately opening a payment modal contradicts itself. (Part of the W3.3
+// copy sweep, pulled forward.)
+const PAYMENT_METHODS = ["UPI", "Card"] as const;
 
 export function CheckoutPageView() {
   const router = useRouter();
@@ -34,6 +44,10 @@ export function CheckoutPageView() {
   const [showLogin, setShowLogin] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  // Set when the order was created but its delivery fee is still unpaid (the
+  // customer closed the Razorpay window). The button becomes a retry so we can
+  // never place a duplicate order.
+  const [awaitingFeeOrderId, setAwaitingFeeOrderId] = useState<string | null>(null);
 
   // Delivery fee from Admin → System Settings. Mirrors the server-side calc in
   // place_order so what the customer sees matches the order:
@@ -99,7 +113,105 @@ export function CheckoutPageView() {
     selectedMethod !== null &&
     !isProcessing;
 
+  /**
+   * Collect the G9/050 delivery fee HERE, immediately after the order exists —
+   * not later on the tracking page. The old flow placed the order, showed a
+   * total that already included the fee, charged nothing, and only asked for
+   * the money on a screen the customer had to navigate to. Meanwhile
+   * store_confirm_order refuses to confirm until the fee is paid, so the order
+   * genuinely sat frozen and looked broken.
+   *
+   * The order must be created first — the payment attaches to an order id — so
+   * this is a UX move, not a data-flow change. Same server actions the tracking
+   * card uses, which stays put as the recovery path.
+   */
+  async function payDeliveryFee(orderId: string) {
+    setError(null);
+
+    const payment = await createDeliveryFeePayment(orderId);
+    if (!payment.success) {
+      // Fee already paid (double-submit) is a success from here.
+      if (/already paid/i.test(payment.error)) {
+        finishPlaced(orderId);
+        return;
+      }
+      setAwaitingFeeOrderId(orderId);
+      setIsProcessing(false);
+      setError(payment.error);
+      return;
+    }
+
+    const ready = await loadRazorpayScript();
+    if (!ready || !window.Razorpay) {
+      setAwaitingFeeOrderId(orderId);
+      setIsProcessing(false);
+      setError("Couldn't load the payment window. Check your connection and try again.");
+      return;
+    }
+
+    const rzp = new window.Razorpay({
+      key: payment.keyId,
+      amount: payment.amount,
+      currency: payment.currency,
+      name: "Fitzo",
+      description: `Delivery fee — refunded if you keep enough after your try-on`,
+      order_id: payment.rzpOrderId,
+      theme: { color: "#171d2b" },
+      modal: {
+        ondismiss: () => {
+          // The order EXISTS and holds stock + the customer's active-order slot,
+          // so never silently drop them here — offer a one-tap retry instead.
+          setAwaitingFeeOrderId(orderId);
+          setIsProcessing(false);
+          setError(
+            "Payment cancelled — your order is saved but the store can't start it until the delivery fee is paid.",
+          );
+        },
+      },
+      handler: async (response) => {
+        // Same verified settle path as Keep payments (HMAC re-checked in-DB).
+        const result = await confirmKeepPayment({
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+          orderId,
+        });
+        if (!result.success) {
+          setAwaitingFeeOrderId(orderId);
+          setIsProcessing(false);
+          setError(result.error);
+          return;
+        }
+        finishPlaced(orderId);
+      },
+    });
+
+    rzp.on("payment.failed", (resp) => {
+      setAwaitingFeeOrderId(orderId);
+      setIsProcessing(false);
+      setError(resp.error?.description ?? "Payment failed. Please try again.");
+    });
+
+    rzp.open();
+  }
+
+  /** Order placed AND paid for (or nothing to pay) — celebrate, then redirect. */
+  function finishPlaced(orderId: string) {
+    clearCart();
+    setAwaitingFeeOrderId(null);
+    setPlacedOrderId(orderId);
+    setIsProcessing(false);
+    setCelebrating(true);
+  }
+
   async function handlePlaceOrder() {
+    // Retry path: the order already exists, so never place a second one.
+    if (awaitingFeeOrderId) {
+      setIsProcessing(true);
+      await payDeliveryFee(awaitingFeeOrderId);
+      return;
+    }
+
     if (!canPay || !selectedMethod || !address) return;
     setIsProcessing(true);
     setError(null);
@@ -121,10 +233,14 @@ export function CheckoutPageView() {
       return;
     }
 
-    // Celebrate, then redirect (CelebrationOverlay calls onComplete).
-    clearCart();
-    setPlacedOrderId(result.orderId);
-    setCelebrating(true);
+    // Nothing to collect (first_order_free, or a pre-050 environment) — the
+    // old behaviour is still exactly right.
+    if (!(feeCfg.upfront && deliveryFee > 0)) {
+      finishPlaced(result.orderId);
+      return;
+    }
+
+    await payDeliveryFee(result.orderId);
   }
 
   return (
@@ -161,7 +277,14 @@ export function CheckoutPageView() {
             <section className="rounded-[22px] border border-[#ece4da] bg-white p-6">
               <h2 className="text-[20px] font-medium text-[#171717]">Payment method</h2>
               <p className="mt-1 text-[13px] text-[#8b7058]">
-                You&apos;ll only be charged for items you decide to keep.
+                {feeCfg.upfront && deliveryFee > 0 ? (
+                  <>
+                    You pay the ₹{deliveryFee.toLocaleString("en-IN")} delivery fee now — clothes are
+                    charged only for what you keep after trying them on.
+                  </>
+                ) : (
+                  <>You&apos;ll only be charged for items you decide to keep.</>
+                )}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {PAYMENT_METHODS.map((method) => (
@@ -198,8 +321,21 @@ export function CheckoutPageView() {
               <p className="mt-3 text-[18px] font-medium text-[#171717]">
                 Keep only what works for you.
               </p>
+              {/* Must stay true now that the fee is collected here: "only billed
+                  for what you keep" was accurate when nothing was charged
+                  upfront, and stopped being so with G9/050. */}
               <p className="mt-3 text-[14px] leading-7 text-[#5f5851]">
-                You will only be billed for what you keep after your at-home try-on window closes.
+                {feeCfg.upfront && deliveryFee > 0 ? (
+                  <>
+                    Apart from the ₹{deliveryFee.toLocaleString("en-IN")} delivery fee, you&apos;re
+                    billed only for what you keep after your at-home try-on window closes.
+                  </>
+                ) : (
+                  <>
+                    You will only be billed for what you keep after your at-home try-on window
+                    closes.
+                  </>
+                )}
               </p>
             </section>
 
@@ -243,9 +379,25 @@ export function CheckoutPageView() {
               </p>
             )}
 
+            {/* The summary total is the ORDER's value; only the fee is due now.
+                Saying so here stops "Place Order — ₹1058" from reading as a
+                ₹1058 charge, which is what made the old flow feel broken. */}
+            {feeCfg.upfront && deliveryFee > 0 && (
+              <p className="mt-2 text-[12px] leading-5 text-[#8b7058]">
+                <strong className="font-semibold text-[#171717]">
+                  ₹{deliveryFee.toLocaleString("en-IN")} due now
+                </strong>{" "}
+                to book the try-on. Clothes are charged only for what you keep.
+              </p>
+            )}
+
             <CheckoutButton
               label={
-                deliveryBlocked
+                awaitingFeeOrderId
+                  ? isProcessing
+                    ? "Opening payment…"
+                    : `Pay ₹${deliveryFee.toLocaleString("en-IN")} to start your order`
+                  : deliveryBlocked
                   ? "Pick a Pune Address to Continue"
                   : !address
                   ? "Add a Delivery Address"
@@ -253,11 +405,23 @@ export function CheckoutPageView() {
                   ? "Select a Payment Method"
                   : isProcessing
                   ? "Placing order…"
+                  : feeCfg.upfront && deliveryFee > 0
+                  ? `Pay ₹${deliveryFee.toLocaleString("en-IN")} & Place Order`
                   : `Place Order — ₹${total}`
               }
               onClick={handlePlaceOrder}
-              disabled={!canPay}
+              disabled={awaitingFeeOrderId ? isProcessing : !canPay}
             />
+
+            {awaitingFeeOrderId && !isProcessing && (
+              <button
+                type="button"
+                onClick={() => router.push(`/order-tracking/${awaitingFeeOrderId}`)}
+                className="mt-3 w-full text-center text-[12px] text-[#8b7058] underline-offset-4 hover:text-[#171717] hover:underline"
+              >
+                View the order instead — you can pay or cancel it there
+              </button>
+            )}
           </aside>
         </div>
       </section>
