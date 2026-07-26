@@ -20,15 +20,23 @@
  * razorpay_secret_fingerprints() computes inside Postgres — and only the
  * fingerprints are compared. No secret is printed, logged, or sent anywhere.
  *
- * Usage:
+ * Sections 1–3 prove the four copies agree WITH EACH OTHER. They would agree
+ * just as happily on a key revoked an hour ago, so section 4 asks Razorpay
+ * itself (read-only, authenticated with the configured pair) whether the keys
+ * are actually live. What nothing here can prove is the WEBHOOK secret — it is
+ * write-only in Razorpay's dashboard, so only a real signed delivery settles it.
+ *
+ * Usage — dev needs no arguments (credentials come from apps/admin/.env.local):
+ *   pnpm razorpay:check
+ *
+ * Prod, or any other project (the Vault is per-project):
  *   SUPABASE_URL=https://<ref>.supabase.co \
- *   SUPABASE_SERVICE_ROLE_KEY=<service key> \
- *   node scripts/razorpay/check-key-sync.mjs
+ *   SUPABASE_SERVICE_ROLE_KEY=<service key> pnpm razorpay:check
  *
- * Env vars are read from apps/{customer,admin}/.env.local automatically.
- * Point SUPABASE_URL at dev, then at prod — the Vault half is per-project.
+ * RAZORPAY_SKIP_PING=true suppresses the network call in section 4.
  *
- * Exit 0 = every copy agrees, exit 1 = a mismatch, exit 2 = bad usage.
+ * Exit 0 = every check ran and agreed · 1 = a real mismatch ·
+ * 2 = INCOMPLETE (something could not run, so nothing is proven).
  */
 
 import { createHmac } from 'node:crypto';
@@ -63,6 +71,10 @@ const customer = readEnv(join(REPO, 'apps/customer/.env.local'));
 const admin = readEnv(join(REPO, 'apps/admin/.env.local'));
 
 let failures = 0;
+// Checks that must actually RUN for a rotation to count as verified. Anything
+// listed here downgrades the summary to INCOMPLETE rather than letting a
+// partial run print a green tick.
+const notRun = [];
 const ok = (m) => console.log(`  ✅ ${m}`);
 const bad = (m) => { console.log(`  ❌ ${m}`); failures++; };
 const skip = (m) => console.log(`  ⚠️  ${m}`);
@@ -102,13 +114,21 @@ if (cId && aId) {
 }
 
 console.log('== 3. Vault copies match the apps (per project) ==');
-const URL_BASE = process.env.SUPABASE_URL?.replace(/\/$/, '');
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Default to the admin app's own env: it is the one app that legitimately holds
+// a service-role key, and it is already parsed above — so the common case (dev)
+// needs no arguments. Explicit env vars override, which is how prod is checked.
+const URL_BASE = (process.env.SUPABASE_URL || admin?.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || admin?.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!URL_BASE || !SERVICE) {
-  skip('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — Vault half skipped');
-  skip('run again per project: the Vault is separate on dev and prod');
+  skip('no Supabase URL / service-role key — Vault half skipped');
+  skip('set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY, or fill apps/admin/.env.local');
+  notRun.push('Vault comparison (section 3)');
 } else {
+  // Always say WHICH project was checked — "it passed" is meaningless without it,
+  // and dev vs prod is a single env var apart.
+  const ref = URL_BASE.match(/https?:\/\/([^.]+)\./)?.[1] ?? URL_BASE;
+  console.log(`  › project: ${ref}`);
   const res = await fetch(`${URL_BASE}/rest/v1/rpc/razorpay_secret_fingerprints`, {
     method: 'POST',
     headers: {
@@ -169,9 +189,73 @@ if (!URL_BASE || !SERVICE) {
   }
 }
 
+// ── 4. Are these keys actually the LIVE ones at Razorpay? ────────────────────
+// Sections 1–3 only prove the four copies agree WITH EACH OTHER. They would all
+// agree just as happily on a key that was revoked an hour ago — which is exactly
+// the state a half-finished regeneration leaves behind. The only authority on
+// that is Razorpay, so ask it: a read-only, count=1 call authenticated with the
+// configured pair. 200 = the pair is live; 401 = the envs are stale.
+console.log('== 4. Razorpay accepts the key pair (live check) ==');
+const pingId = cId || aId;
+const pingSecret = cSecret || aSecret;
+
+if (!pingId || !pingSecret) {
+  skip('no key id + secret available to test');
+  notRun.push('Razorpay live check (section 4)');
+} else if (process.env.RAZORPAY_SKIP_PING === 'true') {
+  skip('skipped via RAZORPAY_SKIP_PING=true');
+  notRun.push('Razorpay live check (section 4)');
+} else {
+  if (pingId.startsWith('rzp_live_')) {
+    console.log('  › LIVE-mode key — this call hits the production Razorpay account (read-only)');
+  }
+  try {
+    const auth = Buffer.from(`${pingId}:${pingSecret}`).toString('base64');
+    const res = await fetch('https://api.razorpay.com/v1/payments?count=1', {
+      headers: { Authorization: `Basic ${auth}` },
+    });
+    if (res.ok) {
+      ok(`Razorpay accepted the key pair (${pingId.slice(0, 13)}…)`);
+    } else if (res.status === 401) {
+      bad(
+        'Razorpay REJECTED the key id/secret (401) — the app envs do not match the ' +
+          'live keys. If you just regenerated in the dashboard, copy the NEW id AND ' +
+          'secret into apps/customer/.env.local and apps/admin/.env.local.',
+      );
+    } else {
+      bad(`Razorpay returned HTTP ${res.status} — could not confirm the key pair`);
+    }
+  } catch (e) {
+    // Offline or DNS failure is not a pass. Same rule as the Vault half.
+    skip(`could not reach Razorpay (${e.message}) — live check did not run`);
+    notRun.push('Razorpay live check (section 4)');
+  }
+}
+
+// What this script still cannot prove: that the WEBHOOK secret matches
+// Razorpay's. That value is write-only in their dashboard and absent from the
+// API, so the only real proof is an actual signed delivery reaching `success`.
+console.log('  › note: the webhook secret cannot be verified from here — only a real delivery proves it');
+
 console.log();
 if (failures > 0) {
   console.log(`❌ ${failures} problem(s). See docs/ENVIRONMENTS.md → "Rotating the Razorpay keys".`);
   process.exit(1);
 }
-console.log('✅ Every checked copy of the Razorpay secrets agrees.');
+
+// A skipped Vault check must NEVER read as a pass. The Vault half is the one
+// that decides whether payments actually settle, so "the app envs agree" on its
+// own proves nothing about a rotation — and a green tick here before the W5.2
+// live cutover would be actively misleading.
+if (notRun.length > 0) {
+  console.log('⚠️  INCOMPLETE — nothing checked disagreed, but these did NOT run:');
+  for (const n of notRun) console.log(`     · ${n}`);
+  console.log('   A rotation is NOT verified until they do. Per project:');
+  console.log('     dev : pnpm razorpay:check            (reads apps/admin/.env.local)');
+  console.log('     prod: SUPABASE_URL=https://<prod-ref>.supabase.co \\');
+  console.log('           SUPABASE_SERVICE_ROLE_KEY=<prod service key> pnpm razorpay:check');
+  process.exit(2);
+}
+
+console.log('✅ Every copy agrees (envs + Vault) and Razorpay accepts the key pair.');
+console.log('   Still unproven: the webhook secret — send one real payment to confirm settlement.');
