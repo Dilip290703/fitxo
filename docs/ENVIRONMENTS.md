@@ -295,10 +295,30 @@ charged for an order that stays open.
 SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… pnpm razorpay:check
 ```
 
-Compares every copy **by HMAC fingerprint**, so no secret is printed, logged, or
-transmitted. It checks the two app envs against each other (secret *and* key id)
-and against the Vault via `razorpay_secret_fingerprints()` (migration **057**).
-Run it once per project — the Vault half is per-environment.
+Dev needs no arguments — credentials come from `apps/admin/.env.local`. For prod
+(or any other project, since the Vault is per-environment):
+
+```bash
+SUPABASE_URL=https://<prod-ref>.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=<prod service key> pnpm razorpay:check
+```
+
+Copies are compared **by HMAC fingerprint**, so no secret is printed, logged, or
+transmitted. Sections 1–3 check the two app envs against each other (secret *and*
+key id) and against the Vault via `razorpay_secret_fingerprints()` (migration
+**057**). Section 4 then asks **Razorpay itself** whether the pair is live — a
+read-only authenticated call — because the first three sections would agree just
+as happily on a key that was revoked an hour ago, which is precisely what a
+half-finished regeneration leaves behind.
+
+**Exit codes matter here:** `0` every check ran and agreed · `1` a real mismatch ·
+`2` **INCOMPLETE** — something could not run, so nothing is proven. A skipped
+check never prints a green tick; a rotation you cannot verify is not a rotation
+you have done.
+
+Still unprovable from the CLI: the **webhook secret**. It is write-only in
+Razorpay's dashboard and absent from their API, so only a real signed delivery
+reaching `success` confirms it.
 
 Then the behavioural check the plan asks for: **one test payment end-to-end**
 (order → Keep → UPI `success@razorpay`) and confirm the payment row reaches
