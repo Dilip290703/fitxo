@@ -7,10 +7,13 @@ config knob it says so rather than quoting a number that will drift.
 Companion docs: **`ENVIRONMENTS.md`** (dev/prod setup, key rotation, backups),
 **`PROGRESS.md`** (what exists and why — the decisions log is the archaeology).
 
-> ⚠️ **Fill these in before launch** — they are decisions, not facts, so this file
-> deliberately leaves them blank rather than inventing them:
-> **on-call rota**, **support SLA targets**, **support phone/email actually monitored**,
-> and the **rider-failed delivery fee policy** (see §3.3).
+> ⚠️ **One item still open before launch: the support contact.** Admin → Settings
+> currently holds the placeholder `support@fitzo.in` with no phone. **Nobody is
+> confirmed to be reading it** — decide the address (and a number, if there is
+> one), set them in Settings, and record them in §6. A contact that looks staffed
+> and isn't is worse than none.
+>
+> *(Resolved 2026-07-26: rider-failed fee policy §3.3 · SLA §6 · on-call §6.)*
 
 ---
 
@@ -160,24 +163,39 @@ SELECT * FROM pending_fee_refunds();
 |---|---|---|
 | `cancelled_unrefunded` | Cancelled, fee never came back | Refund via Admin → Payments (§3.1) |
 | `stale_unclaimed` | Still confirmed, no rider ever took it | Cancel it properly (§1.1) — that refunds too |
-| `rider_failed` | Rider travelled and couldn't deliver | **Policy call — see §3.3** |
+| `rider_failed` | Rider travelled and couldn't deliver | Refund by default, but check for a repeat pattern — §3.3 |
 
 The queue is **derived from the payment rows**, not a flag anyone maintains, so any future
 cancel path shows up here on its own. If the dashboard shows an amber *"Delivery-fee refund
 check unavailable"* row, migration 058 isn't applied on that environment.
 
-### 3.3 ⚠️ Rider-failed deliveries — policy not yet decided
+### 3.3 Rider-failed deliveries — refund by default
 
-When a rider physically travelled and couldn't deliver (customer unreachable, wrong address,
-safety issue), refunding the delivery fee means **Fitzo absorbs the rider's fee** for a trip
-that did happen. Whether the customer is refunded is a **business decision that has not been
-made**, so:
+**Policy (decided 2026-07-26): refund the ₹49, and treat it as the standing answer.**
 
-- those orders surface as `rider_failed` for a human, and are never auto-refunded;
-- the customer's notification says support is reviewing, and **promises nothing about money**.
+When a rider travelled and couldn't deliver (customer unreachable, wrong address, safety
+issue), Fitzo still pays the rider — so a refund means absorbing roughly the rider fee on a
+trip that did happen. That cost is accepted: at launch volume, ₹49 is far cheaper than a
+customer's first experience being "they took my money and nothing arrived", and the customer
+usually cannot prove they *were* reachable.
 
-**Decide this before launch** and write the rule here. Until then, handle case by case and
-keep the answers consistent.
+**It stays a human click, deliberately** — these are never auto-refunded:
+
+- `rider_fail_delivery` runs in the database and cannot call Razorpay, so an automatic refund
+  is blocked by the same constraint as `expire_stale_offers` (§1.1). Nothing to automate today.
+- Keeping a person in the loop is also what makes a **pattern** visible. One customer with
+  repeated "unreachable" failures is the case this policy is *not* meant to cover.
+
+**How to action one:** Admin → Dashboard → the delivery-fee queue (or `SELECT * FROM
+pending_fee_refunds()`), find the `rider_failed` row, refund via Admin → Payments (§3.1).
+
+**When to refuse:** a repeat pattern from the same customer. Check their order history first;
+if this is their second or third rider-failed order, escalate rather than refunding reflexively
+— and record the reason on the refund so the next person sees it.
+
+The customer's automatic notification says support is reviewing and **promises nothing about
+money**, which keeps this reversible: you can refuse a specific case without having contradicted
+anything the customer was already told.
 
 ---
 
@@ -249,19 +267,38 @@ live cutover — with real money flowing daily this stops being optional.
 ## 6. Support
 
 **Channel:** Admin → **Complaints** (statuses `open` → `in_progress` → `resolved` / `closed`).
-Rider-reported failures land here automatically at high priority. Customer-facing contact
-details come from Admin → Settings (`contact_email`, `support_phone`) — make sure they point
-somewhere a human actually watches before launch.
+Rider-reported failures land here automatically at high priority.
 
-**SLA — to be agreed:**
+⚠️ **Customer-facing contact is still unset.** Admin → Settings holds `contact_email =
+support@fitzo.in` and an **empty** `support_phone`, and that address is a placeholder nobody
+has confirmed is monitored. Before launch: pick the address a human genuinely reads, set it in
+Settings, and write it here. Leaving a plausible-looking address in place is the failure mode —
+a customer with a payment problem mails into a void and concludes Fitzo is a scam.
 
-| Severity | Example | Response target | Owner |
-|---|---|---|---|
-| P0 — money or safety | Charged and not settled; rider safety | _TBD_ | _TBD_ |
-| P1 — order blocked | Stuck order, undelivered | _TBD_ | _TBD_ |
-| P2 — everything else | Sizing, app questions | _TBD_ | _TBD_ |
+**SLA (agreed 2026-07-26):**
 
-**On-call:** _TBD — name, hours, and how they're reached._
+| Severity | Example | Respond within |
+|---|---|---|
+| **P0** — money or safety | Charged but not settled · refund owed · rider safety | **1 hour** |
+| **P1** — order blocked | Stuck order · nothing delivered · store can't confirm | **4 hours** |
+| **P2** — everything else | Sizing, app questions, general queries | **Next working day** |
+
+The P0 clock is set by the money paths: a captured-but-unsettled payment or an unrefunded fee
+must not sit overnight, because the customer sees the charge long before we see the queue.
+
+**On-call: no formal rota — Dilip and Jay both respond, whichever is free.**
+
+That is the honest description of a two-person team, but it has one known failure mode worth
+naming: *nobody* is definitively responsible, so the risk is not two people colliding on an
+incident — it's both assuming the other saw it. Two habits make it safe enough at launch
+volume:
+
+- **Claim it out loud.** Say "taking this" in chat before acting, so the other stops watching.
+- **Sweep the queues daily** rather than relying on noticing. The dashboard's Needs-attention
+  section plus `pending_fee_refunds()` are the two that hold customer money.
+
+Revisit this the moment order volume outgrows "we'd both notice" — a rota costs nothing to
+introduce and a missed P0 costs a customer.
 
 **Escalation for anything involving money:** capture the order number and the payment id,
 check Admin → Orders → Money card **and** the Razorpay dashboard before promising a customer
