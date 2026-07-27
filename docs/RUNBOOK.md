@@ -106,12 +106,22 @@ constant, and it starts when the **rider marks delivered**, not at checkout.
 died, tab closed. Both funnel into the same in-DB core, which locks the row and no-ops on
 duplicates, so them racing is safe.
 
-> 🔴 **KNOWN BROKEN as of 2026-07-25 — fix before launch.** Vault's `razorpay_webhook_secret`
-> holds a copy of the **API key secret**, so the webhook path settles **nothing**: the route
-> verifies against the env value and passes, then the in-DB re-verification against Vault
-> rejects it. Diagnose and fix per `ENVIRONMENTS.md` → "Rotating the Razorpay keys"; confirm
-> with `pnpm razorpay:check`. Until then, a customer whose browser dies right after paying
-> has a captured payment Fitxo never records.
+> ⚠️ **The webhook path has never actually been observed working — verify it at W5.2.**
+>
+> Its secret was wrong until 2026-07-26 (Vault held a copy of the **API key secret**, so the
+> route passed on the env value and the in-DB re-check against Vault then rejected it). That
+> is **fixed** — `pnpm razorpay:check` reports every copy in agreement on dev and prod.
+>
+> But agreement is not proof: Razorpay cannot reach `localhost`, so no signed delivery has ever
+> completed. The secret is right; the path is untested. **First real webhook lands only once the
+> apps are deployed at a public URL (W2.2)** — treat that as the acceptance test, and until it
+> passes, assume a customer whose browser dies right after paying may leave a captured payment
+> Fitxo never records. A `gateway_fee` of NULL on a settled payment is the usual tell (the
+> webhook stamps it; Admin → Payments → *Sync gateway fees* is the manual backfill).
+>
+> This matters more since 2026-07-26, when payment moved to the **checkout** screen: customers
+> now pay at a moment when closing the tab is likelier, which is exactly what this path exists
+> to recover.
 
 **Check:**
 1. Admin → **Payments** — find the row. `initiated` means we created the order but never
