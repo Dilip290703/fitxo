@@ -356,6 +356,9 @@ Then the behavioural check the plan asks for: **one test payment end-to-end**
   now names this case explicitly, because two distinct credentials can never
   legitimately be equal. The webhook secret comes from **Settings → Webhooks**
   (the endpoint's own secret), not **Settings → API Keys**.
+  *(Resolved 2026-07-26 — a fresh webhook endpoint + secret, propagated to both
+  projects; `razorpay:check` green everywhere. The path itself is still untested
+  until a public URL exists — see RUNBOOK §2.1.)*
 
 ---
 
