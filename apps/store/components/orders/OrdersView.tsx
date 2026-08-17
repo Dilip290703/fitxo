@@ -83,6 +83,23 @@ export function OrdersView() {
     return () => window.removeEventListener("focus", reload);
   }, [reload]);
 
+  // Live refresh (migration 060 / audit 2.3). pendingCount above only moves when
+  // an order is awaiting confirmation, so a cancellation or a keep/return
+  // decision changed this list with nothing to redraw it — the manager saw a
+  // stale screen until they reloaded by hand. Same 4s cadence the agent app's
+  // delivery detail already uses; it needs no new infrastructure, and unlike a
+  // notification-driven refresh it also catches changes that emit no
+  // notification at all (rider marks delivered, the try-window cron expires an
+  // order). Paused while the tab is hidden so a forgotten tab isn't a standing
+  // query every 4s.
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible") reload();
+    };
+    const id = setInterval(tick, 4000);
+    return () => clearInterval(id);
+  }, [reload]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (orders ?? []).filter(

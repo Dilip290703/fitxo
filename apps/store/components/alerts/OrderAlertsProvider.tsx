@@ -15,11 +15,27 @@ import { useStorePanel } from "@/components/panel/PanelContext";
 import { Icon } from "@/components/icons";
 import { formatCurrency, timeAgo } from "@/lib/format";
 
+/**
+ * The notification kinds a store manager acts on. The DB emits more than this
+ * (rider/customer kinds ride the same table, addressed by user_id), so the
+ * client still discriminates — it just no longer throws away everything that
+ * isn't a new order.
+ */
+const NEW_ORDER = "new_store_order";
+const CANCEL_KINDS = ["order_cancelled", "order_cancelled_by_admin"] as const;
+const DECISION_KINDS = ["item_kept", "item_returned"] as const;
+
+type AlertKind = "new_store_order" | "order_cancelled";
+
 type AlertItem = {
+  /** De-dupe key: order id for new orders, notification id for cancellations. */
+  key: string;
+  kind: AlertKind;
   orderId: string;
   orderNumber: string;
-  itemCount: number;
-  subtotal: number;
+  /** New orders carry the loaded summary; cancellations render `body` instead. */
+  detail: { itemCount: number; subtotal: number } | null;
+  body: string;
   at: number;
 };
 
@@ -33,7 +49,7 @@ type AlertsApi = {
   /** Reset the unread counter (bell opened). */
   markRead: () => void;
   openOrder: (orderId: string) => void;
-  dismiss: (orderId: string) => void;
+  dismiss: (key: string) => void;
   /** Empty the whole alert history + pop-up stack. */
   clearAll: () => void;
   /** Re-count pending orders — call after confirming an order. */
@@ -56,12 +72,23 @@ const MUTE_KEY = "fitxo-store-alerts-muted";
  * navigation between screens.
  *
  * Delivery mechanism (hard-won, do not "simplify" back to Realtime-only):
- * subscribes to the manager's own `notifications` INSERTs
- * (kind='new_store_order', created by the trigger in migration 022) and
- * dedupes by notification id. The PRIMARY channel is an 8s poll — Supabase
- * Realtime doesn't reliably route events to store sessions; it's kept only as
- * an instant nudge. The first poll seeds silently so a page load never pops a
+ * subscribes to the manager's own `notifications` INSERTs and dedupes by
+ * notification id. The PRIMARY channel is an 8s poll — Supabase Realtime
+ * doesn't reliably route events to store sessions; it's kept only as an
+ * instant nudge. The first poll seeds silently so a page load never pops a
  * backlog.
+ *
+ * Kinds consumed (migration 022 new orders, 054/058/060 the rest):
+ *   new_store_order                        → pop-up + chime, loads the summary
+ *   order_cancelled / …_by_admin           → pop-up + chime; the money case —
+ *                                            the fee is already taken and the
+ *                                            manager must STOP packing
+ *   item_kept / item_returned              → no pop-up (one fires per item, so
+ *                                            popping each would be noise); the
+ *                                            screens' own 4s poll shows them
+ *
+ * This used to hard-filter `kind !== "new_store_order"` in both paths, which
+ * silently discarded the cancellation rows 054 and 058 were already writing.
  */
 export function OrderAlertsProvider({ children }: { children: React.ReactNode }) {
   const { storeId } = useStorePanel();
@@ -110,7 +137,7 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
   const pushAlert = useCallback(
     (item: AlertItem) => {
       setAlerts((prev) => [item, ...prev].slice(0, 50));
-      setActiveIds((prev) => [item.orderId, ...prev].slice(0, 4));
+      setActiveIds((prev) => [item.key, ...prev].slice(0, 4));
       setUnread((u) => u + 1);
       playChime();
       refreshPending();
@@ -157,10 +184,12 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
           const order = await loadStoreOrder(orderId, storeId);
           if (order) {
             pushAlert({
+              key: order.id,
+              kind: "new_store_order",
               orderId: order.id,
               orderNumber: order.orderNumber,
-              itemCount: order.itemCount,
-              subtotal: order.subtotal,
+              detail: { itemCount: order.itemCount, subtotal: order.subtotal },
+              body: "",
               at: Date.now(),
             });
           }
@@ -168,6 +197,21 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
           /* ignore */
         }
       }, 400);
+    };
+
+    // Cancellations render straight from the notification. Deliberately no
+    // loadStoreOrder() call: the order is already cancelled, so a fetch would
+    // be a second chance to fail on the one alert the manager must not miss.
+    const handleCancelled = (notifId: string, orderId: string, body: string) => {
+      pushAlert({
+        key: `cancel-${notifId}`,
+        kind: "order_cancelled",
+        orderId,
+        orderNumber: "",
+        detail: null,
+        body: body || "This order was cancelled.",
+        at: Date.now(),
+      });
     };
 
     supabase.auth.getUser().then(({ data }) => {
@@ -180,21 +224,31 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
       const poll = async () => {
         const { data: rows } = await supabase
           .from("notifications")
-          .select("id, data, created_at")
+          .select("id, body, data, created_at")
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
-          .limit(15);
+          .limit(25);
         if (!rows) return;
-        // On the first poll, just mark existing new-order notifications as seen
-        // so we don't pop a backlog on page load — only pop ones that arrive after.
-        for (const r of rows) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const d = ((r as any).data ?? {}) as { kind?: string; order_id?: string };
-          if (d.kind !== "new_store_order" || !d.order_id) continue;
-          const key = `notif-${(r as { id: string }).id}`;
+        // On the first poll, just mark existing notifications as seen so we
+        // don't pop a backlog on page load — only pop ones that arrive after.
+        // Oldest-first, so a burst pops in the order it happened.
+        for (const r of [...rows].reverse()) {
+          const row = r as { id: string; body: string | null; data: unknown };
+          const d = (row.data ?? {}) as { kind?: string; order_id?: string };
+          if (!d.kind || !d.order_id) continue;
+          const isNew = d.kind === NEW_ORDER;
+          const isCancel = (CANCEL_KINDS as readonly string[]).includes(d.kind);
+          const isDecision = (DECISION_KINDS as readonly string[]).includes(d.kind);
+          if (!isNew && !isCancel && !isDecision) continue;
+          const key = `notif-${row.id}`;
           if (handledRef.current.has(key)) continue;
           handledRef.current.add(key);
-          if (seededRef.current) handleNewOrder(d.order_id);
+          if (!seededRef.current) continue;
+          // Decisions refresh the pending badge but never pop — see the header
+          // comment; the screens' own 4s poll is what surfaces them.
+          if (isNew) handleNewOrder(d.order_id);
+          else if (isCancel) handleCancelled(row.id, d.order_id, row.body ?? "");
+          else refreshPending();
         }
         seededRef.current = true;
       };
@@ -213,12 +267,18 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
             filter: `user_id=eq.${userId}`,
           },
           (payload) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const row = payload.new as any;
+            const row = payload.new as { id: string; body?: string | null; data?: unknown };
             const data = (row?.data ?? {}) as { kind?: string; order_id?: string };
-            if (data.kind !== "new_store_order" || !data.order_id) return;
-            handledRef.current.add(`notif-${row.id}`);
-            handleNewOrder(data.order_id);
+            if (!data.kind || !data.order_id) return;
+            const key = `notif-${row.id}`;
+            if (handledRef.current.has(key)) return;
+            handledRef.current.add(key);
+            if (data.kind === NEW_ORDER) handleNewOrder(data.order_id);
+            else if ((CANCEL_KINDS as readonly string[]).includes(data.kind)) {
+              handleCancelled(row.id, data.order_id, row.body ?? "");
+            } else if ((DECISION_KINDS as readonly string[]).includes(data.kind)) {
+              refreshPending();
+            }
           },
         )
         .subscribe();
@@ -230,7 +290,7 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
       if (pollId) clearInterval(pollId);
       if (channel) supabase.removeChannel(channel);
     };
-  }, [pushAlert, storeId]);
+  }, [pushAlert, refreshPending, storeId]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
@@ -247,16 +307,19 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
   const openOrder = useCallback(
     (orderId: string) => {
       // Clear from both the pop-up stack and the bell history so a clicked
-      // alert visibly goes away instead of lingering in the dropdown.
-      setActiveIds((prev) => prev.filter((id) => id !== orderId));
+      // alert visibly goes away instead of lingering in the dropdown. Matched
+      // by key rather than by id, since one order can hold both a new-order
+      // and a cancellation alert.
+      const keys = new Set(alerts.filter((a) => a.orderId === orderId).map((a) => a.key));
+      setActiveIds((prev) => prev.filter((k) => !keys.has(k)));
       setAlerts((prev) => prev.filter((a) => a.orderId !== orderId));
       router.push(`/orders/${orderId}`);
     },
-    [router],
+    [alerts, router],
   );
 
   const dismiss = useCallback(
-    (orderId: string) => setActiveIds((prev) => prev.filter((id) => id !== orderId)),
+    (key: string) => setActiveIds((prev) => prev.filter((k) => k !== key)),
     [],
   );
 
@@ -269,7 +332,7 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
   const markRead = useCallback(() => setUnread(0), []);
 
   const activeAlerts = activeIds
-    .map((id) => alerts.find((a) => a.orderId === id))
+    .map((key) => alerts.find((a) => a.key === key))
     .filter((a): a is AlertItem => Boolean(a));
 
   return (
@@ -280,34 +343,62 @@ export function OrderAlertsProvider({ children }: { children: React.ReactNode })
 
       {/* Pop-up stack */}
       <div className="fixed bottom-4 right-4 z-[55] flex w-[300px] flex-col gap-3">
-        {activeAlerts.map((a) => (
-          <div key={a.orderId} className="overflow-hidden rounded-2xl border border-accent-soft bg-white shadow-pop">
-            <div className="flex items-start justify-between gap-2 bg-accent px-4 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink">New order</p>
-              <button
-                type="button"
-                onClick={() => dismiss(a.orderId)}
-                aria-label="Dismiss"
-                className="text-ink/60 hover:text-ink"
+        {activeAlerts.map((a) => {
+          const cancelled = a.kind === "order_cancelled";
+          return (
+            <div
+              key={a.key}
+              className={`overflow-hidden rounded-2xl border bg-white shadow-pop ${
+                cancelled ? "border-danger" : "border-accent-soft"
+              }`}
+            >
+              <div
+                className={`flex items-start justify-between gap-2 px-4 py-2 ${
+                  cancelled ? "bg-danger" : "bg-accent"
+                }`}
               >
-                <Icon name="close" className="h-4 w-4" />
-              </button>
+                <p
+                  className={`text-[11px] font-bold uppercase tracking-[0.14em] ${
+                    cancelled ? "text-white" : "text-ink"
+                  }`}
+                >
+                  {cancelled ? "Order cancelled" : "New order"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => dismiss(a.key)}
+                  aria-label="Dismiss"
+                  className={cancelled ? "text-white/70 hover:text-white" : "text-ink/60 hover:text-ink"}
+                >
+                  <Icon name="close" className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="px-4 py-3">
+                {a.detail ? (
+                  <>
+                    <p className="font-mono text-[13px] font-semibold text-ink">{a.orderNumber}</p>
+                    <p className="mt-0.5 text-[12px] text-muted">
+                      {a.detail.itemCount} item{a.detail.itemCount === 1 ? "" : "s"} ·{" "}
+                      {formatCurrency(a.detail.subtotal)}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[13px] font-semibold text-ink">Stop preparing this order</p>
+                    <p className="mt-0.5 text-[12px] text-muted">{a.body}</p>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => openOrder(a.orderId)}
+                  className="mt-3 w-full rounded-full bg-ink py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft"
+                >
+                  View order →
+                </button>
+              </div>
             </div>
-            <div className="px-4 py-3">
-              <p className="font-mono text-[13px] font-semibold text-ink">{a.orderNumber}</p>
-              <p className="mt-0.5 text-[12px] text-muted">
-                {a.itemCount} item{a.itemCount === 1 ? "" : "s"} · {formatCurrency(a.subtotal)}
-              </p>
-              <button
-                type="button"
-                onClick={() => openOrder(a.orderId)}
-                className="mt-3 w-full rounded-full bg-ink py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-ink-soft"
-              >
-                View order →
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </AlertsContext.Provider>
   );
@@ -383,7 +474,7 @@ export function AlertBell() {
           ) : (
             <ul className="max-h-[320px] overflow-y-auto">
               {alerts.map((a) => (
-                <li key={`${a.orderId}-${a.at}`}>
+                <li key={a.key}>
                   <button
                     type="button"
                     onClick={() => {
@@ -392,15 +483,30 @@ export function AlertBell() {
                     }}
                     className="flex w-full items-center justify-between gap-3 border-b border-sand px-4 py-3 text-left last:border-0 hover:bg-paper"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate font-mono text-[12px] font-semibold text-ink">{a.orderNumber}</p>
-                      <p className="text-[11px] text-muted">
-                        {a.itemCount} item{a.itemCount === 1 ? "" : "s"} · {timeAgo(a.at)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[12px] font-semibold text-ink">
-                      {formatCurrency(a.subtotal)}
-                    </span>
+                    {a.detail ? (
+                      <>
+                        <div className="min-w-0">
+                          <p className="truncate font-mono text-[12px] font-semibold text-ink">
+                            {a.orderNumber}
+                          </p>
+                          <p className="text-[11px] text-muted">
+                            {a.detail.itemCount} item{a.detail.itemCount === 1 ? "" : "s"} ·{" "}
+                            {timeAgo(a.at)}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[12px] font-semibold text-ink">
+                          {formatCurrency(a.detail.subtotal)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="min-w-0">
+                          <p className="truncate text-[12px] font-semibold text-danger">Cancelled</p>
+                          <p className="truncate text-[11px] text-muted">{a.body}</p>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-muted">{timeAgo(a.at)}</span>
+                      </>
+                    )}
                   </button>
                 </li>
               ))}

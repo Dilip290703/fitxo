@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   confirmOrder,
@@ -41,21 +41,36 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
+  const reload = useCallback(
+    () =>
+      loadStoreOrder(orderId, storeId)
+        .then((data) => {
+          if (!data) setNotFound(true);
+          else setOrder(data);
+        })
+        .catch(() => setError("We couldn't load this order. Please try again.")),
+    [orderId, storeId],
+  );
+
   useEffect(() => {
-    let active = true;
-    loadStoreOrder(orderId, storeId)
-      .then((data) => {
-        if (!active) return;
-        if (!data) setNotFound(true);
-        else setOrder(data);
-      })
-      .catch(() => {
-        if (active) setError("We couldn't load this order. Please try again.");
-      });
-    return () => {
-      active = false;
+    reload();
+  }, [reload]);
+
+  // Live refresh (migration 060 / audit 2.3): the customer's keep/return
+  // decisions and an admin cancellation both change this screen with nothing
+  // to redraw it. 4s matches the agent app's delivery detail.
+  //
+  // Skipped while a write is in flight — togglePrepared and confirm both apply
+  // their result optimistically, and a poll landing mid-write would overwrite
+  // the row the owner just tapped with the pre-write server state.
+  useEffect(() => {
+    const tick = () => {
+      if (busyItem || confirming) return;
+      if (document.visibilityState === "visible") reload();
     };
-  }, [orderId, storeId]);
+    const id = setInterval(tick, 4000);
+    return () => clearInterval(id);
+  }, [reload, busyItem, confirming]);
 
   const togglePrepared = async (item: StoreOrderItem) => {
     if (!order) return;
