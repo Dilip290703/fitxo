@@ -362,6 +362,100 @@ Then the behavioural check the plan asks for: **one test payment end-to-end**
 
 ---
 
+## Moving to a NEW Razorpay account (the Fitxo rebrand)
+
+The section above rotates credentials **within one account**. Creating a *new*
+account under the Fitxo identity is a superset of it, and three of the extra
+steps have no equivalent in a rotation. Read this before touching the dashboard.
+
+### It is not one credential, it is three — across seven slots
+
+A rotation reissues the key pair. A new account reissues the key pair **and** the
+webhook secret, because the webhook endpoint is created fresh and issues its own.
+
+| Credential | Where every copy lives |
+|---|---|
+| **Key id** (`rzp_test_…` / `rzp_live_…`) | `apps/customer/.env.local` (`NEXT_PUBLIC_RAZORPAY_KEY_ID`) · `apps/admin/.env.local` (`RAZORPAY_KEY_ID`) |
+| **Key secret** | `apps/customer/.env.local` · `apps/admin/.env.local` · Vault `razorpay_key_secret` **dev** · Vault `razorpay_key_secret` **prod** |
+| **Webhook secret** | `apps/customer/.env.local` (`RAZORPAY_WEBHOOK_SECRET`) · Vault `razorpay_webhook_secret` **dev** · Vault `razorpay_webhook_secret` **prod** |
+
+`pnpm razorpay:check` verifies all three, including the specific trap of pasting
+the key secret into the webhook slot. Run it against **both** projects.
+
+### ⚠️ The one-way door: old payment ids die with the old account
+
+**A refund can only be issued by the account that captured the payment.** Every
+`payments.razorpay_payment_id` already in the database belongs to the OLD account.
+The moment you stop using that account, those ids are unrefundable — the new
+account has never heard of them and the API call fails.
+
+This is not hypothetical. On dev right now:
+
+```sql
+SELECT order_number, reason, fee_amount, razorpay_payment_id FROM pending_fee_refunds();
+-- FTZ-2026-00059 | cancelled_unrefunded | 49.00 | pay_TEw6qMCO6BkcZl
+```
+
+That ₹49 has been owed since 2026-07-18 (it originally failed on an empty test
+balance). If the account switches with that row outstanding, it becomes a
+**permanently unclearable entry** in `pending_fee_refunds()` and a standing
+amber row on the admin dashboard. That is worse than losing the ₹49 of test
+money: an alert that can never be cleared is an alert everyone learns to ignore,
+and this queue is the mechanism that catches *real* stuck fees later.
+
+**So, in order:**
+
+1. **Drain `pending_fee_refunds()` on dev and prod BEFORE the switch** — top up
+   the old account's test balance if that is what is blocking, refund through
+   Admin → Payments, and confirm the queue returns zero rows.
+2. Only then create the new account.
+3. ⚠️ **On prod this is real money.** Prod state is unverified (nobody has run
+   the probe against `bozqclrtbxkjevgztruc`) — check its queue is empty before
+   the cutover, not after.
+
+Stale `initiated` rows are a milder version of the same thing and can be left;
+they were never captured, so nothing is owed. Expect them to stay stuck forever.
+
+### The webhook secret cannot be finished yet — and that is the trap
+
+Razorpay needs a **reachable URL** to register a webhook endpoint, and there is
+no deployment yet (W2.2, Jay). So the switch splits in two, and stopping after
+the first half looks like success:
+
+- **Now:** create the account, take the test key pair, update the two envs and
+  both Vault `razorpay_key_secret` copies, `pnpm razorpay:check` green on dev and
+  prod, one end-to-end test payment.
+- **After Netlify exists:** create the webhook endpoint against the real URL,
+  take its secret, update `RAZORPAY_WEBHOOK_SECRET` + both Vault
+  `razorpay_webhook_secret` copies, then prove a signed delivery reaches
+  `success`.
+
+Until that second half lands, `payment.captured` settles nothing — which is the
+state the path has **always** been in (RUNBOOK §2.1). A new account does not fix
+it and can quietly re-break it, so do not read a green `razorpay:check` as proof
+the webhook works; it only proves the copies agree.
+
+### Account-level items no code change touches
+
+Renaming the codebase (PR #63) and migration 059 cannot reach these:
+
+- **Account / business name** → Fitxo
+- **Verified website** → `fitxo.co.in`
+- **KYC** under the new entity — still gated on entity + GST (Amit/Dilip), and
+  it is what gates live keys at all
+- **Webhook endpoint URL** → the deployed customer app's
+  `/api/razorpay/webhook`
+
+### One thing that deliberately still says "fitzo"
+
+Migration 057's HMAC salt is the literal `'fitzo-rotation-check'`, and it must
+**stay** that way. It is an input to `razorpay_secret_fingerprints()`, so changing
+it changes every stored fingerprint and would make `razorpay:check` report a
+false mismatch in the middle of the switch — exactly when you most need it to be
+trustworthy. It is a salt, not branding; nobody sees it.
+
+---
+
 ## Going forward — migration workflow after the split
 
 - **One migrations directory stays the truth**: `packages/supabase/migrations/NNN_*.sql`,
