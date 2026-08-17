@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { loadStoreReturns, type StoreReturn } from "@/lib/returns";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useStorePanel } from "@/components/panel/PanelContext";
@@ -31,19 +31,36 @@ export function ReturnsView() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
 
+  const reload = useCallback(
+    () =>
+      loadStoreReturns(storeId)
+        .then((rows) => {
+          setReturns(rows);
+          setError("");
+        })
+        .catch(() => setError("We couldn't load your returns. Please try again.")),
+    [storeId],
+  );
+
   useEffect(() => {
-    let active = true;
-    loadStoreReturns(storeId)
-      .then((rows) => {
-        if (active) setReturns(rows);
-      })
-      .catch(() => {
-        if (active) setError("We couldn't load your returns. Please try again.");
-      });
-    return () => {
-      active = false;
+    reload();
+  }, [reload]);
+
+  // Live refresh (migration 060 / audit 2.3). This screen is the one a customer's
+  // "Return" tap lands on, and it used to render exactly once — the item the
+  // rider is already carrying back would not appear until a manual reload. 4s
+  // matches the agent app's proven cadence; paused while the tab is hidden.
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible") reload();
     };
-  }, [storeId]);
+    const id = setInterval(tick, 4000);
+    window.addEventListener("focus", reload);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", reload);
+    };
+  }, [reload]);
 
   const filtered = useMemo(
     () => (returns ?? []).filter((r) => filter === "all" || r.status === filter),
