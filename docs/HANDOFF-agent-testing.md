@@ -25,7 +25,7 @@ To check they're applied: in the SQL editor run
 ## ✅ Local-testing: panels no longer share one login
 
 **Fixed (2026-06-26):** each app now sets a distinct Supabase auth-cookie name
-(`NEXT_PUBLIC_SUPABASE_COOKIE_NAME`, e.g. `sb-fitzo-agent`) in its `next.config.ts`, so the
+(`NEXT_PUBLIC_SUPABASE_COOKIE_NAME`, e.g. `sb-fitxo-agent`) in its `next.config.ts`, so the
 four panels no longer clobber each other's session on `localhost` (cookies are shared across
 ports). You can be logged into customer (:3000), admin (:3001) and rider (:3002) **at the
 same time in one browser profile**. The middleware also renders the login form instead of

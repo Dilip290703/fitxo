@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { Icon } from '@/components/admin/icons';
 
 type Hit = {

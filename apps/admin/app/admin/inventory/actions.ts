@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/require-admin';
 import { logActivity } from '@/lib/activity';

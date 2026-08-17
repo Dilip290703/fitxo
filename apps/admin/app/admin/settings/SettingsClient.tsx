@@ -145,7 +145,7 @@ export default function SettingsClient({ initial }: { initial: SystemSettings })
         <h3 className="text-sm font-semibold text-ink">Commission & Payouts</h3>
         <div>
           <label className={labelClass}>Platform Commission (%)</label>
-          <p className="text-xs text-muted mb-1.5">Fitzo&apos;s cut of each kept item; the rest is the store payout</p>
+          <p className="text-xs text-muted mb-1.5">Fitxo&apos;s cut of each kept item; the rest is the store payout</p>
           <input type="number" value={commission.commission_rate} min={0} max={100} step={0.5} onChange={(e) => setCommission((f) => ({ ...f, commission_rate: e.target.value }))} className={inputClass} />
         </div>
         <div>

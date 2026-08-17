@@ -1,5 +1,5 @@
 -- ============================================================
--- Fitzo Store panel — dashboard demo data for "Fitzo Test Store"
+-- Fitxo Store panel — dashboard demo data for "Fitxo Test Store"
 -- ============================================================
 -- Gives the seeded test store something to show on the dashboard: one product
 -- with two variants (one low-stock), and one order in its (15–30 min) try window.
@@ -19,9 +19,9 @@ DECLARE
   v_variant_id UUID;
   v_order_id   UUID;
 BEGIN
-  SELECT id INTO v_store_id FROM stores WHERE slug = 'fitzo-test-store';
+  SELECT id INTO v_store_id FROM stores WHERE slug = 'fitxo-test-store';
   IF v_store_id IS NULL THEN
-    RAISE EXCEPTION 'Run store_seed.sql first (no fitzo-test-store).';
+    RAISE EXCEPTION 'Run store_seed.sql first (no fitxo-test-store).';
   END IF;
 
   SELECT user_id INTO v_user_id

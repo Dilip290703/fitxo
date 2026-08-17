@@ -112,7 +112,7 @@ export default function FinanceClient({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `fitzo-pnl-${rangeKey}${rangeKey === 'custom' ? `-${customFrom}-to-${customTo}` : ''}.csv`;
+    a.download = `fitxo-pnl-${rangeKey}${rangeKey === 'custom' ? `-${customFrom}-to-${customTo}` : ''}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

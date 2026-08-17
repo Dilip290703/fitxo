@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { AlertBell, useOrderAlerts } from "@/components/alerts/OrderAlertsProvider";
 import { Icon, type IconName } from "@/components/icons";
@@ -50,7 +50,7 @@ const NAV: NavSection[] = [
   },
 ];
 
-const COLLAPSE_KEY = "fitzo-store-nav-collapsed";
+const COLLAPSE_KEY = "fitxo-store-nav-collapsed";
 
 function isActive(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -110,7 +110,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
       <div className={`border-b border-white/10 py-4 ${showLabels ? "px-5" : "px-3"}`}>
         <div className={`flex items-center gap-2 ${showLabels ? "" : "justify-center"}`}>
           <span className="font-serif text-[17px] font-semibold tracking-[0.18em]">
-            {showLabels ? "FITZO" : "F"}
+            {showLabels ? "FITXO" : "F"}
           </span>
           {showLabels ? (
             <span className="rounded-full border border-white/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/75">

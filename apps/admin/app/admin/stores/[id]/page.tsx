@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import StatusBadge from '@/components/admin/StatusBadge';

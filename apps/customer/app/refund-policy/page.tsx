@@ -4,9 +4,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Refund Policy – FitZo",
+  title: "Refund Policy – FitXo",
   description:
-    "Understand FitZo's refund and return policy for try-before-you-buy fashion delivery in Pune.",
+    "Understand FitXo's refund and return policy for try-before-you-buy fashion delivery in Pune.",
 };
 
 const highlights = [
@@ -32,7 +32,7 @@ const sections = [
     id: "doorstep-returns",
     title: "1. Doorstep Try-On Returns",
     content: [
-      "FitZo's try-before-you-buy model means you only pay for what you keep. During a doorstep delivery, our delivery partner will wait while you try on your selected items.",
+      "FitXo's try-before-you-buy model means you only pay for what you keep. During a doorstep delivery, our delivery partner will wait while you try on your selected items.",
       "Items you choose not to keep are returned immediately to the delivery partner — no charges, no paperwork, no hassle. You are only charged for the items you decide to purchase.",
       "Please ensure returned items are in the same condition as delivered: unworn (beyond trying on), with all original tags, labels, and packaging intact.",
     ],
@@ -41,7 +41,7 @@ const sections = [
     id: "post-purchase-returns",
     title: "2. Post-Purchase Returns",
     content: [
-      "If you purchased an item and later wish to return it, you may initiate a return within 7 days of the purchase date through your FitZo account or by contacting our support team.",
+      "If you purchased an item and later wish to return it, you may initiate a return within 7 days of the purchase date through your FitXo account or by contacting our support team.",
       "The item must be unworn, unwashed, undamaged, and in its original packaging with all tags attached. Once your return request is approved, we will schedule a pickup at your doorstep.",
       "Inspection of the returned item typically takes 1–2 business days after pickup. If the item passes inspection, your refund will be initiated immediately.",
     ],
@@ -59,7 +59,7 @@ const sections = [
       { method: "Digital Wallets", timeline: "1–2 business days" },
     ],
     afterTable: [
-      "Note: Timelines are estimates and may vary depending on your bank or payment provider. FitZo initiates the refund within 48 hours of return approval.",
+      "Note: Timelines are estimates and may vary depending on your bank or payment provider. FitXo initiates the refund within 48 hours of return approval.",
     ],
   },
   {
@@ -83,9 +83,9 @@ const sections = [
     id: "damaged-defective",
     title: "5. Damaged or Defective Items",
     content: [
-      "If you receive an item that is damaged, defective, or different from what you ordered, please report it within 48 hours of delivery through your FitZo account or by contacting our support team.",
+      "If you receive an item that is damaged, defective, or different from what you ordered, please report it within 48 hours of delivery through your FitXo account or by contacting our support team.",
       "Include clear photos of the issue for faster resolution. We will arrange a free pickup and provide a full refund or replacement, based on your preference and item availability.",
-      "For defective items, FitZo covers all return shipping costs regardless of the return reason.",
+      "For defective items, FitXo covers all return shipping costs regardless of the return reason.",
     ],
   },
   {
@@ -108,7 +108,7 @@ const sections = [
     title: "7. Order Cancellations",
     content: [
       "Orders can be cancelled free of charge within 5 minutes of placement. After this window, if the order has been dispatched, cancellation may not be possible.",
-      "If a dispatched order is cancelled before delivery, a ₹49 cancellation fee may apply to cover logistics costs. This fee is waived if the cancellation is due to a FitZo error or delay.",
+      "If a dispatched order is cancelled before delivery, a ₹49 cancellation fee may apply to cover logistics costs. This fee is waived if the cancellation is due to a FitXo error or delay.",
     ],
   },
   {
@@ -116,7 +116,7 @@ const sections = [
     title: "8. Refund Disputes",
     content: [
       "If you disagree with a refund decision, you may escalate the issue by contacting our support team with your order details and reason for dispute.",
-      "FitZo will review the dispute within 5 business days and provide a final resolution. We are committed to fair and transparent resolution of all refund-related concerns.",
+      "FitXo will review the dispute within 5 business days and provide a final resolution. We are committed to fair and transparent resolution of all refund-related concerns.",
     ],
   },
   {
@@ -146,7 +146,7 @@ export default function RefundPolicyPage() {
             Refund Policy
           </h1>
           <p className="mt-6 max-w-2xl text-[16px] leading-8 text-[#5a554f]">
-            At FitZo, our try-before-you-buy model means you should never pay
+            At FitXo, our try-before-you-buy model means you should never pay
             for something that doesn't feel right. Here's exactly how returns
             and refunds work.
           </p>
@@ -270,17 +270,17 @@ export default function RefundPolicyPage() {
                       <p>
                         <strong>Email:</strong>{" "}
                         <a
-                          href="mailto:returns@fitzo.in"
+                          href="mailto:returns@fitxo.co.in"
                           className="text-[#3e6dd2] underline"
                         >
-                          returns@fitzo.in
+                          returns@fitxo.co.in
                         </a>
                       </p>
                       <p>
                         <strong>Phone:</strong> +91 98765 43210
                       </p>
                       <p>
-                        <strong>Address:</strong> FitZo Returns, Baner Road,
+                        <strong>Address:</strong> FitXo Returns, Baner Road,
                         Pune, Maharashtra 411045
                       </p>
                     </div>

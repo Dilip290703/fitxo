@@ -5,7 +5,7 @@ description: Start a new screen/task with full context loaded and a plan before 
 I want to build the screen I name (I'll tell you which one). Before writing any code:
 
 1. Read `CLAUDE.md`, `docs/PROGRESS.md`, and `docs/WORKFLOW.md`.
-2. Find this screen's spec in the Fitzo workflow PDF / the screen list and restate:
+2. Find this screen's spec in the Fitxo workflow PDF / the screen list and restate:
    - what it leads to, every touch/action and what each should do,
    - which Supabase tables/queries it needs,
    - any integration it touches (Razorpay, AI endpoint, maps, OTP).

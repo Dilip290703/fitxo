@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { logActivity } from '@/lib/activity';
-import type { OrderStatus } from '@fitzo/supabase/types';
+import type { OrderStatus } from '@fitxo/supabase/types';
 
 interface OrderRow {
   id: string;
@@ -41,7 +41,7 @@ interface SavedView {
   search: string;
 }
 
-const VIEWS_KEY = 'fitzo-admin-order-views';
+const VIEWS_KEY = 'fitxo-admin-order-views';
 
 function loadViews(): SavedView[] {
   try {
@@ -175,7 +175,7 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `fitzo-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `fitxo-orders-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

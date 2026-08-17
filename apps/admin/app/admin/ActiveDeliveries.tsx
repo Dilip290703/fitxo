@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import StatusBadge from '@/components/admin/StatusBadge';
 import {
   ACTIVE_DELIVERY_SELECT,

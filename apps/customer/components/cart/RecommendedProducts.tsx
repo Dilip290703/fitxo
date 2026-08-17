@@ -45,7 +45,7 @@ export function RecommendedProducts({
             item={{
               id: product.id,
               title: product.title,
-              brand: "FitZo Select",
+              brand: "FitXo Select",
               image: product.image,
               priceValue: product.price,
               displayPrice: `₹${Math.round(product.price)}`,

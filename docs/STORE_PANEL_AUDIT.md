@@ -52,7 +52,7 @@ Basis: full code trace of `apps/store` (~6.7k lines) + migrations 004/007/016/02
 
 ### B1. Navigation & IA — **Major**
 
-- **Flat 10-item sidebar, no grouping** ([StoreShell.tsx:19](../apps/store/components/StoreShell.tsx)). Shopify/Swiggy group by job: *Orders / Catalogue / Money / Store*. Fitzo's list mixes daily-use (Orders) with once-a-quarter (Staff, Guide) at equal weight.
+- **Flat 10-item sidebar, no grouping** ([StoreShell.tsx:19](../apps/store/components/StoreShell.tsx)). Shopify/Swiggy group by job: *Orders / Catalogue / Money / Store*. Fitxo's list mixes daily-use (Orders) with once-a-quarter (Staff, Guide) at equal weight.
 - **Emoji icons** (`🛍 🧾 ↩ ₹ 📊 👥 ⚙ 💬 🧭`) — render differently per OS, unaligned optical sizes. Reads "student project" instantly. **Major** for the professional bar.
 - **No badge counts.** A Swiggy partner sees "New Orders (3)" in the nav; here the only signal is the floating bell.
 - **No header bar on desktop.** No page-level breadcrumb/primary-action slot; the bell floats at `fixed right-4 top-4` **over page content** (e.g. over the status badge on Order Detail, near "+ Add product" on Catalogue). (code-traced)
@@ -70,7 +70,7 @@ Basis: full code trace of `apps/store` (~6.7k lines) + migrations 004/007/016/02
 - **Hardcoded hex values everywhere** — `#171d2b` appears ~80×, `#ece5da` ~60× across 15 files. Palette is consistent *today* only by copy-paste discipline; there is no token layer (globals.css is 5 lines). One brand tweak = 15-file sweep. **Major** as debt, Minor visually.
 - Type scale is ad-hoc per-pixel (`text-[9px]` … `text-[40px]`, ~14 distinct sizes) but hierarchy is mostly coherent. Radius discipline is decent (xl/2xl/full); shadows are disciplined (borders-first).
 - Inconsistent loading states: list views get skeletons; **Order Detail and ProductForm get a bare uppercase "Loading…" string** ([OrderDetailView.tsx:139](../apps/store/components/orders/OrderDetailView.tsx)); Settings gets a single gray box.
-- No per-route `<title>` — every tab says "FitZo Store".
+- No per-route `<title>` — every tab says "FitXo Store".
 - Success feedback is inconsistent: Settings shows inline "Saved ✓", ProductForm silently redirects, Support shows a green banner. No toast system.
 
 ### B4. UX friction / real-world workflow fit — **Critical** (the "would a Swiggy PM approve" test fails here)
@@ -87,7 +87,7 @@ The store owner's job, 15× a day: *order comes in → pack items → mark ready
 
 ### B5. Core logic — one **Major** correctness bug + assorted
 
-- **Personal-order leak (Major, confirmed against RLS):** `orders_select (user_id = auth.uid())` is OR'd with `orders_manager_select` (schema.sql:544 + migration 004). `loadStoreOrders()` and 5 of 7 dashboard queries rely on **RLS alone with no store filter** ([orders.ts:71-81](../apps/store/lib/orders.ts), [dashboard.ts:56-77](../apps/store/lib/dashboard.ts)) — the dashboard comment even asserts "no store filter needed". A manager who also shops on fitzo.in as a customer sees their **personal orders** in the store Orders list and inflating Today's/Total/Try-window/Returns counts. `earnings.ts`/`analytics.ts`/`returns.ts` all explicitly guard against exactly this; orders/dashboard forgot.
+- **Personal-order leak (Major, confirmed against RLS):** `orders_select (user_id = auth.uid())` is OR'd with `orders_manager_select` (schema.sql:544 + migration 004). `loadStoreOrders()` and 5 of 7 dashboard queries rely on **RLS alone with no store filter** ([orders.ts:71-81](../apps/store/lib/orders.ts), [dashboard.ts:56-77](../apps/store/lib/dashboard.ts)) — the dashboard comment even asserts "no store filter needed". A manager who also shops on fitxo.co.in as a customer sees their **personal orders** in the store Orders list and inflating Today's/Total/Try-window/Returns counts. `earnings.ts`/`analytics.ts`/`returns.ts` all explicitly guard against exactly this; orders/dashboard forgot.
 - **Dashboard "Pending payout" is a different metric than Earnings' "Awaiting payout"** (dashboard sums `payouts.status='pending'` rows; admin records payouts directly as `paid`, so the card reads ₹0 forever while Earnings shows the real computed figure). Two screens, two answers to "how much am I owed". **Major** trust issue for money.
 - **Non-transactional product create** ([productForm.ts:225-240](../apps/store/lib/productForm.ts)): product row → colors → variants → images as separate inserts. A mid-sequence failure leaves a half-created *live* product, and retrying Create makes a duplicate. Edit has the same shape. Needs an RPC or an idempotent create-then-patch flow.
 - Stale-data handling: everything is fetch-once-on-mount; no refetch on focus/interval, no realtime on the lists themselves.

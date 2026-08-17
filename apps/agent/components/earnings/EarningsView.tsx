@@ -91,7 +91,7 @@ export function EarningsView() {
           <div>
             <p className="text-[14px] font-semibold text-warn">Add your bank / UPI details</p>
             <p className="text-[13px] text-body">
-              Fitzo has nowhere to send your money yet — add payout details in Settings.
+              Fitxo has nowhere to send your money yet — add payout details in Settings.
             </p>
           </div>
           <span className="shrink-0 text-[13px] font-semibold text-warn">Add →</span>
@@ -178,7 +178,7 @@ export function EarningsView() {
       {payouts.length === 0 ? (
         <Card>
           <p className="text-[14px] text-body">
-            No payouts yet. Fitzo settles your earned rider fees to your bank/UPI —
+            No payouts yet. Fitxo settles your earned rider fees to your bank/UPI —
             each settlement shows up here.
           </p>
         </Card>
@@ -203,7 +203,7 @@ export function EarningsView() {
       )}
 
       <p className="mt-4 text-[12px] leading-5 text-faint">
-        Payouts are recorded by Fitzo per completed order; Razorpay bank disbursement is
+        Payouts are recorded by Fitxo per completed order; Razorpay bank disbursement is
         being wired. &ldquo;To be paid&rdquo; = everything you&rsquo;ve earned minus what&rsquo;s
         already been settled.
       </p>

@@ -19,8 +19,8 @@
 - **Prod is NOT touched** — see "After testing" at the bottom.
 
 **⚠️ READ FIRST — the active-order cap is already live on dev.** Every test account has
-stale active orders (31 total across `fitzo.contact@gmail.com` (18!), `store@fitzo.in` (10),
-`uitest-a1@fitzo.dev`, `fitzoloop.customer@gmail.com`, `goku@gmail.com`), so **every new
+stale active orders (31 total across `fitxo.contact@gmail.com` (18!), `store@fitxo.co.in` (10),
+`uitest-a1@fitxo.dev`, `fitxoloop.customer@gmail.com`, `goku@gmail.com`), so **every new
 order will be rejected with ORDER_LIMIT_ACTIVE until step 0 is done.**
 
 ---
@@ -48,7 +48,7 @@ order will be rejected with ORDER_LIMIT_ACTIVE until step 0 is done.**
 
 ## Test 2 — Store Open/Paused + serviceability (052)
 
-1. Store panel (store.fitzo.in dev / `pnpm dev:store`) → Dashboard shows the
+1. Store panel (store.fitxo.co.in dev / `pnpm dev:store`) → Dashboard shows the
    **"Store open — taking new orders"** card. Click **Pause store** → red paused state.
 2. Customer: the paused store's products still **browsable**; add to bag → checkout →
    Place Order → friendly error "**{Store} is temporarily closed…**"; no order row created.

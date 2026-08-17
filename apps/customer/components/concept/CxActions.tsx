@@ -1,7 +1,7 @@
 import { CxIcon, CX_ICONS } from "@/components/concept/shared";
 
 /**
- * Hover action row for product cards (Fitzo landing):
+ * Hover action row for product cards (Fitxo landing):
  * heart / quick-view / compare / cart circles slide up + fade in on card
  * hover. Parent card must be `group` + `relative`.
  */

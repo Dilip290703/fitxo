@@ -173,7 +173,7 @@ export function PincodeModal({
               Set your pincode
             </h2>
             <p className="mt-2 text-[13px] text-[#706961]">
-              FitZo currently delivers across Pune.
+              FitXo currently delivers across Pune.
             </p>
           </div>
           <button

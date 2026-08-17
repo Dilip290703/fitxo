@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import {
   IconBell,
   IconBellOff,
@@ -24,7 +24,7 @@ type AlertItem = {
   at: number;
 };
 
-const MUTE_KEY = "fitzo-agent-alerts-muted";
+const MUTE_KEY = "fitxo-agent-alerts-muted";
 
 const KIND_META: Record<
   AlertKind,
@@ -109,7 +109,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
     setMuted(typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1");
     // Shared mute with IncomingJobsProvider (one switch for the whole app).
     const onMute = (e: Event) => setMuted(!!(e as CustomEvent).detail);
-    window.addEventListener("fitzo-mute-change", onMute);
+    window.addEventListener("fitxo-mute-change", onMute);
 
     const unlock = () => {
       if (!audioRef.current) {
@@ -200,7 +200,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
 
     return () => {
       window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("fitzo-mute-change", onMute);
+      window.removeEventListener("fitxo-mute-change", onMute);
       supabase.removeChannel(channel);
     };
   }, [pushAlert, userId]);
@@ -213,7 +213,7 @@ export function JobAlertsProvider({ userId }: { userId: string }) {
       } catch {
         /* ignore */
       }
-      window.dispatchEvent(new CustomEvent("fitzo-mute-change", { detail: next }));
+      window.dispatchEvent(new CustomEvent("fitxo-mute-change", { detail: next }));
       return next;
     });
   };

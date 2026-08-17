@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { loadRazorpayScript } from "@/lib/razorpayCheckout";
 import {
   createKeepPayment,
@@ -14,7 +14,7 @@ import {
   refundDeliveryFeeIfEligible,
   cancelOrder,
 } from "./actions";
-import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
+import type { OrderStatus, ItemDecision } from "@fitxo/supabase/types";
 
 // ─────────────────────────────────────────────
 // Razorpay Checkout (loaded on demand from their CDN)
@@ -287,7 +287,7 @@ export function OrderTrackingView({
       key: payment.keyId,
       amount: payment.amount,
       currency: payment.currency,
-      name: "Fitzo",
+      name: "Fitxo",
       description: `Delivery fee — refunded if you keep ₹ worth over the free-delivery limit`,
       order_id: payment.rzpOrderId,
       theme: { color: "#171d2b" },
@@ -408,7 +408,7 @@ export function OrderTrackingView({
       key: sheet.keyId,
       amount: sheet.amount,
       currency: sheet.currency,
-      name: "Fitzo",
+      name: "Fitxo",
       description:
         sheet.deliveryFee > 0
           ? `Keep — ${sheet.productName} (incl. ₹${sheet.deliveryFee.toLocaleString("en-IN")} delivery fee)`
@@ -473,11 +473,11 @@ export function OrderTrackingView({
     <main className="min-h-screen bg-[#fbfaf7]">
       {/* ── Cancel confirmation (G4) ── */}
       {cancelOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitzo-fade-in 180ms ease-out both" }}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitxo-fade-in 180ms ease-out both" }}>
           <div className="absolute inset-0 bg-[#171d2b]/50 backdrop-blur-[3px]" onClick={() => !cancelling && setCancelOpen(false)} />
           <div
             className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.5)]"
-            style={{ animation: "fitzo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
+            style={{ animation: "fitxo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
           >
             <div className="px-7 pb-7 pt-7 text-center">
               <h2 className="font-display text-[24px] leading-tight text-[#171717]">Cancel this order?</h2>
@@ -509,19 +509,19 @@ export function OrderTrackingView({
             </div>
           </div>
           <style>{`
-            @keyframes fitzo-fade-in { from { opacity: 0 } to { opacity: 1 } }
-            @keyframes fitzo-pop-in { 0% { opacity: 0; transform: translateY(12px) scale(0.96) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
+            @keyframes fitxo-fade-in { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes fitxo-pop-in { 0% { opacity: 0; transform: translateY(12px) scale(0.96) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
           `}</style>
         </div>
       )}
 
       {/* ── Doorstep prompt: rider delivered → start the 7-min window ── */}
       {awaitingTryStart && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitzo-fade-in 180ms ease-out both" }}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fitxo-fade-in 180ms ease-out both" }}>
           <div className="absolute inset-0 bg-[#171d2b]/50 backdrop-blur-[3px]" />
           <div
             className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.5)]"
-            style={{ animation: "fitzo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
+            style={{ animation: "fitxo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
           >
             <div className="h-2 w-full bg-gradient-to-r from-[#171d2b] via-[#8b7058] to-[#c89b3c]" />
             <div className="px-7 pb-7 pt-6 text-center">
@@ -557,8 +557,8 @@ export function OrderTrackingView({
             </div>
           </div>
           <style>{`
-            @keyframes fitzo-fade-in { from { opacity: 0 } to { opacity: 1 } }
-            @keyframes fitzo-pop-in { 0% { opacity: 0; transform: translateY(12px) scale(0.96) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
+            @keyframes fitxo-fade-in { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes fitxo-pop-in { 0% { opacity: 0; transform: translateY(12px) scale(0.96) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
           `}</style>
         </div>
       )}

@@ -1,5 +1,5 @@
-import { createClient } from "@fitzo/supabase/client";
-import type { StoreEntityType, StoreOnboardingStatus } from "@fitzo/supabase/types";
+import { createClient } from "@fitxo/supabase/client";
+import type { StoreEntityType, StoreOnboardingStatus } from "@fitxo/supabase/types";
 
 /**
  * The full onboarding application: the safe `stores` profile columns plus the

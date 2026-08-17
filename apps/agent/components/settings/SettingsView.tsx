@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { useAgent } from "@/components/AgentShell";
 import {
   fetchPayoutDetails,
@@ -238,7 +238,7 @@ function PayoutDetailsCard({ riderId }: { riderId: string }) {
       return;
     }
     setHasSaved(true);
-    setMsg({ kind: "ok", text: "Payout details saved. Fitzo pays your earnings here." });
+    setMsg({ kind: "ok", text: "Payout details saved. Fitxo pays your earnings here." });
   }
 
   return (
@@ -259,7 +259,7 @@ function PayoutDetailsCard({ riderId }: { riderId: string }) {
         )}
       </div>
       <p className="text-[13px] text-body">
-        Where Fitzo sends your delivery earnings. Kept private — only you and Fitzo can see this.
+        Where Fitxo sends your delivery earnings. Kept private — only you and Fitxo can see this.
       </p>
 
       {loading ? (

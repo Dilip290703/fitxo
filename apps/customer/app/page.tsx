@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@fitzo/supabase/server";
+import { createClient } from "@fitxo/supabase/server";
 import { queryProducts, type FrontendProduct } from "@/lib/supabase/products";
 import { CxScrollProgress } from "@/components/concept/CxScrollProgress";
 import { Navbar } from "@/components/Navbar";
@@ -16,11 +16,11 @@ import { Journal } from "@/components/concept/Journal";
 import "./concept.css";
 
 export const metadata: Metadata = {
-  title: "FITZO — Try before you buy",
+  title: "FITXO — Try before you buy",
   description: "Curated fashion from stores near you. A rider brings your picks and waits while you try them on — keep only what fits.",
 };
 
-/** Short Fitzo rail labels rotated over live product imagery. */
+/** Short Fitxo rail labels rotated over live product imagery. */
 const RAIL_LABELS = ["Jeans", "Fancy Top", "T-Shirts", "Sweaters", "Jacket", "Shirts", "Shorts", "Tops", "Denim", "Knits"];
 
 const HERO_COPY = [

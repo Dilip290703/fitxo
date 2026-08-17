@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 /**
  * One image tile in the ProductForm. Two flavours:

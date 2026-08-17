@@ -1,6 +1,6 @@
-# Fitzo — Project Context
+# Fitxo — Project Context
 
-Fitzo is a **try-before-you-buy** fashion commerce platform. Customers order clothes and
+Fitxo is a **try-before-you-buy** fashion commerce platform. Customers order clothes and
 **book a delivery slot**; a rider brings the picks to their door and **waits 15–30 minutes**
 while they try on; the customer keeps (pays for) what they love and **hands the rest back to
 the waiting rider on the spot** — no return to schedule.
@@ -11,10 +11,10 @@ state lives in `docs/PROGRESS.md` — **read that file before starting any task.
 ## The 4 panels (each is its own app + its own subdomain)
 | Panel    | App folder      | Users           | Domain          | Screens |
 |----------|-----------------|-----------------|-----------------|---------|
-| Customer | `apps/customer` | end users       | fitzo.in        | 25      |
-| Agent    | `apps/agent`    | delivery riders | agent.fitzo.in  | 12      |
-| Store    | `apps/store`    | store owners    | store.fitzo.in  | 14      |
-| Admin    | `apps/admin`    | Jay + Amit only | admin.fitzo.in  | 21      |
+| Customer | `apps/customer` | end users       | fitxo.co.in        | 25      |
+| Agent    | `apps/agent`    | delivery riders | agent.fitxo.co.in  | 12      |
+| Store    | `apps/store`    | store owners    | store.fitxo.co.in  | 14      |
+| Admin    | `apps/admin`    | Jay, Amit, Dilip | admin.fitxo.co.in | 21      |
 
 ## Monorepo structure (pnpm workspaces)
 ```
@@ -22,9 +22,9 @@ apps/customer  public storefront        (Next.js)
 apps/admin     admin panel (/admin/*)   (Next.js)  ← separate build; only app with the service-role key
 apps/agent     delivery-agent panel     (Next.js)  ← shell, WIP
 apps/store     store-manager panel      (Next.js)  ← shell, WIP
-packages/supabase  @fitzo/supabase  anon + SSR Supabase clients + DB types (NO service-role)
-packages/ui        @fitzo/ui        shared UI primitives (thin today)
-packages/config    @fitzo/config    shared tsconfig base
+packages/supabase  @fitxo/supabase  anon + SSR Supabase clients + DB types (NO service-role)
+packages/ui        @fitxo/ui        shared UI primitives (thin today)
+packages/config    @fitxo/config    shared tsconfig base
 ```
 Each app is its own **Next.js 15 App Router** app with its own `package.json`/config.
 A panel's screens live under its app folder — **panel = app folder**, which is also the

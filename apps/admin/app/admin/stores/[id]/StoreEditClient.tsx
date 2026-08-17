@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
-import type { Store } from '@fitzo/supabase/types';
+import type { Store } from '@fitxo/supabase/types';
 
 export default function StoreEditClient({ store }: { store: Store }) {
   const router = useRouter();

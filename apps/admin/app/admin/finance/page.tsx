@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import FinanceClient, { type EcoRow, type PnlTotals } from './FinanceClient';
 
 // Date-ranged P&L over the order_economics money truth (money plan M5).

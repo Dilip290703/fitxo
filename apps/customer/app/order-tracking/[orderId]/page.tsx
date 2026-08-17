@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@fitzo/supabase/server";
+import { createClient } from "@fitxo/supabase/server";
 import { OrderTrackingView } from "./OrderTrackingView";
 import type { TrackingItem, TrackingSession, TrackingOrder } from "./OrderTrackingView";
-import type { OrderStatus, ItemDecision } from "@fitzo/supabase/types";
+import type { OrderStatus, ItemDecision } from "@fitxo/supabase/types";
 
 export default async function OrderTrackingPage({
   params,

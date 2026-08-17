@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 export type CatalogueProduct = {
   id: string;

@@ -1,8 +1,8 @@
 ---
-description: Audit the codebase against the Fitzo workflow spec and report what's done vs pending
+description: Audit the codebase against the Fitxo workflow spec and report what's done vs pending
 ---
 
-You are auditing the Fitzo codebase against the product spec. Do a thorough, honest pass —
+You are auditing the Fitxo codebase against the product spec. Do a thorough, honest pass —
 do not assume a screen is done just because a file exists; verify it actually implements the
 behaviour.
 

@@ -9,7 +9,7 @@ const footerColumns = [
   {
     title: "Company Info",
     items: [
-      { label: "About Fitzo", href: "/about" },
+      { label: "About Fitxo", href: "/about" },
       { label: "Social Responsibility", href: "/about" },
       { label: "Affiliate", href: "/contact" },
       { label: "Fashion Blogger", href: "/contact" },
@@ -230,7 +230,7 @@ export function Footer() {
                 href="/"
                 className="font-serif text-[34px] font-semibold tracking-[0.07em] text-[#faf9f6]"
               >
-                FITZO
+                FITXO
               </Link>
             </div>
 
@@ -280,7 +280,7 @@ export function Footer() {
 
               <div className="mt-10 max-w-[760px]">
                 <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#faf9f6]">
-                  Sign Up For Fitzo Style News
+                  Sign Up For Fitxo Style News
                 </h3>
 
                 <form
@@ -395,7 +395,7 @@ export function Footer() {
           </div>
 
           <div className="mt-12 border-t border-white/10 pt-6 text-center text-[13px] text-[#a99f92]">
-            ©2026 Fitzo. All Rights Reserved.
+            ©2026 Fitxo. All Rights Reserved.
           </div>
         </div>
       </footer>

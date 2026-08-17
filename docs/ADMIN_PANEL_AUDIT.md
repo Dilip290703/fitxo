@@ -21,7 +21,7 @@ The question was whether admin routes/code ship in the customer JS bundle. They 
 ### S2. 🔴 **CRITICAL: `store_manager` role is admitted into the admin panel**
 [middleware.ts:43](apps/admin/middleware.ts:43) and [layout.tsx:27](apps/admin/app/admin/layout.tsx:27) both treat `role === 'store_manager'` as admin (`isAdmin = role === 'admin' || role === 'store_manager'`), and [login/page.tsx:34](apps/admin/app/admin/login/page.tsx:34) accepts them too. This looks like a localhost cookie-sharing workaround that shipped as an auth rule.
 
-Since the 2026-07 store rework, **store-manager signup is public self-serve** (migration 029). So today, anyone on the internet can create an account on the store login page and then open `admin.fitzo.in` and pass the gate.
+Since the 2026-07 store rework, **store-manager signup is public self-serve** (migration 029). So today, anyone on the internet can create an account on the store login page and then open `admin.fitxo.co.in` and pass the gate.
 
 What they can then do is bounded by two layers, and the second one is broken — see S3.
 
@@ -75,7 +75,7 @@ e) **Item damaged in try-on** — rider records return `condition`; admin can se
 ### A3. Money reconciliation — can you trace one order end-to-end?
 **No.** The pieces exist but never join:
 
-- `payments` has no Razorpay **fee** column ([002_try_loop.sql:53](packages/supabase/migrations/002_try_loop.sql:53)) → Razorpay's cut is invisible; "net Fitzo margin" is not computable in-panel.
+- `payments` has no Razorpay **fee** column ([002_try_loop.sql:53](packages/supabase/migrations/002_try_loop.sql:53)) → Razorpay's cut is invisible; "net Fitxo margin" is not computable in-panel.
 - No per-order view of: customer paid → commission → store payout → agent payout → margin. You'd open 4 screens and a calculator.
 - **Analytics vs Payments will disagree by design**: Analytics sums `orders.final_amount` (includes delivery fee); the payments ledger holds **per-item keep payments** (delivery fee is never charged through Razorpay — COD collects it in cash, prepaid doesn't collect it at all, a known checkout gap). Nothing in the UI explains the mismatch — a founder doing reconciliation will think the numbers are wrong.
 

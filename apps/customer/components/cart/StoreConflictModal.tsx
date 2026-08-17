@@ -57,7 +57,7 @@ export function StoreConflictModal({
       {/* Card */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="fitzo-store-card relative w-full max-w-[440px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.45)]"
+        className="fitxo-store-card relative w-full max-w-[440px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.45)]"
       >
         {/* Decorative top band */}
         <div className="h-2 w-full bg-gradient-to-r from-[#171d2b] via-[#8b7058] to-[#c89b3c]" />
@@ -126,13 +126,13 @@ export function StoreConflictModal({
       </div>
 
       <style>{`
-        @keyframes fitzo-store-pop {
+        @keyframes fitxo-store-pop {
           0%   { transform: translateY(14px) scale(0.96) }
           100% { transform: translateY(0) scale(1) }
         }
-        .fitzo-store-card { animation: fitzo-store-pop 240ms cubic-bezier(0.18,0.89,0.32,1.2) both }
+        .fitxo-store-card { animation: fitxo-store-pop 240ms cubic-bezier(0.18,0.89,0.32,1.2) both }
         @media (prefers-reduced-motion: reduce) {
-          .fitzo-store-card { animation: none }
+          .fitxo-store-card { animation: none }
         }
       `}</style>
     </div>

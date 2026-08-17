@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify a Fitzo Supabase environment (docs/ENVIRONMENTS.md Part G).
+# Verify a Fitxo Supabase environment (docs/ENVIRONMENTS.md Part G).
 # Read-only. Fails loudly on anything that would have caused a past incident
 # or breaks the money path. Run against BOTH dev and prod — same expectations.
 #

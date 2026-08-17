@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import OrderAlerts from '@/components/admin/OrderAlerts';
 import GlobalSearch from '@/components/admin/GlobalSearch';
 import { Icon, type IconName } from '@/components/admin/icons';
@@ -69,7 +69,7 @@ const NAV: NavSection[] = [
   },
 ];
 
-const COLLAPSE_KEY = 'fitzo-admin-nav-collapsed';
+const COLLAPSE_KEY = 'fitxo-admin-nav-collapsed';
 
 function isActive(pathname: string, href: string): boolean {
   return href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(`${href}/`);
@@ -129,7 +129,7 @@ export default function AdminShell({
       <div className={`border-b border-white/10 py-3.5 ${showLabels ? 'px-4' : 'px-2'}`}>
         <Link href="/admin" className={`flex items-center gap-2 ${showLabels ? '' : 'justify-center'}`}>
           <span className="font-serif text-[16px] font-semibold tracking-[0.18em]">
-            {showLabels ? 'FITZO' : 'F'}
+            {showLabels ? 'FITXO' : 'F'}
           </span>
           {showLabels ? (
             <span className="rounded-full border border-white/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/75">

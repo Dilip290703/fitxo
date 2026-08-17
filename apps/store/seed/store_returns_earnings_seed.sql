@@ -1,7 +1,7 @@
 -- ============================================================
--- Fitzo Store panel — demo data for Returns / Earnings / Analytics
+-- Fitxo Store panel — demo data for Returns / Earnings / Analytics
 -- ============================================================
--- Adds to "Fitzo Test Store": one order with a returned item (+ returns row),
+-- Adds to "Fitxo Test Store": one order with a returned item (+ returns row),
 -- and two completed orders with kept items — one with a PENDING payout, one
 -- with a PAID payout. Spread over recent days so the 30-day charts have shape.
 --
@@ -19,7 +19,7 @@ DECLARE
   v_order_id   UUID;
   v_item_id    UUID;
 BEGIN
-  SELECT id INTO v_store_id FROM stores WHERE slug = 'fitzo-test-store';
+  SELECT id INTO v_store_id FROM stores WHERE slug = 'fitxo-test-store';
   IF v_store_id IS NULL THEN RAISE EXCEPTION 'Run store_seed.sql first.'; END IF;
 
   SELECT user_id INTO v_user_id

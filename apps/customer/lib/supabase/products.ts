@@ -329,7 +329,7 @@ export async function queryProductDetail(
     discount: discountPct ? `${discountPct}% off` : undefined,
     subtitle:
       (row.short_description as string | null) ??
-      'A FitZo pick designed for all-day comfort and doorstep try-on confidence.',
+      'A FitXo pick designed for all-day comfort and doorstep try-on confidence.',
     gallery,
     colors,
     sizes,

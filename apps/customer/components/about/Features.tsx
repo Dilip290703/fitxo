@@ -23,7 +23,7 @@ export function Features() {
       <div className="section-frame">
         <div className="mx-auto max-w-[640px] text-center fade-up">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8b7b69]">
-            What makes FitZo different
+            What makes FitXo different
           </p>
           <h2 className="mt-4 font-display text-[38px] leading-[0.98] font-medium tracking-[-0.04em] text-[#181818] sm:text-[52px]">
             Built around ease, not compromise.

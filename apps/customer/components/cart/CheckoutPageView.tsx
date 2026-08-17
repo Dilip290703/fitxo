@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { CartDeliveryInfo } from "@/components/cart/DeliveryInfo";
@@ -153,7 +153,7 @@ export function CheckoutPageView() {
       key: payment.keyId,
       amount: payment.amount,
       currency: payment.currency,
-      name: "Fitzo",
+      name: "Fitxo",
       description: `Delivery fee — refunded if you keep enough after your try-on`,
       order_id: payment.rzpOrderId,
       theme: { color: "#171d2b" },
@@ -253,7 +253,7 @@ export function CheckoutPageView() {
             Checkout
           </p>
           <h1 className="mt-3 font-display text-[42px] leading-none text-[#171717]">
-            Finish your FitZo try-on order.
+            Finish your FitXo try-on order.
           </h1>
         </div>
 
@@ -267,7 +267,7 @@ export function CheckoutPageView() {
             />
             {deliveryBlocked && (
               <div className="rounded-[12px] bg-[#fdecea] px-4 py-3 text-[13px] text-[#c0392b]">
-                <strong>FitZo currently serves Pune locations only.</strong>
+                <strong>FitXo currently serves Pune locations only.</strong>
                 <br />
                 Pick or add an address with a Pune pincode to proceed.
               </div>

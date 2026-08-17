@@ -88,7 +88,7 @@ export function ProfileView() {
           <div>
             <p className="text-[15px] font-semibold text-ink">Bank / UPI details</p>
             <p className="text-[13px] text-soft">
-              {hasPayout === null ? "Checking…" : hasPayout ? "On file — Fitzo pays you here" : "Missing — add them to get paid"}
+              {hasPayout === null ? "Checking…" : hasPayout ? "On file — Fitxo pays you here" : "Missing — add them to get paid"}
             </p>
           </div>
           <Link

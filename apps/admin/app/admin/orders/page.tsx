@@ -1,6 +1,6 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import OrdersClient from './OrdersClient';
-import type { OrderStatus } from '@fitzo/supabase/types';
+import type { OrderStatus } from '@fitxo/supabase/types';
 
 type OrderRow = {
   id: string; order_number: string; status: OrderStatus; final_amount: number;

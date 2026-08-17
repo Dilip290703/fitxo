@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { loadPayoutSummary } from "@/lib/earnings";
 import { formatCurrency } from "@/lib/format";
 

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@fitzo/supabase/server";
+import { createClient } from "@fitxo/supabase/server";
 
 export default async function OrderConfirmationPage({
   params,
@@ -94,7 +94,7 @@ export default async function OrderConfirmationPage({
           Order placed!
         </h1>
         <p className="mt-2 text-[15px] text-[#5f5851]">
-          Your FitZo try-on order is confirmed.
+          Your FitXo try-on order is confirmed.
         </p>
 
         {/* Order number */}

@@ -6,7 +6,7 @@
  * two screens can never disagree about what an address looks like.
  */
 
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { getDeliveryStatus } from "./pincode";
 
 export type DeliveryAddress = {
@@ -77,7 +77,7 @@ export type AddressFieldErrors = Partial<Record<keyof AddressDraft, string>>;
 
 /**
  * Per-field validation shared by the checkout form (and any future address
- * form). Pincode must be a serviceable Pune pincode — Fitzo delivers only
+ * form). Pincode must be a serviceable Pune pincode — Fitxo delivers only
  * where a rider can actually go.
  */
 export function validateAddressDraft(d: AddressDraft): AddressFieldErrors {
@@ -92,7 +92,7 @@ export function validateAddressDraft(d: AddressDraft): AddressFieldErrors {
   if (!/^\d{6}$/.test(pin)) {
     errors.pincode = "Enter a valid 6-digit pincode.";
   } else if (!getDeliveryStatus(pin).available) {
-    errors.pincode = "Fitzo currently delivers only in Pune. This pincode isn't serviceable yet.";
+    errors.pincode = "Fitxo currently delivers only in Pune. This pincode isn't serviceable yet.";
   }
   return errors;
 }

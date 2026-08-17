@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { RecommendedCarousel } from "@/components/product/RecommendedCarousel";
-import { createClient } from "@fitzo/supabase/server";
+import { createClient } from "@fitxo/supabase/server";
 import {
   queryProductDetail,
   queryRecommendedProducts,

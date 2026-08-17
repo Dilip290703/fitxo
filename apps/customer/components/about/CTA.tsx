@@ -13,7 +13,7 @@ export function AboutCTA() {
             href="/#featured-stores"
             className="fade-up fade-delay-2 button-shadow mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[color:var(--accent)] px-7 text-[11px] font-extrabold uppercase tracking-[0.26em] text-black transition duration-200 hover:-translate-y-0.5 hover:brightness-95"
           >
-            Explore FitZo
+            Explore FitXo
           </a>
         </div>
       </div>

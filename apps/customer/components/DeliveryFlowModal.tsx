@@ -60,7 +60,7 @@ export function DeliveryFlowModal({
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-label="How Fitzo delivery works"
+        aria-label="How Fitxo delivery works"
         variants={panelVariants(reduce)}
         className="w-full max-w-2xl rounded-[30px] bg-[#faf9f6] p-8 shadow-[0_35px_80px_rgba(20,20,20,0.2)]"
         onClick={(event) => event.stopPropagation()}
@@ -71,7 +71,7 @@ export function DeliveryFlowModal({
               Delivery flow
             </p>
             <h2 className="mt-3 font-display text-[38px] leading-none text-[#221b13]">
-              How FitZo brings the fitting room to your door.
+              How FitXo brings the fitting room to your door.
             </h2>
           </div>
           <button

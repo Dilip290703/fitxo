@@ -17,11 +17,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "When do I get paid?",
-    a: "Fitzo issues a payout for every item the customer keeps, net of commission. Track net earnings, pending and paid amounts on the Earnings page — payouts are settled to the account you registered during onboarding.",
+    a: "Fitxo issues a payout for every item the customer keeps, net of commission. Track net earnings, pending and paid amounts on the Earnings page — payouts are settled to the account you registered during onboarding.",
   },
   {
     q: 'What does "Mark ready" do?',
-    a: "It tells the Fitzo rider an item is packed and ready for pickup at your store. Mark items ready as soon as an order comes in to speed up delivery.",
+    a: "It tells the Fitxo rider an item is packed and ready for pickup at your store. Mark items ready as soon as an order comes in to speed up delivery.",
   },
   {
     q: "What happens to returned items?",
@@ -29,7 +29,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How do I change my store name or add a staff member?",
-    a: "Store identity and staff accounts are managed by the Fitzo team — raise a ticket below or email us from your registered store address and we'll handle it.",
+    a: "Store identity and staff accounts are managed by the Fitxo team — raise a ticket below or email us from your registered store address and we'll handle it.",
   },
 ];
 
@@ -82,7 +82,7 @@ export function SupportView() {
       setSubject("");
       setMessage("");
       setOrderNumber("");
-      setNotice("Ticket filed — the Fitzo team will respond here and by email.");
+      setNotice("Ticket filed — the Fitxo team will respond here and by email.");
       refresh();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Couldn't file the ticket. Try again.");
@@ -97,12 +97,12 @@ export function SupportView() {
 
       <section className="mt-7 grid gap-4 sm:grid-cols-2">
         <a
-          href={`mailto:partners@fitzo.in?subject=${encodeURIComponent(`[Store support] ${storeName}`)}`}
+          href={`mailto:partners@fitxo.co.in?subject=${encodeURIComponent(`[Store support] ${storeName}`)}`}
           className="rounded-2xl border border-line bg-white p-5 transition hover:border-ink"
         >
           <p className="text-[20px]">✉️</p>
           <p className="mt-2 text-[14px] font-semibold text-ink">Email partner support</p>
-          <p className="mt-1 text-[13px] text-body">partners@fitzo.in — replies within 1 business day.</p>
+          <p className="mt-1 text-[13px] text-body">partners@fitxo.co.in — replies within 1 business day.</p>
         </a>
         <div className="rounded-2xl border border-line bg-white p-5">
           <p className="text-[20px]">📞</p>
@@ -117,7 +117,7 @@ export function SupportView() {
       <section className="mt-6 rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="text-[14px] font-semibold text-ink">Raise a ticket</h2>
         <p className="mt-1 text-[12px] text-soft">
-          Filed straight to the Fitzo team — responses appear under &quot;Your tickets&quot; below.
+          Filed straight to the Fitxo team — responses appear under &quot;Your tickets&quot; below.
         </p>
         <form onSubmit={handleSubmit} className="mt-4 space-y-3" noValidate>
           <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
@@ -203,7 +203,7 @@ export function SupportView() {
                 {t.adminResponse ? (
                   <div className="mt-2 rounded-xl bg-cream px-4 py-3">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                      Fitzo team
+                      Fitxo team
                     </p>
                     <p className="mt-1 text-[13px] leading-6 text-body">{t.adminResponse}</p>
                   </div>

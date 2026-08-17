@@ -38,7 +38,7 @@ export function Reviews({ reviews }: { reviews: ProductReview[] }) {
           {averageRating.toFixed(1)}
         </p>
         <p className="mt-1 text-[12px] uppercase tracking-[0.08em] text-[#7b736b]">
-          Based on {reviews.length} FitZo reviews
+          Based on {reviews.length} FitXo reviews
         </p>
       </div>
 

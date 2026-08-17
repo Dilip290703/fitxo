@@ -1,5 +1,5 @@
 /**
- * @fitzo/ui — shared UI primitives across FitZo apps.
+ * @fitxo/ui — shared UI primitives across FitXo apps.
  *
  * Today the customer and admin panels share NO components (their UIs are
  * fully domain-specific), so this package is intentionally thin. It is the

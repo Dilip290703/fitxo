@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/require-admin';
 
@@ -27,8 +27,8 @@ export interface SystemSettings {
 
 // Mirrors the migration 011 defaults — used if the singleton row is somehow missing.
 const DEFAULTS: SystemSettings = {
-  site_name: 'Fitzo',
-  contact_email: 'support@fitzo.in',
+  site_name: 'Fitxo',
+  contact_email: 'support@fitxo.co.in',
   support_phone: '',
   try_window_minutes: 1440,
   delivery_fee: 49,
