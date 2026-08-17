@@ -19,9 +19,11 @@ Owner tags: **J** = Jay · **D** = Dilip · **A** = Amit.
 
 - ✅ **The rename landed** — PR #63 `rebrand: FITZO → FITXO across the monorepo`, 232 files,
   merged to `main`. Phase 1 is **done**.
-- ✅ **Migration `059_rebrand_fitxo.sql` exists and is applied on dev.** Verified by query
-  2026-08-17: `site_name = "Fitxo"`, `contact_email = "support@fitxo.co.in"`. New orders get the
-  **`FTX-`** prefix; existing `FTZ-` order numbers are deliberately left alone.
+- ✅ **Migrations 059 and 060 are applied on BOTH dev and prod** (2026-08-17). Verified by query
+  on each: `site_name = "Fitxo"`, `contact_email = "support@fitxo.co.in"`, the `contact_email`
+  column DEFAULT rewritten, `generate_order_number` emitting **`FTX-`**, plus 060's
+  `notify_store_on_decision` + its trigger and a brand-clean `cancel_order_by_admin`. Existing
+  `FTZ-` order numbers are deliberately left alone (prod had none — it is empty).
 - ✅ **The domain is bought: `fitxo.co.in`** (with `store.` / `agent.` / `admin.` subdomains).
   This is the name already hardcoded across the codebase and written into the DB — the audit's
   open question of `fitxo.in` vs `.co.in` is **settled as `.co.in`**.
@@ -29,11 +31,16 @@ Owner tags: **J** = Jay · **D** = Dilip · **A** = Amit.
   `zqmggvuizjkxbrxlblzp` (dev) / `bozqclrtbxkjevgztruc` (prod) are unchanged and **no env file
   needs editing** for this.
 - ⬜ **Razorpay: a new account under the Fitxo identity is still to be created.** This is not just
-  a login change — it reissues the **key id, key secret and webhook secret**, which live in *four*
-  places (customer env, admin env, Vault on dev, Vault on prod). Treat it as a full rotation and
-  follow `ENVIRONMENTS.md` → "Rotating the Razorpay keys"; a half-done rotation is the exact
-  silent-failure mode recorded in the 2026-07-21 decisions-log entry.
-- ⬜ **Hosting: Jay is standing the sites up shortly** (W2.2, §3.1) — still the biggest bottleneck.
+  a login change — it reissues **three** credentials (key id, key secret, webhook secret) across
+  **seven** slots. `ENVIRONMENTS.md` → "Moving to a NEW Razorpay account" is the procedure; a
+  half-done rotation is the silent-failure mode recorded on 2026-07-21. ✅ Now known to risk **no
+  real money**, since prod holds no payments — but the webhook half cannot be finished until a
+  public URL exists, so expect it to land in two passes.
+- ✅ **Hosting platform decided: Firebase App Hosting** — PR #64 (`chore(deploy): Firebase App
+  Hosting config for all 4 panels`) is **merged**, so every "Netlify" reference below (W2.2, §3.1)
+  is stale wherever it names a vendor. The *substance* of those lines stands: the sites are not
+  live yet, and that is still what blocks the Razorpay webhook, prod admin MFA, and the stale-offer
+  sweep. ⬜ Config merged ≠ deployed — no public URL exists yet.
 
 **Consequence for §2:** migration **059 is taken by the rebrand**, so the store-propagation work
 below is **060**, not 059.
@@ -55,8 +62,12 @@ Probed the live PostgREST schema; all 20 RPCs resolve, including the ones the do
 ✅ **Verified live dev settings:** try window **7 min**, commission **15%**, delivery fee **₹49**,
 rider pay **₹40**, caps **8 items / 1 active order / daily off**, offer expiry **120 min**.
 
-⚠️ **Unverified: the prod project** (`bozqclrtbxkjevgztruc`). No prod credentials on this machine —
-**D must run the same check against prod** before trusting any "applied to prod" claim.
+✅ **RESOLVED 2026-08-17 — prod verified for the first time since 047.** Dilip ran the checks
+against `bozqclrtbxkjevgztruc` from the SQL Editor. **Prod holds every function the repo defines,
+with zero drift** (nothing on prod that no migration creates). Both environments are now at **060**.
+The audit's worry was misplaced in extent but right in kind: prod was never stuck at 047 — the
+decisions log was correct that 051–054 and 056–058 shipped there — but **059 genuinely had not run**,
+so prod really was serving the old brand until today.
 
 **Next free migration number = 060.** (055 is a reserved hole for M4 tax; 043–054 + 056–059 exist
 — 059 is the rebrand.)
@@ -84,9 +95,21 @@ mistake in the other direction.** As of 2026-08-05 Amit was preparing the **FITZ
 is now the *only* part of 0.1 outstanding — note the code shipped ahead of it, which is a risk
 someone accepted rather than one that was checked off.
 
-### 0.2 — [D] Verify prod matches dev
-Run the RPC/schema probe + `verify-env.sh` against prod. Everything below assumes dev ≡ prod;
-if it doesn't, that's a hidden launch blocker.
+### 0.2 — [D] Verify prod matches dev — ✅ DONE 2026-08-17
+Verified: prod is at **060**, same function set as the repo, no drift, and 059's data half
+(`site_name`, `contact_email`, both column DEFAULTs, the `FTX-` order prefix) all confirmed by
+query. Reusable check: **`scripts/supabase/verify-prod-state.sql`** — read-only, safe against
+prod, and it prints `>>> MISSING` per migration instead of a list to eyeball.
+
+✅ **Also established: prod is EMPTY — 0 orders, 0 stores.** It was created 2026-07-15 as
+schema-only from `prod_bootstrap.sql` and has never been seeded (that is W5.3, still open). Two
+consequences worth carrying forward: (1) the **entire money path has never executed on prod** —
+`place_order` → fee → `store_confirm_order` → try window → keep/return → settle — which is exactly
+what W5.4's live dry-run is for; (2) the **Razorpay account switch risks no real money**, because
+no orders means no payments to strand (see `ENVIRONMENTS.md`).
+
+⚠️ **`verify-env.sh`'s full RLS audit still needs psql + a prod connection string** and has not
+been run. Schema and function parity are proven; the RLS policy audit is not.
 
 ---
 
@@ -114,7 +137,8 @@ Original verified scope (excluding `node_modules`, `.next`, and 224 stale files 
    **migration 059**, which rewrites `site_name` → `Fitxo` and `contact_email` →
    `support@fitxo.co.in`, moves both column DEFAULTs, and flips `generate_order_number()` from the
    `FTZ-` prefix to `FTX-`. Existing order numbers keep `FTZ-` on purpose (renumbering would break
-   every receipt, job card and Razorpay note). Applied and verified on dev; **⚠️ prod unverified.**
+   every receipt, job card and Razorpay note). ✅ **Applied and verified by query on BOTH dev and
+   prod (2026-08-17).**
 3. ⬜ **Outside the repo entirely** — still outstanding in part: Supabase project names, the
    **Razorpay account/business name (new account still to be created)**, the GitHub repo name, and
    any verified-website entry at Razorpay. None of these change by editing code.
@@ -133,7 +157,19 @@ report a false mismatch during the Razorpay rotation.
 
 ---
 
-## PHASE 2 — Cross-panel propagation 🔴 the gap you suspected is real
+## PHASE 2 — Cross-panel propagation — ✅ 2.1–2.3 DONE (PR #66 + migration 060)
+
+> ✅ **Shipped and applied 2026-08-17.** PR #66 widened the store's notification kinds and added
+> the 4s poll to `/orders`, `/orders/[id]` and `/returns`; **migration 060 is applied on dev and
+> prod**. The root cause below is preserved because the *shape* of it recurs: the cancellation
+> notifications were already being written by 054 and 058 — the client was discarding them. Look
+> for discarded data before assuming a missing feature.
+>
+> ⬜ **Still open: 2.4 (admin orders list), and the logged-in click-test of the store panel** —
+> the store flows are code-verified and the app boots clean, but nobody has driven them behind the
+> sign-in yet.
+
+## The original finding (2026-08-12)
 
 You asked whether a return reflects to rider, customer and store in 3–4s. I traced it end to end.
 
@@ -154,7 +190,7 @@ The store panel's `OrderAlertsProvider` consumes **exactly one** — it hard-fil
 store page (`/orders`, `/orders/[id]`, `/returns`, dashboard) has any `setInterval`,
 `postgres_changes`, or `router.refresh` at all.
 
-### 2.1 — [D] Store never learns a customer cancelled 🔴 real bug, costs money
+### 2.1 — [D] Store never learns a customer cancelled — ✅ FIXED (PR #66)
 ✅ Verified: migration 054 **does** insert an `order_cancelled` notification for every active store
 manager. The row lands in the database. The store UI then **throws it away**. A store manager
 keeps picking and packing an order that no longer exists — and under the upfront-fee model that
@@ -165,12 +201,12 @@ Migration **060** also recreates `cancel_order_by_admin` (058) to fix the leftov
 every store manager. 059 did not touch that function, so until 060 lands, every admin cancellation
 tells the customer the old brand name.
 
-### 2.2 — [D] No keep/return decision reaches the store at all
+### 2.2 — [D] No keep/return decision reaches the store at all — ✅ FIXED (migration 060)
 ✅ Verified: `notify_rider_on_decision` (023) notifies **only** `rider_user_for_order`. There is no
 store-side equivalent. The store's stock moves (047 release triggers) and its earnings change,
 but its screen doesn't. Needs a new trigger (migration **060**) + widening the store's kind filter.
 
-### 2.3 — [D] Store panel has no live refresh on any screen
+### 2.3 — [D] Store panel has no live refresh on any screen — ✅ FIXED (PR #66)
 Even with notifications fixed, `/orders` and `/returns` render once. Add the 4s-poll pattern the
 agent app already uses — it's proven and needs no new infrastructure.
 
@@ -181,7 +217,8 @@ Lower priority than the store (admin is 2 people who can hit reload), but it's t
 
 ## PHASE 3 — Launch-blocking infrastructure
 
-### 3.1 — [J] W2.2 Netlify — 4 sites + env vars 🔴 the single biggest bottleneck
+### 3.1 — [J] W2.2 hosting — 4 sites + env vars 🔴 the single biggest bottleneck
+**Platform: Firebase App Hosting** (PR #64, merged 2026-08-17 — the plan's "Netlify" is superseded).
 Three separate things are stuck behind "there is no public URL":
 - The Razorpay **`payment.captured` webhook has never once been observed working** — Razorpay
   cannot reach localhost. This is the recovery path for "customer closed the tab after paying",
@@ -281,9 +318,9 @@ whose ₹49 is stuck — has no route in. This undercuts the whole runbook suppo
 | # | Task | Owner | Why this position |
 |---|---|---|---|
 | ~~1~~ | ~~FITXO domain clearance~~ — ✅ `fitxo.co.in` bought. **[A] trademark search still open** | **A** | the code shipped ahead of this; see 0.1 |
-| 2 | Verify prod = dev | **D** | cheap; removes a hidden unknown |
+| ~~2~~ | ~~Verify prod = dev~~ — ✅ **DONE 2026-08-17**: both at 060, no drift, prod empty | **D** | done |
 | ~~3~~ | ~~Codebase rename to FITXO~~ — ✅ **DONE**, PR #63 + migration 059 | **J** | done 2026-08-16 |
-| 4 | Store cancel/return propagation (2.1–2.3, mig **060**) | **D** | live bug with money attached |
+| ~~4~~ | ~~Store cancel/return propagation (2.1–2.3, mig 060)~~ — ✅ **DONE**, applied dev + prod | **D** | done 2026-08-17 |
 | 5 | Netlify 4 sites (W2.2) | **J** | unblocks webhook + prod MFA + sweeps |
 | 6 | Reconcile `.env.local` across machines | **J + D** | stops you debugging phantom failures |
 | 7 | Prove the Razorpay webhook on a real URL | **D** | first thing possible once #5 lands |
@@ -301,7 +338,9 @@ whose ₹49 is stuck — has no route in. This undercuts the whole runbook suppo
 
 ## What I could NOT verify (someone must check by hand)
 
-1. **Prod database state** — no prod credentials on this machine.
+1. ~~Prod database state~~ — ✅ **resolved 2026-08-17** (Dilip ran the checks; both environments at
+   060, no drift, prod empty at 0 orders / 0 stores). Still open on prod: the **`verify-env.sh` RLS
+   audit**, which needs psql and a connection string.
 2. **Trademark status of FITZO or FITXO** — registry is not reachable from here.
 3. ~~fitxo.in domain availability~~ — ✅ resolved: **`fitxo.co.in` is bought**.
 4. **Whether pg_cron jobs are actually scheduled and firing** — not exposed over the REST API.
