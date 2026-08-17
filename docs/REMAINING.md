@@ -36,9 +36,11 @@ Owner tags: **J** = Jay · **D** = Dilip · **A** = Amit.
   half-done rotation is the silent-failure mode recorded on 2026-07-21. ✅ Now known to risk **no
   real money**, since prod holds no payments — but the webhook half cannot be finished until a
   public URL exists, so expect it to land in two passes.
-- ⬜ **Hosting: Jay is standing the sites up** — note PR #64 uses **Firebase App Hosting**, not
-  Netlify. W2.2 and §3.1 below still say Netlify; the platform decision has moved and those lines
-  are stale wherever they name a vendor. Still the biggest bottleneck either way.
+- ✅ **Hosting platform decided: Firebase App Hosting** — PR #64 (`chore(deploy): Firebase App
+  Hosting config for all 4 panels`) is **merged**, so every "Netlify" reference below (W2.2, §3.1)
+  is stale wherever it names a vendor. The *substance* of those lines stands: the sites are not
+  live yet, and that is still what blocks the Razorpay webhook, prod admin MFA, and the stale-offer
+  sweep. ⬜ Config merged ≠ deployed — no public URL exists yet.
 
 **Consequence for §2:** migration **059 is taken by the rebrand**, so the store-propagation work
 below is **060**, not 059.
@@ -215,7 +217,8 @@ Lower priority than the store (admin is 2 people who can hit reload), but it's t
 
 ## PHASE 3 — Launch-blocking infrastructure
 
-### 3.1 — [J] W2.2 Netlify — 4 sites + env vars 🔴 the single biggest bottleneck
+### 3.1 — [J] W2.2 hosting — 4 sites + env vars 🔴 the single biggest bottleneck
+**Platform: Firebase App Hosting** (PR #64, merged 2026-08-17 — the plan's "Netlify" is superseded).
 Three separate things are stuck behind "there is no public URL":
 - The Razorpay **`payment.captured` webhook has never once been observed working** — Razorpay
   cannot reach localhost. This is the recovery path for "customer closed the tab after paying",
