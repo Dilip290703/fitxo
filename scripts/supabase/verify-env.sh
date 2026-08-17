@@ -3,6 +3,17 @@
 # Read-only. Fails loudly on anything that would have caused a past incident
 # or breaks the money path. Run against BOTH dev and prod — same expectations.
 #
+# ⚠️ PREFER `verify-env.sql` — same nine checks, plus the RLS policy audit this
+# script does NOT have, and no psql required (paste it into the SQL Editor).
+# Two things to be honest about here:
+#   · psql is not installed on the machine that does this work, so this script
+#     has never run against either environment. Every check below is pure SQL.
+#   · check 1 is the RLS *switch* (`NOT rowsecurity`) — the 2026-06-08 incident
+#     class, and the most valuable single check. It is NOT a policy audit: this
+#     script never reads pg_policies, so it cannot prove dev/prod policy parity
+#     and never could. `verify-env.sql` sections 02 and 03 are that audit.
+# Kept because it is the only form that runs unattended in a shell/CI job.
+#
 # Usage: ./scripts/supabase/verify-env.sh "postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres"
 set -euo pipefail
 
@@ -22,7 +33,8 @@ FAILURES=0
 fail() { echo "  ❌ $1"; FAILURES=$((FAILURES + 1)); }
 ok()   { echo "  ✅ $1"; }
 
-echo "== 1. RLS enabled on every public table (2026-06-08 incident class) =="
+echo "== 1. RLS SWITCH on every public table (2026-06-08 incident class) =="
+echo "   (switch only — policy parity lives in verify-env.sql sections 02/03)"
 RLS_OFF="$("${PSQL[@]}" -c "
   SELECT string_agg(tablename, ', ')
     FROM pg_tables
