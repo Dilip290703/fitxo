@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { AddToBagDrawer } from "@/components/cart/AddToBagDrawer";
 import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
 import { StoreConflictModal } from "@/components/cart/StoreConflictModal";
@@ -20,13 +20,13 @@ import { findStoreConflict, type StoreConflict } from "@/lib/storeConflict";
  * only: it is never written to storage and does not survive a reload. Signing
  * out empties the bag on the spot.
  *
- * Before this, a single global `fitzo-cart` key meant one browser's bag was
+ * Before this, a single global `fitxo-cart` key meant one browser's bag was
  * shared by every account that ever signed in on it, and it outlived sign-out.
  */
-const cartStorageKey = (userId: string) => `fitzo-cart:${userId}`;
+const cartStorageKey = (userId: string) => `fitxo-cart:${userId}`;
 
 /** The old global key. Removed on first load so stale bags don't linger. */
-const LEGACY_CART_KEY = "fitzo-cart";
+const LEGACY_CART_KEY = "fitxo-cart";
 
 export type CartItem = {
   key: string;

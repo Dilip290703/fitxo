@@ -8,7 +8,7 @@ import { Pagination } from "@/components/products/Pagination";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { ProductNavbar } from "@/components/products/ProductNavbar";
 import { SortDropdown } from "@/components/products/SortDropdown";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import {
   queryProducts,
   queryFilterOptions,

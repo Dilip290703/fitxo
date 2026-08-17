@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
 
@@ -60,7 +60,7 @@ export default function ReportsClient() {
         return;
       }
       const stamp = new Date().toISOString().slice(0, 10);
-      download(`fitzo-${report.filename}-${stamp}.csv`, toCSV(rows));
+      download(`fitxo-${report.filename}-${stamp}.csv`, toCSV(rows));
       await logActivity(supabase, { action: `Exported ${report.label} report`, entity_type: 'report', new_value: { dataset: report.key, rows: rows.length } });
       toast(`Exported ${rows.length} ${report.label.toLowerCase()} rows`, 'success');
     } catch (e) {

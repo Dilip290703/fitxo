@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import CouponsClient from './CouponsClient';
 
 export default async function CouponsPage() {

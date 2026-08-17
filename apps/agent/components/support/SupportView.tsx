@@ -8,12 +8,12 @@ import { IconChevronDown, IconMail, IconPhone } from "@/components/icons";
 
 const FAQ: { q: string; a: string }[] = [
   {
-    q: "How does a Fitzo delivery work?",
+    q: "How does a Fitxo delivery work?",
     a: "You collect the customer's picks from the store shown on the job, deliver to their door, confirm the handover with their 4-digit code, and wait while they try things on (about 7 minutes). They keep what they love and hand the rest back to you on the spot — no return trip.",
   },
   {
     q: "When do I get paid?",
-    a: "You earn the delivery fee on every completed job. Add your bank/UPI details in Settings — Fitzo settles your earnings there, and every settlement shows up under Earnings → Payout history.",
+    a: "You earn the delivery fee on every completed job. Add your bank/UPI details in Settings — Fitxo settles your earnings there, and every settlement shows up under Earnings → Payout history.",
   },
   {
     q: "What if the customer isn't home?",
@@ -76,7 +76,7 @@ export function SupportView() {
     }
     setTopic(null);
     setMessage("");
-    setFormMsg({ kind: "ok", text: "Ticket sent — Fitzo support will reply here." });
+    setFormMsg({ kind: "ok", text: "Ticket sent — Fitxo support will reply here." });
     loadTickets();
   }
 
@@ -98,7 +98,7 @@ export function SupportView() {
           </div>
         </a>
         <a
-          href="mailto:riders@fitzo.in"
+          href="mailto:riders@fitxo.co.in"
           className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 transition hover:border-line-strong hover:shadow-float"
         >
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-info-bg text-info">
@@ -106,7 +106,7 @@ export function SupportView() {
           </span>
           <div>
             <p className="text-[15px] font-semibold text-ink">Email support</p>
-            <p className="text-[13px] text-soft">riders@fitzo.in</p>
+            <p className="text-[13px] text-soft">riders@fitxo.co.in</p>
           </div>
         </a>
       </div>
@@ -157,7 +157,7 @@ export function SupportView() {
         <Skeleton className="mb-6 h-[76px]" />
       ) : tickets.length === 0 ? (
         <Card className="mb-6">
-          <p className="text-[14px] text-body">No tickets yet — anything you send lands here with Fitzo's reply.</p>
+          <p className="text-[14px] text-body">No tickets yet — anything you send lands here with Fitxo's reply.</p>
         </Card>
       ) : (
         <div className="mb-6 space-y-2">
@@ -175,7 +175,7 @@ export function SupportView() {
               </p>
               {t.adminResponse && (
                 <div className="mt-2 rounded-xl bg-cream p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Fitzo replied</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Fitxo replied</p>
                   <p className="mt-0.5 text-[13px] leading-5 text-ink">{t.adminResponse}</p>
                 </div>
               )}

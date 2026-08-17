@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 
 // W3.5: stepped sign-in — credentials → TOTP verify (enrolled admins) or TOTP
 // enrollment (when NEXT_PUBLIC_ADMIN_REQUIRE_MFA=true). The layout bounces
@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
       }
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'Fitzo Admin',
+        friendlyName: 'Fitxo Admin',
       });
       if (enrollError || !data) {
         setError(
@@ -163,7 +163,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-ink tracking-tight">Fitzo</h1>
+          <h1 className="text-3xl font-black text-ink tracking-tight">Fitxo</h1>
           <p className="text-sm text-muted mt-1">Admin Panel</p>
         </div>
 
@@ -185,7 +185,7 @@ export default function AdminLoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@fitzo.com"
+                    placeholder="admin@fitxo.com"
                     className={inputClass}
                   />
                 </div>
@@ -287,7 +287,7 @@ export default function AdminLoginPage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-faint mt-6">Fitzo Admin · Restricted Access</p>
+        <p className="text-center text-xs text-faint mt-6">Fitxo Admin · Restricted Access</p>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { useAgentGuard } from "@/lib/useAgentGuard";
 import { riderSetAvailability } from "@/lib/deliveries";
 import { JobAlertsProvider } from "@/components/alerts/JobAlertsProvider";
@@ -87,7 +87,7 @@ export function AgentShell({ active, children }: { active: NavKey; children: Rea
     return (
       <GateScreen
         title="Not a rider account"
-        body="This account isn't registered as a Fitzo delivery partner. If you just signed up, an admin needs to add you as a rider before you can take deliveries."
+        body="This account isn't registered as a Fitxo delivery partner. If you just signed up, an admin needs to add you as a rider before you can take deliveries."
         onSignOut={signOut}
       />
     );
@@ -117,7 +117,7 @@ export function AgentShell({ active, children }: { active: NavKey; children: Rea
   const sidebar = (
     <div className="flex h-full flex-col bg-white">
       <div className="flex items-center gap-2 px-6 py-5">
-        <span className="font-serif text-[19px] font-semibold tracking-[0.18em] text-ink">FITZO</span>
+        <span className="font-serif text-[19px] font-semibold tracking-[0.18em] text-ink">FITXO</span>
         <span className="rounded-full border border-line-strong px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-soft">
           Rider
         </span>
@@ -171,7 +171,7 @@ export function AgentShell({ active, children }: { active: NavKey; children: Rea
         {/* Mobile top bar — pr leaves room for the floating alerts bell */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-paper/95 pl-4 pr-[60px] backdrop-blur lg:hidden">
           <div className="flex items-center gap-2">
-            <span className="font-serif text-[16px] font-semibold tracking-[0.18em] text-ink">FITZO</span>
+            <span className="font-serif text-[16px] font-semibold tracking-[0.18em] text-ink">FITXO</span>
             <span className="rounded-full border border-line-strong px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-soft">
               Rider
             </span>

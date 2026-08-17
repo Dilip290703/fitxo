@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
 import { cancelOrderWithRefund } from '../actions';
-import type { OrderStatus } from '@fitzo/supabase/types';
+import type { OrderStatus } from '@fitxo/supabase/types';
 
 interface Order {
   id: string;

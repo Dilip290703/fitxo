@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Category } from '@fitzo/supabase/types';
+import type { Category } from '@fitxo/supabase/types';
 import BrandsClient from './BrandsClient';
 import CategoriesClient from './CategoriesClient';
 

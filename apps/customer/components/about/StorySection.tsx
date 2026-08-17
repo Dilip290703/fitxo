@@ -5,7 +5,7 @@ const storyPoints = [
   },
   {
     title: "The solution",
-    text: "FitZo brings the fitting room to your door. You order pieces nearby, try them on while the rider waits, and keep only what actually works.",
+    text: "FitXo brings the fitting room to your door. You order pieces nearby, try them on while the rider waits, and keep only what actually works.",
   },
   {
     title: "The vision",
@@ -46,7 +46,7 @@ export function StorySection() {
           <div className="overflow-hidden rounded-[28px] bg-[#f4ede4] shadow-[0_24px_60px_rgba(27,22,18,0.08)]">
             <img
               src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1400&q=80"
-              alt="FitZo lifestyle fashion"
+              alt="FitXo lifestyle fashion"
               className="h-[520px] w-full scale-x-[-1] object-cover"
             />
           </div>

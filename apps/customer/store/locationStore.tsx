@@ -19,7 +19,7 @@ import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { getDeliveryStatus, type DeliveryStatus } from "@/lib/pincode";
 
 // Keeps the same key that was already used in mockData / BagPageView
-export const PINCODE_STORAGE_KEY = "fitzo-pincode";
+export const PINCODE_STORAGE_KEY = "fitxo-pincode";
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import StatusBadge from '@/components/admin/StatusBadge';
@@ -322,7 +322,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-soft">Fitzo commission ({commissionRate}%)</span>
+                <span className="text-soft">Fitxo commission ({commissionRate}%)</span>
                 <span className="text-ink">{formatCurrency(commission)}</span>
               </div>
               <div className="flex justify-between">
@@ -370,7 +370,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </span>
               </div>
               <div className="flex justify-between border-t border-hairline pt-1.5">
-                <span className="font-medium text-ink">Fitzo margin</span>
+                <span className="font-medium text-ink">Fitxo margin</span>
                 <span className={`font-semibold ${margin < 0 ? 'text-danger' : 'text-ink'}`}>{formatCurrency(margin)}</span>
               </div>
             </div>

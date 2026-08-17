@@ -3,7 +3,7 @@
  * accounts, so the full order loop can be exercised with proper variety.
  *
  * Run from repo root:  node packages/supabase/seed/seed-test-data.mjs
- * Reset (delete all @fitzo.test data):  node packages/supabase/seed/seed-test-data.mjs --reset
+ * Reset (delete all @fitxo.test data):  node packages/supabase/seed/seed-test-data.mjs --reset
  *
  * Uses the admin service-role key (only place it lives: apps/admin/.env.local).
  * Auth users are created via auth.admin.createUser so the handle_new_user trigger
@@ -36,7 +36,7 @@ if (!URL || !KEY) {
 }
 const db = createClient(URL, KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
-const PASSWORD = "FitzoTest#2026"; // one password for every test account
+const PASSWORD = "FitxoTest#2026"; // one password for every test account
 const RESET = process.argv.includes("--reset");
 
 // ── small helpers ────────────────────────────────────────────────────────────
@@ -114,10 +114,10 @@ const STORES = [
 ];
 
 const RIDERS = [
-  { name: "Ravi Kumar", email: "rider.ravi@fitzo.test", vehicle_type: "bike", vehicle_number: "MH 12 AB 1201", deliveries: 24, rating: 4.8 },
-  { name: "Sana Shaikh", email: "rider.sana@fitzo.test", vehicle_type: "scooter", vehicle_number: "MH 14 CD 3402", deliveries: 11, rating: 4.9 },
-  { name: "Arjun Patil", email: "rider.arjun@fitzo.test", vehicle_type: "bike", vehicle_number: "MH 12 EF 5603", deliveries: 37, rating: 4.7 },
-  { name: "Neha Verma", email: "rider.neha@fitzo.test", vehicle_type: "cycle", vehicle_number: "MH 12 GH 7804", deliveries: 3, rating: 5.0 },
+  { name: "Ravi Kumar", email: "rider.ravi@fitxo.test", vehicle_type: "bike", vehicle_number: "MH 12 AB 1201", deliveries: 24, rating: 4.8 },
+  { name: "Sana Shaikh", email: "rider.sana@fitxo.test", vehicle_type: "scooter", vehicle_number: "MH 14 CD 3402", deliveries: 11, rating: 4.9 },
+  { name: "Arjun Patil", email: "rider.arjun@fitxo.test", vehicle_type: "bike", vehicle_number: "MH 12 EF 5603", deliveries: 37, rating: 4.7 },
+  { name: "Neha Verma", email: "rider.neha@fitxo.test", vehicle_type: "cycle", vehicle_number: "MH 12 GH 7804", deliveries: 3, rating: 5.0 },
 ];
 
 // ── auth user (idempotent) ───────────────────────────────────────────────────
@@ -189,8 +189,8 @@ async function seedProduct(store, storeIdx, prodIdx, name) {
 
 // ── reset ────────────────────────────────────────────────────────────────────
 async function reset() {
-  console.log("↺ Reset: deleting all @fitzo.test data …");
-  const { data: users } = await db.from("users").select("id, email").like("email", "%@fitzo.test");
+  console.log("↺ Reset: deleting all @fitxo.test data …");
+  const { data: users } = await db.from("users").select("id, email").like("email", "%@fitxo.test");
   const ids = (users ?? []).map((u) => u.id);
   // manager → store → products first (products RESTRICT store delete)
   const { data: mgrs } = await db.from("store_managers").select("store_id").in("user_id", ids);
@@ -216,7 +216,7 @@ async function main() {
 
   for (let s = 0; s < STORES.length; s++) {
     const store = STORES[s];
-    const email = `store.${slugify(store.name)}@fitzo.test`;
+    const email = `store.${slugify(store.name)}@fitxo.test`;
     const { id: managerId } = await ensureAuthUser(email, {
       name: `${store.name} Manager`, role: "store_manager", store_name: store.name,
     });

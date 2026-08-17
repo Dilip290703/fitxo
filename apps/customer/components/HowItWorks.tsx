@@ -9,7 +9,7 @@ const steps = [
     step: "02",
     title: "Pick a delivery slot",
     description:
-      "A FitZo rider brings your picks to your door at the slot you chose and waits while you try them on.",
+      "A FitXo rider brings your picks to your door at the slot you chose and waits while you try them on.",
   },
   {
     step: "03",
@@ -25,7 +25,7 @@ export function HowItWorks() {
       <div className="section-frame">
         <div className="mx-auto max-w-[680px] text-center">
           <h2 className="font-display text-[38px] font-medium tracking-[-0.03em] text-black sm:text-[48px]">
-            How FitZo works
+            How FitXo works
           </h2>
           <p className="mt-3 text-[14px] leading-7 text-[#67615a]">
             Fashion convenience built around your schedule, your neighborhood,

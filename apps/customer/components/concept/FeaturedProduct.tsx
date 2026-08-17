@@ -9,9 +9,9 @@ import { CxParallax } from "@/components/concept/CxParallax";
 import { CxActions } from "@/components/concept/CxActions";
 
 /**
- * "FEATURED PRODUCT" split (Fitzo landing): a large promo image card beside
+ * "FEATURED PRODUCT" split (Fitxo landing): a large promo image card beside
  * two live product cards, then a time-sensitive countdown band whose digits
- * roll (odometer) on each tick. Content is FITZO / live catalogue.
+ * roll (odometer) on each tick. Content is FITXO / live catalogue.
  */
 const SWATCHES = ["#7a4a2b", "#e9e5df", "#c0392b", "#1a1a1a"];
 

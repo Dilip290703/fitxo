@@ -1,5 +1,5 @@
 {
-  "name": "@fitzo/agent",
+  "name": "@fitxo/agent",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,14 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fitzo/supabase": "workspace:*",
-    "@fitzo/ui": "workspace:*",
+    "@fitxo/supabase": "workspace:*",
+    "@fitxo/ui": "workspace:*",
     "next": "15.3.1",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "@fitzo/config": "workspace:*",
+    "@fitxo/config": "workspace:*",
     "@tailwindcss/postcss": "4.1.4",
     "@types/node": "22.14.1",
     "@types/react": "19.1.2",

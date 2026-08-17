@@ -23,7 +23,7 @@ const FAQS = [
 ];
 
 export const metadata = {
-  title: "How It Works — FitZo",
+  title: "How It Works — FitXo",
   description: "Book a delivery slot, try fashion on at your door while the rider waits, and keep only what you love.",
 };
 
@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
       {/* Intro */}
       <section className="mx-auto w-full max-w-[760px] px-5 pt-12 text-center sm:px-6 lg:pt-16">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#958675]">
-          The FitZo way
+          The FitXo way
         </p>
         <h1 className="mt-3 font-display text-[36px] leading-tight tracking-[-0.04em] text-[#171717] sm:text-[48px]">
           Try before you buy, at your doorstep

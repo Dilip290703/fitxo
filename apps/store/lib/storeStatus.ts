@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 /**
  * Store Open/Paused state (G6 / migration 052).

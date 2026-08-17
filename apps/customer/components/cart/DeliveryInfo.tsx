@@ -79,7 +79,7 @@ export function CartDeliveryInfo() {
           Delivery unavailable
         </p>
         <p className="mt-1 text-[13px] text-[#c0392b]/80">
-          FitZo is currently available only in Pune.
+          FitXo is currently available only in Pune.
         </p>
       </div>
     </div>

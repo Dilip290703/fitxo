@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import UsersClient, { type UserRow, type StoreOption } from './UsersClient';
 
 export default async function UsersPage() {

@@ -101,11 +101,11 @@ export async function cancelOrderWithRefund(
   }
 
   // Move the money. "Already fully refunded" is reconciled rather than treated
-  // as a failure — the goal is that Fitzo's ledger matches Razorpay's.
+  // as a failure — the goal is that Fitxo's ledger matches Razorpay's.
   let refundId: string | null = null;
   try {
     const refund = await razorpay.payments.refund(feePaymentId, {
-      notes: { reason: trimmedReason, source: 'fitzo_admin_cancel' },
+      notes: { reason: trimmedReason, source: 'fitxo_admin_cancel' },
     });
     refundId = refund.id ?? null;
   } catch (e) {

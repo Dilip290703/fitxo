@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { emailAllowed, getMfaGate } from '@/lib/mfa';
 import AdminShell from '@/components/admin/AdminShell';
 import { ToastProvider } from '@/components/admin/Toast';

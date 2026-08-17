@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import {
   ENTITY_TYPES,
   GST_RE,
@@ -16,7 +16,7 @@ import {
   submitOnboarding,
   type OnboardingData,
 } from "@/lib/onboarding";
-import type { StoreOnboardingStatus } from "@fitzo/supabase/types";
+import type { StoreOnboardingStatus } from "@fitxo/supabase/types";
 
 const inputClass =
   "h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[14px] text-ink outline-none transition focus:border-ink focus:ring-4 focus:ring-accent/25";
@@ -63,7 +63,7 @@ const STEPS: StepDef[] = [
   },
   {
     title: "Payout",
-    hint: "Where Fitzo sends your earnings. Add a bank account or a UPI ID.",
+    hint: "Where Fitxo sends your earnings. Add a bank account or a UPI ID.",
     validate: (d) => {
       const hasUpi = !!d.upiId.trim();
       const hasBank =
@@ -457,7 +457,7 @@ function Frame({
     <main className="min-h-screen bg-paper">
       <header className="flex items-center justify-between border-b border-line bg-white px-5 py-4 sm:px-8">
         <div className="flex items-center gap-3">
-          <span className="font-serif text-[18px] font-semibold tracking-[0.18em] text-ink">FITZO</span>
+          <span className="font-serif text-[18px] font-semibold tracking-[0.18em] text-ink">FITXO</span>
           <span className="rounded-full border border-ink/20 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink/70">
             Store
           </span>
@@ -479,7 +479,7 @@ function Frame({
           Store onboarding
         </h1>
         <p className="mt-2 max-w-[480px] text-[14px] leading-6 text-body">
-          Tell us about your store. Once you submit, the Fitzo team reviews and activates your
+          Tell us about your store. Once you submit, the Fitxo team reviews and activates your
           account — usually within a business day.
         </p>
         <div className="mt-7">{children}</div>
@@ -569,7 +569,7 @@ function UnderReview({
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-pale text-[26px]">⏳</div>
       <h2 className="mt-5 text-[20px] font-semibold tracking-[-0.01em] text-ink">Application under review</h2>
       <p className="mx-auto mt-2 max-w-[400px] text-[14px] leading-6 text-body">
-        Thanks — your store is with the Fitzo team. We&apos;ll email you once it&apos;s approved, and your
+        Thanks — your store is with the Fitxo team. We&apos;ll email you once it&apos;s approved, and your
         full dashboard unlocks automatically. This usually takes under a business day.
       </p>
       <button

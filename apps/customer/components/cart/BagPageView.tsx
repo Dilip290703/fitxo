@@ -134,7 +134,7 @@ export function BagPageView() {
                 {deliveryBlocked ? (
                   <div className="space-y-2">
                     <div className="rounded-[14px] bg-[#fdecea] px-4 py-3 text-center text-[13px] text-[#c0392b]">
-                      FitZo serves Pune locations only. Please update your pincode.
+                      FitXo serves Pune locations only. Please update your pincode.
                     </div>
                     <CheckoutButton
                       label="Proceed to Checkout"

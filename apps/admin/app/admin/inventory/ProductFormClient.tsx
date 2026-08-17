@@ -6,7 +6,7 @@ import { createProduct, updateProduct } from './actions';
 import { useToast } from '@/components/admin/Toast';
 import ColorVariantBuilder, { ColorEntry } from '@/components/admin/ColorVariantBuilder';
 import ImageUploader from '@/components/admin/ImageUploader';
-import type { Product } from '@fitzo/supabase/types';
+import type { Product } from '@fitxo/supabase/types';
 
 interface Option { id: string; name: string; parent_id?: string | null; }
 

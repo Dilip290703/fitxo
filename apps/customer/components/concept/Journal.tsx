@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxReveal";
 import { CxParallax } from "@/components/concept/CxParallax";
 
-/** "JOURNAL" — 3 editorial blog cards with date pills (Fitzo landing). */
+/** "JOURNAL" — 3 editorial blog cards with date pills (Fitxo landing). */
 const POSTS = [
   {
     title: "Try-at-home, done right: our 5 fitting-room tips",

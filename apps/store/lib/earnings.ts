@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 export type PayoutRow = {
   id: string;
@@ -23,7 +23,7 @@ export type PayoutSummary = {
   commissionAmount: number;
   /** Kept-item rupees with no live successful payment (refunded or unpaid) — excluded from net (migration 045). */
   excludedGross: number;
-  /** What the store actually receives: paid kept revenue − Fitzo commission. */
+  /** What the store actually receives: paid kept revenue − Fitxo commission. */
   netEarnings: number;
   /** Net earned but not yet in the payout ledger (or recorded as pending). */
   awaitingPayout: number;

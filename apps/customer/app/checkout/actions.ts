@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import type { CartItem } from '@/components/cart/CartProvider';
 import { isPunePincode } from '@/lib/pincode';
 
@@ -75,7 +75,7 @@ export async function placeOrder(
     return { success: false, error: 'That delivery address could not be found.' };
   }
   if (!isPunePincode(String(address.pincode ?? ''))) {
-    return { success: false, error: 'FitZo currently delivers only to Pune pincodes.' };
+    return { success: false, error: 'FitXo currently delivers only to Pune pincodes.' };
   }
 
   const paymentMethod = METHOD_MAP[paymentMethodLabel] ?? 'razorpay';
@@ -144,7 +144,7 @@ export async function placeOrder(
     if (!store || store.is_active !== true || store.onboarding_status !== 'approved') {
       return {
         success: false,
-        error: `"${item.title}" isn't available right now — its store is not live on Fitzo.`,
+        error: `"${item.title}" isn't available right now — its store is not live on Fitxo.`,
       };
     }
 
@@ -179,7 +179,7 @@ export async function placeOrder(
     return {
       success: false,
       error:
-        'Your bag has items from more than one store. A Fitzo order is delivered from a single store — please order them separately.',
+        'Your bag has items from more than one store. A Fitxo order is delivered from a single store — please order them separately.',
     };
   }
 

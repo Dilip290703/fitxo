@@ -1,6 +1,6 @@
-# Fitzo
+# Fitxo
 
-**Fitzo is a try-before-you-buy fashion commerce platform.** A customer orders clothes and
+**Fitxo is a try-before-you-buy fashion commerce platform.** A customer orders clothes and
 **books a delivery slot**; a rider brings the picks to their door and **waits 15–30 minutes**
 while they try on; the customer **keeps** (and pays for) what they love and **hands the rest
 straight back to the waiting rider** — no return to schedule.
@@ -10,10 +10,10 @@ subdomain — all sharing one Postgres database (Supabase) and a set of internal
 
 | Panel        | App folder      | Who uses it        | Subdomain        | Dev port |
 | ------------ | --------------- | ------------------ | ---------------- | -------- |
-| **Customer** | `apps/customer` | shoppers           | `fitzo.in`       | `3000`   |
-| **Admin**    | `apps/admin`    | Fitzo owners only  | `admin.fitzo.in` | `3001`   |
-| **Agent**    | `apps/agent`    | delivery riders    | `agent.fitzo.in` | `3002`   |
-| **Store**    | `apps/store`    | partner store owners | `store.fitzo.in` | `3003` |
+| **Customer** | `apps/customer` | shoppers           | `fitxo.co.in`       | `3000`   |
+| **Admin**    | `apps/admin`    | Fitxo owners only  | `admin.fitxo.co.in` | `3001`   |
+| **Agent**    | `apps/agent`    | delivery riders    | `agent.fitxo.co.in` | `3002`   |
+| **Store**    | `apps/store`    | partner store owners | `store.fitxo.co.in` | `3003` |
 
 ---
 
@@ -52,9 +52,9 @@ apps/
   store      Store-manager panel                       (Next.js, :3003)  ← complete (14 screens)
 
 packages/
-  supabase   @fitzo/supabase   Anon + SSR Supabase clients, DB types, schema.sql, migrations (NO service-role)
-  ui         @fitzo/ui         Shared UI primitives (thin today)
-  config     @fitzo/config     Shared tsconfig base
+  supabase   @fitxo/supabase   Anon + SSR Supabase clients, DB types, schema.sql, migrations (NO service-role)
+  ui         @fitxo/ui         Shared UI primitives (thin today)
+  config     @fitxo/config     Shared tsconfig base
 ```
 
 A **panel = an app folder**, which is also the unit of ownership. Internal packages are

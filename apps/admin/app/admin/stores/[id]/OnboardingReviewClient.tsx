@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
-import { isPunePincode } from '@fitzo/pincode';
+import { createClient } from '@fitxo/supabase/client';
+import { isPunePincode } from '@fitxo/pincode';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
-import type { StoreBusinessDetails, StoreOnboardingStatus } from '@fitzo/supabase/types';
+import type { StoreBusinessDetails, StoreOnboardingStatus } from '@fitxo/supabase/types';
 
 const STATUS_PILL: Record<StoreOnboardingStatus, { label: string; cls: string }> = {
   draft: { label: 'Draft', cls: 'bg-sand text-body' },
@@ -43,7 +43,7 @@ export default function OnboardingReviewClient({
   const pill = STATUS_PILL[status] ?? STATUS_PILL.draft;
 
   // G6: riders pick up FROM the store, so the store itself must sit inside the
-  // delivery area — the same Pune list the customer app checks (@fitzo/pincode).
+  // delivery area — the same Pune list the customer app checks (@fitxo/pincode).
   // A store outside it (or with no pincode) is operationally undeliverable.
   const serviceable = !!pincode && isPunePincode(pincode);
 
@@ -193,7 +193,7 @@ export default function OnboardingReviewClient({
         <div className="space-y-2">
           <p className="text-xs text-warn bg-warn-bg border border-warn-accent/40 rounded-lg px-3 py-2">
             {pincode
-              ? `Pincode ${pincode} is outside FitZo's delivery area — riders can't pick up from this store, so its orders can never be fulfilled. Approve only if delivery coverage is expanding here.`
+              ? `Pincode ${pincode} is outside FitXo's delivery area — riders can't pick up from this store, so its orders can never be fulfilled. Approve only if delivery coverage is expanding here.`
               : 'This store has no pincode on file, so serviceability can’t be checked. Ask the store to complete its address, or approve only if you’ve verified the location yourself.'}
           </p>
           <div className="flex gap-2">

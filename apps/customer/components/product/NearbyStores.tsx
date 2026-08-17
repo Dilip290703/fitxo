@@ -14,7 +14,7 @@ export function NearbyStores({ stores }: { stores: NearbyStore[] }) {
       </p>
       <p className="mt-3 text-[15px] leading-7 text-[#3d3731]">
         Your try-on picks are prepared and packed by this partner store, then
-        brought to your door by a Fitzo rider.
+        brought to your door by a Fitxo rider.
       </p>
 
       <div className="mt-5 space-y-3">
@@ -38,7 +38,7 @@ export function NearbyStores({ stores }: { stores: NearbyStore[] }) {
                 </p>
               ) : (
                 <p className="mt-1 text-[13px] text-[#6c655e]">
-                  Fitzo partner store · Pune
+                  Fitxo partner store · Pune
                 </p>
               )}
             </div>

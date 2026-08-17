@@ -29,7 +29,7 @@
     {
       "name": "store-verify",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@fitzo/store", "exec", "next", "dev", "--port", "3013"],
+      "runtimeArgs": ["--filter", "@fitxo/store", "exec", "next", "dev", "--port", "3013"],
       "port": 3013
     }
   ]

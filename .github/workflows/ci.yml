@@ -95,7 +95,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm --filter @fitzo/${{ matrix.app }} build
+        run: pnpm --filter @fitxo/${{ matrix.app }} build
 
   # RLS regression guard (W4.1 / D3) — the automated backstop for the
   # 2026-06-08 incident (RLS silently disabled → anon could read all PII).

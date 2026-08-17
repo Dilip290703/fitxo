@@ -1,5 +1,5 @@
 {
-  "name": "@fitzo/customer",
+  "name": "@fitxo/customer",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,9 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fitzo/pincode": "workspace:*",
-    "@fitzo/supabase": "workspace:*",
-    "@fitzo/ui": "workspace:*",
+    "@fitxo/pincode": "workspace:*",
+    "@fitxo/supabase": "workspace:*",
+    "@fitxo/ui": "workspace:*",
     "@supabase/ssr": "^0.10.3",
     "framer-motion": "^12.42.2",
     "next": "15.3.1",
@@ -22,7 +22,7 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "@fitzo/config": "workspace:*",
+    "@fitxo/config": "workspace:*",
     "@tailwindcss/postcss": "4.1.4",
     "@types/node": "22.14.1",
     "@types/react": "19.1.2",

@@ -1,4 +1,4 @@
-import type { OrderStatus, DeliveryStatus, PaymentStatus } from '@fitzo/supabase/types';
+import type { OrderStatus, DeliveryStatus, PaymentStatus } from '@fitxo/supabase/types';
 
 type StatusValue = OrderStatus | DeliveryStatus | PaymentStatus | string;
 

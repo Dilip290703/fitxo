@@ -195,8 +195,8 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             <h2 className="text-[14px] font-semibold text-ink">Confirm this order</h2>
             <p className="mt-1 text-[12px] text-soft">
               {allReady
-                ? "All your items are ready. Confirm to send it to a Fitzo rider."
-                : "Mark every item ready, then confirm to send it to a Fitzo rider."}
+                ? "All your items are ready. Confirm to send it to a Fitxo rider."
+                : "Mark every item ready, then confirm to send it to a Fitxo rider."}
             </p>
           </div>
           <button
@@ -211,7 +211,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
       ) : (
         <section className="mt-6 rounded-2xl border border-success-line bg-success-bg px-5 py-3.5">
           <p className="text-[13px] font-medium text-success">
-            Order confirmed — a Fitzo rider will be assigned for pickup.
+            Order confirmed — a Fitxo rider will be assigned for pickup.
           </p>
         </section>
       )}
@@ -278,7 +278,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
       </section>
 
       <p className="mt-4 text-[12px] leading-5 text-muted">
-        Customer and delivery details are handled by the Fitzo rider — your store only
+        Customer and delivery details are handled by the Fitxo rider — your store only
         sees the items to prepare.
       </p>
     </div>

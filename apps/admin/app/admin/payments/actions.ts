@@ -132,7 +132,7 @@ export async function refundPayment(paymentId: string, reason: string): Promise<
 
   // Pre-flight migration 041 check BEFORE moving money: if the refund columns
   // don't exist, the post-refund ledger write would fail and leave a refund
-  // Razorpay knows about but Fitzo doesn't.
+  // Razorpay knows about but Fitxo doesn't.
   const { error: colError } = await admin.from('payments').select('razorpay_refund_id').limit(1);
   if (colError) {
     return { success: false, error: 'Refund bookkeeping columns missing — apply migration 041 first.' };
@@ -140,11 +140,11 @@ export async function refundPayment(paymentId: string, reason: string): Promise<
 
   // Move the money: full refund at Razorpay. If Razorpay says it was already
   // fully refunded (e.g. via their dashboard), reconcile our ledger instead of
-  // failing — the goal is that Fitzo's books match Razorpay's.
+  // failing — the goal is that Fitxo's books match Razorpay's.
   let refundId: string | null = null;
   try {
     const refund = await razorpay.payments.refund(payment.razorpay_payment_id, {
-      notes: { reason: trimmedReason, source: 'fitzo_admin' },
+      notes: { reason: trimmedReason, source: 'fitxo_admin' },
     });
     refundId = refund.id ?? null;
   } catch (e) {

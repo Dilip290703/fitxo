@@ -35,15 +35,15 @@ export function GuideView() {
     <ContentWrap>
       <PageHeader
         title="Rider guide"
-        subtitle="The Fitzo try-at-home flow, start to finish."
+        subtitle="The Fitxo try-at-home flow, start to finish."
       />
 
       {/* Plain div, not <Card>: Card's bg-white ties with bg-ink (equal
           Tailwind specificity) and can leave the white text invisible. */}
       <div className="mb-6 rounded-2xl bg-ink p-4">
-        <p className="text-[15px] font-semibold text-accent">Welcome to Fitzo</p>
+        <p className="text-[15px] font-semibold text-accent">Welcome to Fitxo</p>
         <p className="mt-1 text-[14px] leading-6 text-white/75">
-          Fitzo is try-before-you-buy fashion. You bring the customer their picks and wait
+          Fitxo is try-before-you-buy fashion. You bring the customer their picks and wait
           while they decide — they keep what they love and hand the rest back to you. Here's
           how every delivery goes.
         </p>

@@ -86,7 +86,7 @@ export default function RefundDialog({ payment, onClose }: { payment: PaymentRow
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={2}
-              placeholder="e.g. delivery fee charged twice on FTZ-2026-00051"
+              placeholder="e.g. delivery fee charged twice on FTX-2026-00051"
               className="w-full bg-white border border-line rounded-lg px-3 py-2 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink"
             />
 

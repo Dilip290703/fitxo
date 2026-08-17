@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import ActivityLogClient, { type ActivityRow } from './ActivityLogClient';
 
 export default async function ActivityLogPage() {

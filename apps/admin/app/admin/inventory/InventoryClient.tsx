@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { logActivity } from '@/lib/activity';
 
 interface Product {

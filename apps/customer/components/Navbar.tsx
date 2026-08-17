@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { EASE } from "@/components/motion";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { useCart } from "@/components/cart/CartProvider";
 import { PincodeModal } from "@/components/PincodeModal";
 import { SearchBar } from "@/components/SearchBar";
@@ -337,7 +337,7 @@ function NavbarInner({
                       isCategoriesActive(pathname, searchParams) ? "text-black" : ""
                     }`}
                     aria-expanded={isCategoryOpen}
-                    aria-controls="fitzo-mega-menu"
+                    aria-controls="fitxo-mega-menu"
                   >
                     <span>{item.label}</span>
                     <ChevronDown
@@ -392,7 +392,7 @@ function NavbarInner({
               onClick={handleLogoClick}
               className="justify-self-center font-serif text-xl font-medium tracking-[0.3em] text-gray-800 transition duration-200 hover:text-black"
             >
-              FITZO
+              FITXO
             </button>
 
             <div className="flex items-center gap-3 justify-self-end text-gray-700 sm:gap-4">
@@ -462,7 +462,7 @@ function NavbarInner({
           </div>
 
           <motion.div
-            id="fitzo-mega-menu"
+            id="fitxo-mega-menu"
             initial={false}
             animate={
               isCategoryOpen

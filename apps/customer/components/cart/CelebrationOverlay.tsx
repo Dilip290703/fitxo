@@ -62,7 +62,7 @@ export function CelebrationOverlay({
   return (
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center overflow-hidden bg-[#fbfaf7]/80 backdrop-blur-[2px]"
-      style={{ animation: "fitzo-fade-in 200ms ease-out both" }}
+      style={{ animation: "fitxo-fade-in 200ms ease-out both" }}
       aria-live="polite"
     >
       {/* Confetti burst origin (centre) */}
@@ -80,7 +80,7 @@ export function CelebrationOverlay({
               ["--tx" as string]: `${p.tx}px`,
               ["--ty" as string]: `${p.ty}px`,
               ["--rot" as string]: `${p.rot}deg`,
-              animation: `fitzo-burst ${p.duration}s cubic-bezier(0.18,0.7,0.3,1) ${p.delay}s both`,
+              animation: `fitxo-burst ${p.duration}s cubic-bezier(0.18,0.7,0.3,1) ${p.delay}s both`,
             }}
           />
         ))}
@@ -90,7 +90,7 @@ export function CelebrationOverlay({
       <div className="relative z-10 flex flex-col items-center text-center">
         <div
           className="flex h-24 w-24 items-center justify-center rounded-full bg-[#2e7d52] shadow-[0_18px_50px_-12px_rgba(46,125,82,0.6)]"
-          style={{ animation: "fitzo-badge-pop 520ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
+          style={{ animation: "fitxo-badge-pop 520ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
         >
           <svg
             className="h-12 w-12 text-white"
@@ -98,42 +98,42 @@ export function CelebrationOverlay({
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2.5}
-            style={{ animation: "fitzo-check-draw 600ms ease-out 220ms both" }}
+            style={{ animation: "fitxo-check-draw 600ms ease-out 220ms both" }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <h2
           className="mt-6 font-display text-[34px] leading-tight text-[#171717]"
-          style={{ animation: "fitzo-rise 420ms ease-out 200ms both" }}
+          style={{ animation: "fitxo-rise 420ms ease-out 200ms both" }}
         >
           {message}
         </h2>
         <p
           className="mt-1 text-[14px] text-[#8b7058]"
-          style={{ animation: "fitzo-rise 420ms ease-out 320ms both" }}
+          style={{ animation: "fitxo-rise 420ms ease-out 320ms both" }}
         >
           {subMessage}
         </p>
       </div>
 
       <style>{`
-        @keyframes fitzo-fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes fitzo-burst {
+        @keyframes fitxo-fade-in { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes fitxo-burst {
           0%   { transform: translate(0,0) rotate(0deg); opacity: 1 }
           70%  { opacity: 1 }
           100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0 }
         }
-        @keyframes fitzo-badge-pop {
+        @keyframes fitxo-badge-pop {
           0%   { transform: scale(0); opacity: 0 }
           60%  { transform: scale(1.12) }
           100% { transform: scale(1); opacity: 1 }
         }
-        @keyframes fitzo-check-draw {
+        @keyframes fitxo-check-draw {
           from { stroke-dasharray: 30; stroke-dashoffset: 30 }
           to   { stroke-dasharray: 30; stroke-dashoffset: 0 }
         }
-        @keyframes fitzo-rise {
+        @keyframes fitxo-rise {
           from { opacity: 0; transform: translateY(10px) }
           to   { opacity: 1; transform: translateY(0) }
         }

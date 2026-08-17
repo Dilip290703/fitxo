@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 type AuthMode = "login" | "signup";
 
@@ -267,7 +267,7 @@ export function LoginPanel() {
         <div className="relative h-64 overflow-hidden bg-[#111827] p-5 text-white sm:h-80 sm:rounded-t-[2rem] sm:p-7 lg:h-full lg:min-h-0 lg:rounded-l-[2rem] lg:rounded-tr-none">
           <Image
             src={editorialImage}
-            alt="Editorial fashion look for Fitzo"
+            alt="Editorial fashion look for Fitxo"
             fill
             priority
             sizes="(min-width: 1024px) 48vw, 100vw"
@@ -277,7 +277,7 @@ export function LoginPanel() {
           <div className="relative z-10 flex h-full flex-col justify-between">
             <div className="flex items-center justify-between">
               <p className="font-serif text-[24px] font-semibold tracking-[0.18em]">
-                FITZO
+                FITXO
               </p>
               <span className="rounded-full border border-white/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em]">
                 Try-on at your door
@@ -320,7 +320,7 @@ export function LoginPanel() {
                 Account access
               </p>
               <h2 className="mt-2 font-display text-[32px] leading-none tracking-[-0.04em] text-[#171717] sm:text-[36px]">
-                {mode === "login" ? "Welcome back" : "Start your Fitzo closet"}
+                {mode === "login" ? "Welcome back" : "Start your Fitxo closet"}
               </h2>
               <p className="mx-auto mt-2 max-w-sm text-[13px] leading-5 text-[#625b53]">
                 {mode === "login"

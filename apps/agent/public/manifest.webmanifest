@@ -1,7 +1,7 @@
 {
-  "name": "Fitzo Rider",
-  "short_name": "Fitzo Rider",
-  "description": "Fitzo delivery partner app — accept jobs, deliver, wait for the try-on, collect returns, get paid.",
+  "name": "Fitxo Rider",
+  "short_name": "Fitxo Rider",
+  "description": "Fitxo delivery partner app — accept jobs, deliver, wait for the try-on, collect returns, get paid.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

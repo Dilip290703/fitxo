@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { createClient } from "@fitzo/supabase/server";
+import { createClient } from "@fitxo/supabase/server";
 import { queryProducts } from "@/lib/supabase/products";
 import { ProductCard } from "@/components/products/ProductCard";
 

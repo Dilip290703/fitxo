@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { logActivity } from '@/lib/activity';
-import type { User } from '@fitzo/supabase/types';
+import type { User } from '@fitxo/supabase/types';
 
 export default function CustomerActions({ customer }: { customer: User }) {
   const router = useRouter();

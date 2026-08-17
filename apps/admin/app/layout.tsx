@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FitZo Admin",
-  description: "FitZo administration panel.",
+  title: "FitXo Admin",
+  description: "FitXo administration panel.",
 };
 
 export default function RootLayout({

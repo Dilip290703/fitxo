@@ -10,13 +10,13 @@ importers:
 
   apps/admin:
     dependencies:
-      '@fitzo/pincode':
+      '@fitxo/pincode':
         specifier: workspace:*
         version: link:../../packages/pincode
-      '@fitzo/supabase':
+      '@fitxo/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
-      '@fitzo/ui':
+      '@fitxo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@supabase/ssr':
@@ -41,7 +41,7 @@ importers:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react-is@19.2.7)(react@19.1.0)(redux@5.0.1)
     devDependencies:
-      '@fitzo/config':
+      '@fitxo/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@tailwindcss/postcss':
@@ -65,10 +65,10 @@ importers:
 
   apps/agent:
     dependencies:
-      '@fitzo/supabase':
+      '@fitxo/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
-      '@fitzo/ui':
+      '@fitxo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       next:
@@ -81,7 +81,7 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
     devDependencies:
-      '@fitzo/config':
+      '@fitxo/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@tailwindcss/postcss':
@@ -105,13 +105,13 @@ importers:
 
   apps/customer:
     dependencies:
-      '@fitzo/pincode':
+      '@fitxo/pincode':
         specifier: workspace:*
         version: link:../../packages/pincode
-      '@fitzo/supabase':
+      '@fitxo/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
-      '@fitzo/ui':
+      '@fitxo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@supabase/ssr':
@@ -133,7 +133,7 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
     devDependencies:
-      '@fitzo/config':
+      '@fitxo/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@tailwindcss/postcss':
@@ -160,10 +160,10 @@ importers:
 
   apps/store:
     dependencies:
-      '@fitzo/supabase':
+      '@fitxo/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
-      '@fitzo/ui':
+      '@fitxo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       next:
@@ -176,7 +176,7 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
     devDependencies:
-      '@fitzo/config':
+      '@fitxo/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@tailwindcss/postcss':

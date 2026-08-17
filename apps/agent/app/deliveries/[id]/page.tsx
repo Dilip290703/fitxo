@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import {
   fetchDeliveryDetail,
   fileDeliveryIssue,
@@ -515,7 +515,7 @@ export default function DeliveryDetailPage() {
               onClick={() => router.push("/")}
               className="flex h-14 w-full items-center justify-center rounded-2xl border border-danger-line bg-danger-bg text-[15px] font-semibold text-danger"
             >
-              Delivery failed — reported to Fitzo. Back to dashboard
+              Delivery failed — reported to Fitxo. Back to dashboard
             </button>
           )}
         </div>
@@ -530,7 +530,7 @@ export default function DeliveryDetailPage() {
           onClose={() => setProblem(null)}
           onReported={() => {
             setProblem(null);
-            setNotice("Issue reported — Fitzo support can see it now. Carry on when you can.");
+            setNotice("Issue reported — Fitxo support can see it now. Carry on when you can.");
           }}
           detail={detail}
           onFailed={() => load()}
@@ -630,7 +630,7 @@ function ProblemSheet({
               </a>
             )}
             <a href={`tel:${SUPPORT_PHONE}`} className="flex min-h-[52px] items-center gap-3 rounded-xl border border-line bg-white px-4 text-[15px] font-medium text-ink hover:bg-cream">
-              <IconPhone size={18} className="text-info" /> Call Fitzo support
+              <IconPhone size={18} className="text-info" /> Call Fitxo support
             </a>
             <button
               type="button"

@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { WishlistToast } from "@/components/wishlist/WishlistToast";
 import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
@@ -16,11 +16,11 @@ import { LoginRequiredModal } from "@/components/cart/LoginRequiredModal";
 /**
  * Persisted PER SIGNED-IN USER, like the bag — and like the bag, hearting an
  * item REQUIRES an account: a guest tap opens the login modal instead of
- * adding (no phantom in-memory list). The old global `fitzo-wishlist` key
+ * adding (no phantom in-memory list). The old global `fitxo-wishlist` key
  * shared one wishlist across every account on the browser; removed on load.
  */
-const wishlistStorageKey = (userId: string) => `fitzo-wishlist:${userId}`;
-const LEGACY_WISHLIST_KEY = "fitzo-wishlist";
+const wishlistStorageKey = (userId: string) => `fitxo-wishlist:${userId}`;
+const LEGACY_WISHLIST_KEY = "fitxo-wishlist";
 
 export type WishlistItem = {
   id: string;

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { logActivity } from '@/lib/activity';
-import type { Rider } from '@fitzo/supabase/types';
+import type { Rider } from '@fitxo/supabase/types';
 
 export default function RiderActions({ rider }: { rider: Rider }) {
   const router = useRouter();
