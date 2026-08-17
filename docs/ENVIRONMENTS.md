@@ -1,4 +1,4 @@
-# Fitzo environments — prod/dev split (W2.1)
+# Fitxo environments — prod/dev split (W2.1)
 
 **Why this exists:** today ONE Supabase project is both dev and "prod" — E2E fixtures,
 test riders and 50 test orders live beside what would be real customer data, and the
@@ -9,7 +9,7 @@ into two projects and make prod reproducible from the repo.
 | | Project | Who uses it | Data |
 |---|---|---|---|
 | **dev** | the existing project (keep as-is) | Dilip + Jay + Claude sessions, all local `.env.local`s | test fixtures, seeds, experiments |
-| **prod** | new project `fitzo-prod` | deployed apps only (Netlify env vars) | real stores, riders, customers — **zero test data** |
+| **prod** | new project `fitxo-prod` | deployed apps only (Netlify env vars) | real stores, riders, customers — **zero test data** |
 
 The split is **Part A–G below, in order**. Steps marked 🧑 need the Supabase dashboard
 (Dilip); steps marked 💻 run from the repo. Allow ~30–45 min end to end.
@@ -18,7 +18,7 @@ The split is **Part A–G below, in order**. Steps marked 🧑 need the Supabase
 
 ## Part A — create the prod project 🧑
 
-1. Supabase dashboard → New project → org: Fitzo → name **`fitzo-prod`** →
+1. Supabase dashboard → New project → org: Fitxo → name **`fitxo-prod`** →
    region **Mumbai (ap-south-1)** → generate a strong DB password → **store the DB
    password in the password manager** (needed for dumps/psql, not by the apps).
 2. Note the new project's: Project URL, `anon` key, `service_role` key
@@ -70,7 +70,7 @@ certificate of prod.
    INSERT INTO system_settings (id, site_name, contact_email, support_phone,
      try_window_minutes, delivery_fee, free_delivery_above, commission_rate,
      offer_expiry_minutes, rider_fee)
-   VALUES (1, 'Fitzo', 'support@fitzo.in', '', 60, 49, 999, 15, 120, 40)
+   VALUES (1, 'Fitxo', 'support@fitxo.co.in', '', 60, 49, 999, 15, 120, 40)
    ON CONFLICT (id) DO NOTHING;
    ```
 4. **Vault secrets** (test keys until Razorpay live KYC clears — C3; swap at cutover W5.2):
@@ -136,9 +136,9 @@ Only three call sites pass a `redirectTo`, all using `window.location.origin`:
 the domain be a redirect target):
 
 ```
-https://fitzo.in/auth/callback
-https://store.fitzo.in/reset-password
-https://agent.fitzo.in/reset-password
+https://fitxo.co.in/auth/callback
+https://store.fitxo.co.in/reset-password
+https://agent.fitxo.co.in/reset-password
 ```
 
 **Dev allowlist** (ports from `.claude/launch.json`):
@@ -150,7 +150,7 @@ http://localhost:3002/reset-password
 ```
 
 Add Netlify preview/staging aliases alongside these when W2.2 lands. Site URL:
-`https://fitzo.in` on prod, `http://localhost:3000` on dev.
+`https://fitxo.co.in` on prod, `http://localhost:3000` on dev.
 
 ### Hardening (D4)
 
@@ -371,6 +371,6 @@ Then the behavioural check the plan asks for: **one test payment end-to-end**
   **merged to main**. Record "applied to prod" in the PROGRESS Known-issues line.
 - Re-baseline (`dump-baseline.sh` against dev) only when standing up a fresh
   environment — never edit an old baseline.
-- Test fixtures (accounts `*@fitzo.test`, orders tagged E2E, seed stores/riders)
+- Test fixtures (accounts `*@fitxo.test`, orders tagged E2E, seed stores/riders)
   stay in dev, forever. Nothing in prod is fake — if a prod smoke test is needed,
   use a clearly-named real account and clean it up the same day (W5.4).

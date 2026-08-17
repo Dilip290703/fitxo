@@ -46,7 +46,7 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 // Must match migration 057's probe string exactly, or nothing will ever agree.
-const PROBE = 'fitzo-rotation-check';
+const PROBE = 'fitxo-rotation-check';
 
 const fingerprint = (secret) =>
   createHmac('sha256', secret).update(PROBE).digest('hex');

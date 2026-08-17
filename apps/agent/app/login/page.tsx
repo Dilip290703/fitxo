@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { Banner, btnPrimary, inputCls } from "@/components/ui";
 
 type Mode = "signin" | "signup" | "forgot";
@@ -41,7 +41,7 @@ export default function AgentLoginPage() {
         });
         if (error) throw error;
         setNotice(
-          "Account created. A Fitzo admin will verify your rider profile before you can take deliveries.",
+          "Account created. A Fitxo admin will verify your rider profile before you can take deliveries.",
         );
         setMode("signin");
         return;
@@ -65,7 +65,7 @@ export default function AgentLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-paper px-4">
       <div className="w-full max-w-[400px]">
         <div className="mb-8 text-center">
-          <p className="font-serif text-[13px] font-semibold uppercase tracking-[0.35em] text-muted">Fitzo</p>
+          <p className="font-serif text-[13px] font-semibold uppercase tracking-[0.35em] text-muted">Fitxo</p>
           <h1 className="mt-2 text-[28px] font-semibold tracking-tight text-ink">Delivery Partner</h1>
           <p className="mt-1 text-[14px] text-body">
             {mode === "signin" && "Sign in to start delivering"}

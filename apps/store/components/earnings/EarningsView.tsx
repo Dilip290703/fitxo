@@ -46,7 +46,7 @@ export function EarningsView() {
       <PageHeader
         eyebrow="Earnings"
         title="Earnings & payouts"
-        sub="What you earn from kept items after the Fitzo commission, and how it's paid out."
+        sub="What you earn from kept items after the Fitxo commission, and how it's paid out."
       />
 
       {error ? (
@@ -68,7 +68,7 @@ export function EarningsView() {
             <Breakdown label="Kept-item revenue (gross)" value={formatCurrency(data.grossKeptRevenue)} />
             <span className="text-[15px] text-faint">−</span>
             <Breakdown
-              label={`Fitzo commission (${data.commissionRate}%)`}
+              label={`Fitxo commission (${data.commissionRate}%)`}
               value={formatCurrency(data.commissionAmount)}
             />
             {data.excludedGross > 0 && (
@@ -86,7 +86,7 @@ export function EarningsView() {
               <h2 className="text-[14px] font-semibold text-ink">Payouts</h2>
               {data.payouts.length === 0 ? (
                 <p className="mt-3 text-[13px] text-soft">
-                  No payouts yet — they appear here once Fitzo settles your kept orders.
+                  No payouts yet — they appear here once Fitxo settles your kept orders.
                 </p>
               ) : (
                 <div className="mt-3 overflow-x-auto">

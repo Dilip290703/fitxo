@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 export type DayBucket = {
   label: string; // e.g. "9 Jun"

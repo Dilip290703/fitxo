@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 type OrderRow = {
   id: string;
@@ -91,7 +91,7 @@ export function OrderHistoryView() {
         Order history
       </h1>
       <p className="mt-3 max-w-xl text-[14px] leading-6 text-[#625b53]">
-        Track active try-ons and revisit past Fitzo deliveries.
+        Track active try-ons and revisit past Fitxo deliveries.
       </p>
 
       <div className="mt-8">

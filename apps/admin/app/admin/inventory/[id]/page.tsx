@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { notFound } from 'next/navigation';
 import ProductFormClient from '../ProductFormClient';
 import Link from 'next/link';

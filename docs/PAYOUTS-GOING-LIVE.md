@@ -4,7 +4,7 @@
 
 ## Verdict: don't build disbursement yet — it's blocked on business steps, not code
 
-Fitzo cannot move real (or even honestly-simulated) payout money today, for three
+Fitxo cannot move real (or even honestly-simulated) payout money today, for three
 independent reasons:
 
 1. **RazorpayX needs an account we don't have.** Payouts run on RazorpayX, a
@@ -20,10 +20,10 @@ independent reasons:
    *inside* an existing RazorpayX account's dashboard. Code written today could
    not be run against anything. Per the track rule — don't fake it — nothing was
    built.
-3. **Route (split settlement) is regulatorily unavailable to Fitzo.** The RBI's
+3. **Route (split settlement) is regulatorily unavailable to Fitxo.** The RBI's
    September 2025 Payment Aggregator guidelines gate Razorpay Route behind
    **domestic turnover > ₹40 lakh** (FY25/FY26), no category exemptions;
-   non-compliant merchants were cut off 2026-01-01. Fitzo is pre-launch, so the
+   non-compliant merchants were cut off 2026-01-01. Fitxo is pre-launch, so the
    elegant "split each Keep payment to the store's linked account minus
    commission" architecture is off the table until that scale.
 

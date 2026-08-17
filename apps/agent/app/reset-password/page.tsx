@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { Banner, btnPrimary, inputCls } from "@/components/ui";
 
 export default function ResetPasswordPage() {

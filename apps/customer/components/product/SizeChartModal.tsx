@@ -308,7 +308,7 @@ export function SizeChartModal({ isOpen, onClose, selectedSize }: SizeChartModal
               <div className="mt-6 rounded-[14px] bg-[#f4ede4] px-5 py-4">
                 <p className="text-[12px] font-semibold text-[#8b7058]">💡 Pro tip</p>
                 <p className="mt-1.5 text-[12px] leading-5 text-[#5f5851]">
-                  Between sizes? Size up for a relaxed fit, down for slim. FitZo&apos;s
+                  Between sizes? Size up for a relaxed fit, down for slim. FitXo&apos;s
                   doorstep try-on lets you compare multiple sizes while the rider waits before you decide.
                 </p>
               </div>

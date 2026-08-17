@@ -1,5 +1,5 @@
 -- ============================================================
--- FITZO — Complete PostgreSQL Schema
+-- FITXO — Complete PostgreSQL Schema
 -- Fashion Try-and-Buy Platform
 -- ============================================================
 
@@ -239,7 +239,7 @@ CREATE SEQUENCE order_number_seq START 1;
 CREATE OR REPLACE FUNCTION generate_order_number()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.order_number := 'FTZ-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('order_number_seq')::TEXT, 5, '0');
+  NEW.order_number := 'FTX-' || TO_CHAR(NOW(), 'YYYY') || '-' || LPAD(NEXTVAL('order_number_seq')::TEXT, 5, '0');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

@@ -1,5 +1,5 @@
-export const AUTH_STORAGE_KEY = "fitzo-auth";
-export const PINCODE_STORAGE_KEY = "fitzo-pincode";
+export const AUTH_STORAGE_KEY = "fitxo-auth";
+export const PINCODE_STORAGE_KEY = "fitxo-pincode";
 
 export const brands = [
   {
@@ -436,7 +436,7 @@ export const testimonials = [
     image:
       "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
     quote:
-      "FitZo made a same-day event outfit possible. I tracked the order live, swapped one top instantly, and paid only for the final look.",
+      "FitXo made a same-day event outfit possible. I tracked the order live, swapped one top instantly, and paid only for the final look.",
   },
   {
     id: "rhea-kapoor",

@@ -3,9 +3,9 @@ import { Navbar } from "@/components/Navbar";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy – FitZo",
+  title: "Privacy Policy – FitXo",
   description:
-    "Learn how FitZo collects, uses, and protects your personal information during try-before-you-buy fashion delivery.",
+    "Learn how FitXo collects, uses, and protects your personal information during try-before-you-buy fashion delivery.",
 };
 
 const sections = [
@@ -19,11 +19,11 @@ const sections = [
       },
       {
         subtitle: "Payment Information",
-        text: "Payment details such as UPI IDs, card information, and wallet data are processed securely through our payment partners (Razorpay, Paytm, PhonePe). FitZo does not store your full card numbers or CVV on our servers.",
+        text: "Payment details such as UPI IDs, card information, and wallet data are processed securely through our payment partners (Razorpay, Paytm, PhonePe). FitXo does not store your full card numbers or CVV on our servers.",
       },
       {
         subtitle: "Device & Usage Data",
-        text: "We automatically collect device type, browser, IP address, pages visited, and interaction patterns to improve the FitZo experience. Cookies and similar technologies help us remember your preferences and deliver relevant content.",
+        text: "We automatically collect device type, browser, IP address, pages visited, and interaction patterns to improve the FitXo experience. Cookies and similar technologies help us remember your preferences and deliver relevant content.",
       },
       {
         subtitle: "Location Data",
@@ -71,7 +71,7 @@ const sections = [
       },
       {
         subtitle: "Legal Requirements",
-        text: "We may disclose your information if required by law, court order, or governmental request, or if necessary to protect the rights, property, or safety of FitZo, our users, or others.",
+        text: "We may disclose your information if required by law, court order, or governmental request, or if necessary to protect the rights, property, or safety of FitXo, our users, or others.",
       },
     ],
   },
@@ -85,7 +85,7 @@ const sections = [
       },
       {
         subtitle: "Analytics Cookies",
-        text: "Help us understand how users interact with FitZo, which pages are most visited, and where improvements are needed. We use privacy-respecting analytics tools.",
+        text: "Help us understand how users interact with FitXo, which pages are most visited, and where improvements are needed. We use privacy-respecting analytics tools.",
       },
       {
         subtitle: "Preference Cookies",
@@ -103,7 +103,7 @@ const sections = [
     content: [
       {
         subtitle: "Encryption",
-        text: "All data transmitted between your device and FitZo servers is encrypted using TLS 1.3. Sensitive data at rest is encrypted using AES-256 industry-standard encryption.",
+        text: "All data transmitted between your device and FitXo servers is encrypted using TLS 1.3. Sensitive data at rest is encrypted using AES-256 industry-standard encryption.",
       },
       {
         subtitle: "Access Controls",
@@ -121,7 +121,7 @@ const sections = [
     content: [
       {
         subtitle: "Access & Correction",
-        text: "You can access, review, and update your personal information at any time through your FitZo account settings or by contacting our support team.",
+        text: "You can access, review, and update your personal information at any time through your FitXo account settings or by contacting our support team.",
       },
       {
         subtitle: "Data Deletion",
@@ -161,7 +161,7 @@ const sections = [
     content: [
       {
         subtitle: "",
-        text: "FitZo is not intended for children under 16. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, please contact us immediately and we will take steps to delete such information.",
+        text: "FitXo is not intended for children under 16. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, please contact us immediately and we will take steps to delete such information.",
       },
     ],
   },
@@ -171,7 +171,7 @@ const sections = [
     content: [
       {
         subtitle: "",
-        text: "We may update this Privacy Policy from time to time. Material changes will be communicated via email or a prominent notice on the platform at least 14 days before they take effect. Your continued use of FitZo after changes constitutes acceptance of the updated policy.",
+        text: "We may update this Privacy Policy from time to time. Material changes will be communicated via email or a prominent notice on the platform at least 14 days before they take effect. Your continued use of FitXo after changes constitutes acceptance of the updated policy.",
       },
     ],
   },
@@ -206,7 +206,7 @@ export default function PrivacyPolicyPage() {
           </h1>
           <p className="mt-6 max-w-2xl text-[16px] leading-8 text-[#5a554f]">
             Your trust is the fabric of our platform. This policy explains how
-            FitZo collects, uses, safeguards, and shares your personal
+            FitXo collects, uses, safeguards, and shares your personal
             information when you use our try-before-you-buy fashion delivery
             service in Pune.
           </p>
@@ -268,17 +268,17 @@ export default function PrivacyPolicyPage() {
                       <p>
                         <strong>Email:</strong>{" "}
                         <a
-                          href="mailto:privacy@fitzo.in"
+                          href="mailto:privacy@fitxo.co.in"
                           className="text-[#3e6dd2] underline"
                         >
-                          privacy@fitzo.in
+                          privacy@fitxo.co.in
                         </a>
                       </p>
                       <p>
                         <strong>Phone:</strong> +91 98765 43210
                       </p>
                       <p>
-                        <strong>Address:</strong> FitZo Privacy Team, Baner
+                        <strong>Address:</strong> FitXo Privacy Team, Baner
                         Road, Pune, Maharashtra 411045
                       </p>
                     </div>

@@ -18,7 +18,7 @@ const sansFont = Jost({
 });
 
 export const metadata: Metadata = {
-  title: "FitZo",
+  title: "FitXo",
   description: "Fashion delivery with try-before-you-buy convenience.",
 };
 

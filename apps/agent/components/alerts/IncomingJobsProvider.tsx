@@ -10,7 +10,7 @@ const POLL_MS = 7000; // how often we refresh the offer feed while online
 const RING_MS = 3500; // gap between repeat chimes while an offer is pending
 // ONE mute for the whole app (shared with JobAlertsProvider) — two separate
 // switches meant a rider could mute one and believe both were off (audit M7).
-const MUTE_KEY = "fitzo-agent-alerts-muted";
+const MUTE_KEY = "fitxo-agent-alerts-muted";
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -90,7 +90,7 @@ export function IncomingJobsProvider() {
   useEffect(() => {
     setMuted(typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1");
     const onMute = (e: Event) => setMuted(!!(e as CustomEvent).detail);
-    window.addEventListener("fitzo-mute-change", onMute);
+    window.addEventListener("fitxo-mute-change", onMute);
     const unlock = () => {
       if (!audioRef.current) {
         try {
@@ -106,7 +106,7 @@ export function IncomingJobsProvider() {
     window.addEventListener("pointerdown", unlock);
     return () => {
       window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("fitzo-mute-change", onMute);
+      window.removeEventListener("fitxo-mute-change", onMute);
     };
   }, []);
 
@@ -151,7 +151,7 @@ export function IncomingJobsProvider() {
       } catch {
         /* ignore */
       }
-      window.dispatchEvent(new CustomEvent("fitzo-mute-change", { detail: next }));
+      window.dispatchEvent(new CustomEvent("fitxo-mute-change", { detail: next }));
       return next;
     });
   };

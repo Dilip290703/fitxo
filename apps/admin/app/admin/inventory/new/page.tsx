@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import ProductFormClient from '../ProductFormClient';
 
 export default async function NewProductPage() {

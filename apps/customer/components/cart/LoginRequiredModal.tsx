@@ -36,7 +36,7 @@ export function LoginRequiredModal({
       aria-labelledby="login-modal-title"
       onClick={onClose}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ animation: "fitzo-fade-in 180ms ease-out both" }}
+      style={{ animation: "fitxo-fade-in 180ms ease-out both" }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-[#171d2b]/45 backdrop-blur-[3px]" />
@@ -45,7 +45,7 @@ export function LoginRequiredModal({
       <div
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-[420px] overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#fbfaf7] shadow-[0_24px_70px_-20px_rgba(23,29,43,0.45)]"
-        style={{ animation: "fitzo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
+        style={{ animation: "fitxo-pop-in 260ms cubic-bezier(0.18,0.89,0.32,1.28) both" }}
       >
         {/* Decorative top band */}
         <div className="h-2 w-full bg-gradient-to-r from-[#171d2b] via-[#8b7058] to-[#c89b3c]" />
@@ -101,8 +101,8 @@ export function LoginRequiredModal({
       </div>
 
       <style>{`
-        @keyframes fitzo-fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes fitzo-pop-in {
+        @keyframes fitxo-fade-in { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes fitxo-pop-in {
           0%   { opacity: 0; transform: translateY(12px) scale(0.96) }
           100% { opacity: 1; transform: translateY(0) scale(1) }
         }

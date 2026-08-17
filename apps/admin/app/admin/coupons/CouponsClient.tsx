@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { logActivity } from '@/lib/activity';
-import type { Coupon } from '@fitzo/supabase/types';
+import type { Coupon } from '@fitxo/supabase/types';
 
 export default function CouponsClient({ coupons }: { coupons: Coupon[] }) {
   const router = useRouter();

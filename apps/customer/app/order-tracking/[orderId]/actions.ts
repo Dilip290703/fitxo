@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import { razorpay, RAZORPAY_KEY_ID, verifyPaymentSignature } from '@/lib/razorpay';
 
 type ActionResult = { success: true } | { success: false; error: string };

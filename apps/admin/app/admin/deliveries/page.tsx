@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import DeliveriesClient from './DeliveriesClient';
 
 type RiderRow = { id: string; is_available: boolean; users: { name: string; phone: string } | null };

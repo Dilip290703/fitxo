@@ -11,8 +11,8 @@ const MEASURE_TIPS = [
 ];
 
 export const metadata = {
-  title: "Size Guide — FitZo",
-  description: "Find your perfect fit with the FitZo size chart and measurement guide.",
+  title: "Size Guide — FitXo",
+  description: "Find your perfect fit with the FitXo size chart and measurement guide.",
 };
 
 export default function SizeGuidePage() {
@@ -28,7 +28,7 @@ export default function SizeGuidePage() {
           Size guide
         </h1>
         <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[#6b6258]">
-          Use the chart below to find your size. Not sure between two? With FitZo&apos;s
+          Use the chart below to find your size. Not sure between two? With FitXo&apos;s
           doorstep try-on, you can order both and compare the fit while the rider waits before you pay.
         </p>
 
@@ -94,7 +94,7 @@ export default function SizeGuidePage() {
         <div className="mt-8 rounded-[18px] bg-[#f4ede4] px-6 py-5">
           <p className="text-[12px] font-semibold text-[#8b7058]">💡 Pro tip</p>
           <p className="mt-1.5 text-[13px] leading-6 text-[#5f5851]">
-            Between sizes? Size up for a relaxed fit, down for slim. FitZo&apos;s doorstep try-on
+            Between sizes? Size up for a relaxed fit, down for slim. FitXo&apos;s doorstep try-on
             lets you compare multiple sizes while the rider waits before you decide.
           </p>
         </div>

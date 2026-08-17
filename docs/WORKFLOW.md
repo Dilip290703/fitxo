@@ -1,4 +1,4 @@
-# Fitzo — Team Workflow (Jay + Amit)
+# Fitxo — Team Workflow (Jay + Amit)
 
 Two developers, two Claude Code instances, one repo. This doc keeps you out of each
 other's way and keeps `main` always-shippable.
@@ -11,13 +11,13 @@ The repo is a **pnpm-workspace monorepo**. Each of the 4 panels is its own deplo
 Next.js app, so "work split by panel" is literally "work in your app folder":
 
 ```
-apps/customer   fitzo.in         (25 screens)
-apps/agent      agent.fitzo.in   (12 screens)
-apps/store      store.fitzo.in   (14 screens)
-apps/admin      admin.fitzo.in   (21 screens)  ← separate build; only app with the service-role key
-packages/supabase  @fitzo/supabase  shared anon + SSR clients + DB types (no service-role)
-packages/ui        @fitzo/ui        shared UI primitives
-packages/config    @fitzo/config    shared tsconfig base
+apps/customer   fitxo.co.in         (25 screens)
+apps/agent      agent.fitxo.co.in   (12 screens)
+apps/store      store.fitxo.co.in   (14 screens)
+apps/admin      admin.fitxo.co.in   (21 screens)  ← separate build; only app with the service-role key
+packages/supabase  @fitxo/supabase  shared anon + SSR clients + DB types (no service-role)
+packages/ui        @fitxo/ui        shared UI primitives
+packages/config    @fitxo/config    shared tsconfig base
 ```
 
 Commands (run from repo root):

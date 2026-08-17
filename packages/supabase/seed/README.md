@@ -11,26 +11,26 @@
 # from repo root — reads apps/admin/.env.local for the service-role key
 node packages/supabase/seed/seed-test-data.mjs
 
-# delete every @fitzo.test account + their stores/products
+# delete every @fitxo.test account + their stores/products
 node packages/supabase/seed/seed-test-data.mjs --reset
 ```
 
 Idempotent: re-running skips accounts that already exist and stores that already
 have products. It prints a credentials table at the end.
 
-## Accounts (all password `FitzoTest#2026`)
+## Accounts (all password `FitxoTest#2026`)
 
 | Role  | Email                              | Detail |
 |-------|------------------------------------|--------|
-| store | `store.urban-threads@fitzo.test`   | Streetwear · 411001 |
-| store | `store.bella-ethnic@fitzo.test`    | Ethnic Wear · 411004 |
-| store | `store.peak-active@fitzo.test`     | Activewear · 411045 |
-| store | `store.denim-depot@fitzo.test`     | Denim & Casuals · 411014 |
-| store | `store.little-stars@fitzo.test`    | Kids · 411038 |
-| rider | `rider.ravi@fitzo.test`            | bike |
-| rider | `rider.sana@fitzo.test`            | scooter |
-| rider | `rider.arjun@fitzo.test`           | bike |
-| rider | `rider.neha@fitzo.test`            | cycle |
+| store | `store.urban-threads@fitxo.test`   | Streetwear · 411001 |
+| store | `store.bella-ethnic@fitxo.test`    | Ethnic Wear · 411004 |
+| store | `store.peak-active@fitxo.test`     | Activewear · 411045 |
+| store | `store.denim-depot@fitxo.test`     | Denim & Casuals · 411014 |
+| store | `store.little-stars@fitxo.test`    | Kids · 411038 |
+| rider | `rider.ravi@fitxo.test`            | bike |
+| rider | `rider.sana@fitxo.test`            | scooter |
+| rider | `rider.arjun@fitxo.test`           | bike |
+| rider | `rider.neha@fitxo.test`            | cycle |
 
 ## Notes
 

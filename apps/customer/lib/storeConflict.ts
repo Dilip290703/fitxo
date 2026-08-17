@@ -1,7 +1,7 @@
 /**
  * Single-store cart (G1) — pure conflict detection.
  *
- * A Fitzo order is fulfilled by ONE store: one rider picks up from one shop,
+ * A Fitxo order is fulfilled by ONE store: one rider picks up from one shop,
  * delivers, and waits at the door. Mixing stores in a bag would make the
  * 60-minute delivery + doorstep try-on physically impossible, so the bag
  * refuses items from a second store (the checkout server rejects them too).

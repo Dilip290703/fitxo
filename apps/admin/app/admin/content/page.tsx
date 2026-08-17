@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import ContentClient, { type ContentRow } from './ContentClient';
 
 export default async function ContentPage() {

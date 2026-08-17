@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import ComplaintsClient, { type ComplaintRow } from './ComplaintsClient';
 
 export default async function ComplaintsPage({

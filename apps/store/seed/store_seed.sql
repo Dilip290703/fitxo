@@ -1,11 +1,11 @@
 -- ============================================================
--- Fitzo Store panel — dev seed: one store + one store_manager
+-- Fitxo Store panel — dev seed: one store + one store_manager
 -- ============================================================
 -- Store login has no signup (accounts are admin-provisioned), so to test the
 -- Store panel you need a seeded store manager. Two steps:
 --
 --   1. Supabase Dashboard → Authentication → Users → "Add user"
---        Email:    store@fitzo.in
+--        Email:    store@fitxo.co.in
 --        Password: <pick one you'll remember>
 --        ✅ Auto Confirm User   (confirm-email is off in dev anyway)
 --
@@ -18,7 +18,7 @@
 
 DO $$
 DECLARE
-  v_email   TEXT := 'store@fitzo.in';   -- must match the auth user from step 1
+  v_email   TEXT := 'store@fitxo.co.in';   -- must match the auth user from step 1
   v_user_id UUID;
   v_store_id UUID;
 BEGIN
@@ -32,7 +32,7 @@ BEGIN
 
   -- 2. Upsert the store.
   INSERT INTO stores (name, slug, contact_email, city, is_active, is_verified)
-  VALUES ('Fitzo Test Store', 'fitzo-test-store', v_email, 'Bengaluru', true, true)
+  VALUES ('Fitxo Test Store', 'fitxo-test-store', v_email, 'Bengaluru', true, true)
   ON CONFLICT (slug) DO UPDATE SET is_active = true
   RETURNING id INTO v_store_id;
 

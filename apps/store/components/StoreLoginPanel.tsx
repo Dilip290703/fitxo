@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { getStoreContext } from "@/lib/store-auth";
 
 type Mode = "signin" | "signup" | "forgot";
@@ -128,7 +128,7 @@ export function StoreLoginPanel() {
   };
 
   const heading =
-    mode === "signin" ? "Sign in to your store" : mode === "signup" ? "Sell on Fitzo" : "Reset your password";
+    mode === "signin" ? "Sign in to your store" : mode === "signup" ? "Sell on Fitxo" : "Reset your password";
   const sub =
     mode === "signin"
       ? "Use the email and password for your store account."
@@ -145,7 +145,7 @@ export function StoreLoginPanel() {
           <div className="absolute -bottom-28 -left-16 h-72 w-72 rounded-full bg-accent/10 blur-2xl" />
 
           <div className="relative flex items-center gap-3">
-            <span className="font-serif text-[22px] font-semibold tracking-[0.18em]">FITZO</span>
+            <span className="font-serif text-[22px] font-semibold tracking-[0.18em]">FITXO</span>
             <span className="rounded-full border border-white/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
               Store
             </span>
@@ -182,7 +182,7 @@ export function StoreLoginPanel() {
         <section className="flex items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[420px]">
             <div className="flex items-center gap-3 lg:hidden">
-              <span className="font-serif text-[20px] font-semibold tracking-[0.18em] text-ink">FITZO</span>
+              <span className="font-serif text-[20px] font-semibold tracking-[0.18em] text-ink">FITXO</span>
               <span className="rounded-full border border-ink/20 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/70">
                 Store
               </span>
@@ -301,7 +301,7 @@ export function StoreLoginPanel() {
             <p className="mt-6 text-center text-[13px] text-body">
               {mode === "signin" ? (
                 <>
-                  New to Fitzo?{" "}
+                  New to Fitxo?{" "}
                   <button
                     type="button"
                     onClick={() => switchMode("signup")}

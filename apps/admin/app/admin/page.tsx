@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import Link from 'next/link';
 import StatsCard from '@/components/admin/StatsCard';
 import RevenueChart from '@/components/admin/RevenueChart';

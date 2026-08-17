@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 

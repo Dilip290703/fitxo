@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { StoreLoginPanel } from "@/components/StoreLoginPanel";
 
 export const metadata: Metadata = {
-  title: "Store Login · FitZo",
-  description: "Sign in to the FitZo store manager panel.",
+  title: "Store Login · FitXo",
+  description: "Sign in to the FitXo store manager panel.",
 };
 
 export default function StoreLoginPage() {

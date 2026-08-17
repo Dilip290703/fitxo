@@ -1,12 +1,12 @@
 /**
- * FitZo serviceable-pincode list — the single source of truth.
+ * FitXo serviceable-pincode list — the single source of truth.
  *
- * FitZo currently delivers ONLY in Pune. Two apps consume this:
+ * FitXo currently delivers ONLY in Pune. Two apps consume this:
  *   • apps/customer (lib/pincode.ts): address/checkout serviceability + ETA copy
  *   • apps/admin: store-onboarding approval gate (G6 — a store outside the
  *     delivery area can't be approved without an explicit override)
  * Never copy this list into an app — a drifted copy means the customer app
- * and the admin approval gate disagree about where FitZo delivers.
+ * and the admin approval gate disagree about where FitXo delivers.
  */
 
 export const punePincodes: ReadonlySet<string> = new Set([

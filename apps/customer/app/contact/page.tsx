@@ -118,7 +118,7 @@ const contactCards = [
   },
   {
     icon: Phone,
-    title: "Call Fitzo Care",
+    title: "Call Fitxo Care",
     value: "+91 98765 43210",
     text: "Available daily for urgent order or doorstep try-on support.",
     action: "Call now",
@@ -126,7 +126,7 @@ const contactCards = [
   {
     icon: Mail,
     title: "Email us",
-    value: "support@fitzo.in",
+    value: "support@fitxo.co.in",
     text: "Best for brand partnerships, store onboarding, and detailed requests.",
     action: "Send email",
   },
@@ -142,7 +142,7 @@ const supportTopics = [
 const faqs = [
   "How does try-before-you-buy work?",
   "Do I return items to the rider at the door?",
-  "How fast can Fitzo deliver near me?",
+  "How fast can Fitxo deliver near me?",
   "How do I contact partner stores?",
 ];
 
@@ -165,7 +165,7 @@ export default function ContactPage() {
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.04fr_0.96fr]">
           <div>
-            <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#8a7b6d]">Contact Fitzo</p>
+            <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#8a7b6d]">Contact Fitxo</p>
             <h1 className="max-w-3xl font-display text-[42px] leading-[0.95] tracking-[-0.04em] text-[#171717] sm:text-[56px] lg:text-[64px]">
               We are here before, during, and after your try-on.
             </h1>
@@ -195,7 +195,7 @@ export default function ContactPage() {
               <div className="relative min-h-[460px] overflow-hidden rounded-[1.7rem] bg-[linear-gradient(135deg,#142033_0%,#263954_55%,#f8c9a9_55%,#ffd9c1_100%)] p-8">
                 <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(135deg,#ffffff_12.5%,transparent_12.5%,transparent_50%,#ffffff_50%,#ffffff_62.5%,transparent_62.5%,transparent_100%)] [background-size:32px_32px]" />
                 <div className="relative z-10 max-w-sm rounded-[1.6rem] bg-white/90 p-7 shadow-2xl backdrop-blur">
-                  <p className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#8a7b6d]">Fitzo care promise</p>
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#8a7b6d]">Fitxo care promise</p>
                   <h2 className="mt-4 font-display text-[32px] leading-none tracking-[-0.03em] text-[#171717]">Support that moves as fast as your outfit.</h2>
                   <div className="mt-7 space-y-4">
                     {["Average reply under 10 minutes", "Doorstep return guidance", "Secure payment assistance"].map((item) => (
@@ -249,7 +249,7 @@ export default function ContactPage() {
             <p className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#ffd037]">Support topics</p>
             <h2 className="mt-4 font-display text-[32px] leading-none tracking-[-0.03em] sm:text-[40px]">Choose what you need help with.</h2>
             <p className="mt-5 text-[14px] leading-7 text-white/70">
-              We route your message to the right Fitzo team so you get useful answers faster.
+              We route your message to the right Fitxo team so you get useful answers faster.
             </p>
 
             <div className="mt-9 grid gap-4">
@@ -350,7 +350,7 @@ export default function ContactPage() {
           <div className="rounded-[1.6rem] border border-[#eadfd1] bg-white p-7 transition duration-200 hover:-translate-y-1 hover:shadow-lg">
             <MapPin className="h-6 w-6 text-[#221b13]" />
             <h3 className="mt-5 font-display text-[24px] leading-none tracking-[-0.02em] text-[#171717]">Pune support hub</h3>
-            <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">FitZo Care, Baner Road, Pune, Maharashtra 411045</p>
+            <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">FitXo Care, Baner Road, Pune, Maharashtra 411045</p>
           </div>
           <div className="rounded-[1.6rem] border border-[#eadfd1] bg-white p-7 transition duration-200 hover:-translate-y-1 hover:shadow-lg">
             <Clock className="h-6 w-6 text-[#221b13]" />
@@ -360,7 +360,7 @@ export default function ContactPage() {
           <div className="rounded-[1.6rem] border border-[#eadfd1] bg-white p-7 transition duration-200 hover:-translate-y-1 hover:shadow-lg">
             <ShieldCheck className="h-6 w-6 text-[#221b13]" />
             <h3 className="mt-5 font-display text-[24px] leading-none tracking-[-0.02em] text-[#171717]">Safe support</h3>
-            <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">Never share OTPs, full card details, or passwords with anyone claiming to be Fitzo.</p>
+            <p className="mt-3 text-[14px] leading-7 text-[#5a554f]">Never share OTPs, full card details, or passwords with anyone claiming to be Fitxo.</p>
           </div>
         </div>
       </section>

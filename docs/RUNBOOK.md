@@ -1,4 +1,4 @@
-# Fitzo — Ops Runbook
+# Fitxo — Ops Runbook
 
 **Launch-plan W5.5. This is the "something is wrong at 9pm" document.** Symptom → check →
 fix, in that order. Everything here has been verified against the code; where a value is a
@@ -8,7 +8,7 @@ Companion docs: **`ENVIRONMENTS.md`** (dev/prod setup, key rotation, backups),
 **`PROGRESS.md`** (what exists and why — the decisions log is the archaeology).
 
 > ⚠️ **One item still open before launch: the support contact.** Admin → Settings
-> currently holds the placeholder `support@fitzo.in` with no phone. **Nobody is
+> currently holds the placeholder `support@fitxo.co.in` with no phone. **Nobody is
 > confirmed to be reading it** — decide the address (and a number, if there is
 > one), set them in Settings, and record them in §6. A contact that looks staffed
 > and isn't is worse than none.
@@ -122,6 +122,12 @@ duplicates, so them racing is safe.
 > This matters more since 2026-07-26, when payment moved to the **checkout** screen: customers
 > now pay at a moment when closing the tab is likelier, which is exactly what this path exists
 > to recover.
+> 🔴 **KNOWN BROKEN as of 2026-07-25 — fix before launch.** Vault's `razorpay_webhook_secret`
+> holds a copy of the **API key secret**, so the webhook path settles **nothing**: the route
+> verifies against the env value and passes, then the in-DB re-verification against Vault
+> rejects it. Diagnose and fix per `ENVIRONMENTS.md` → "Rotating the Razorpay keys"; confirm
+> with `pnpm razorpay:check`. Until then, a customer whose browser dies right after paying
+> has a captured payment Fitxo never records.
 
 **Check:**
 1. Admin → **Payments** — find the row. `initiated` means we created the order but never
@@ -130,7 +136,7 @@ duplicates, so them racing is safe.
 3. `pnpm razorpay:check` — if the Vault key secret and the app envs disagree, **every**
    settlement fails signature verification. That's the first thing to rule out.
 
-**Fix:** if Razorpay shows captured and Fitzo shows `initiated`, re-deliver the webhook from
+**Fix:** if Razorpay shows captured and Fitxo shows `initiated`, re-deliver the webhook from
 the Razorpay dashboard once the secret is correct. Never hand-edit a payment row to
 `success` — the in-DB HMAC check exists precisely so settlement can't be forged.
 
@@ -184,7 +190,7 @@ check unavailable"* row, migration 058 isn't applied on that environment.
 **Policy (decided 2026-07-26): refund the ₹49, and treat it as the standing answer.**
 
 When a rider travelled and couldn't deliver (customer unreachable, wrong address, safety
-issue), Fitzo still pays the rider — so a refund means absorbing roughly the rider fee on a
+issue), Fitxo still pays the rider — so a refund means absorbing roughly the rider fee on a
 trip that did happen. That cost is accepted: at launch volume, ₹49 is far cheaper than a
 customer's first experience being "they took my money and nothing arrived", and the customer
 usually cannot prove they *were* reachable.
@@ -222,7 +228,7 @@ not an oversight.
 
 **Procedure:** pay from the bank/UPI first → then **Record payout** in the admin screen and
 paste the **UTR / UPI transaction id** into *Payment reference*. Always record the reference:
-it is the only link between Fitzo's ledger and the bank, and it is what makes a "you didn't
+it is the only link between Fitxo's ledger and the bank, and it is what makes a "you didn't
 pay me" dispute answerable. Every payout is audit-logged.
 
 **"I wasn't paid":** Admin → Payouts / Agent Payouts shows outstanding vs paid per partner;
@@ -280,10 +286,10 @@ live cutover — with real money flowing daily this stops being optional.
 Rider-reported failures land here automatically at high priority.
 
 ⚠️ **Customer-facing contact is still unset.** Admin → Settings holds `contact_email =
-support@fitzo.in` and an **empty** `support_phone`, and that address is a placeholder nobody
+support@fitxo.co.in` and an **empty** `support_phone`, and that address is a placeholder nobody
 has confirmed is monitored. Before launch: pick the address a human genuinely reads, set it in
 Settings, and write it here. Leaving a plausible-looking address in place is the failure mode —
-a customer with a payment problem mails into a void and concludes Fitzo is a scam.
+a customer with a payment problem mails into a void and concludes Fitxo is a scam.
 
 **SLA (agreed 2026-07-26):**
 

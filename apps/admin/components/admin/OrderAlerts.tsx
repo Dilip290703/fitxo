@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { Icon } from '@/components/admin/icons';
 
 type AlertItem = {
@@ -12,7 +12,7 @@ type AlertItem = {
   at: number;
 };
 
-const MUTE_KEY = 'fitzo-admin-alerts-muted';
+const MUTE_KEY = 'fitxo-admin-alerts-muted';
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat('en-IN', {

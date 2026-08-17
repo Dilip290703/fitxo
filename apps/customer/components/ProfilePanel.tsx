@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { getStorageItem } from "@/lib/storage";
 import { useLocation, PINCODE_STORAGE_KEY } from "@/store/locationStore";
 import { useWishlist } from "@/store/wishlistStore";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 type UserProfile = {
   name: string;
@@ -80,7 +80,7 @@ function toUIOrder(order: any): Order {
   };
 }
 
-const emptyUser: UserProfile = { name: "", email: "", phone: "", membership: "Fitzo Muse" };
+const emptyUser: UserProfile = { name: "", email: "", phone: "", membership: "Fitxo Muse" };
 const emptyAddress: Address = { id: "", label: "Home", name: "", line: "", city: "", pincode: "", isDefault: false };
 
 /* ---------------------------------------------------------------- icons */
@@ -204,7 +204,7 @@ export function ProfilePanel() {
         name: userData?.name ?? session.user.user_metadata?.name ?? session.user.email?.split("@")[0] ?? "",
         email: userData?.email ?? session.user.email ?? "",
         phone: userData?.phone ?? session.user.phone ?? "",
-        membership: "Fitzo Muse",
+        membership: "Fitxo Muse",
       };
       setUser(profile);
       setProfileDraft(profile);

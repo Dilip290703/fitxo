@@ -5,7 +5,7 @@ import { CxReveal, CxRevealGroup, CxRiseChild } from "@/components/concept/CxRev
 import { AutoVideo } from "@/components/concept/AutoVideo";
 
 /**
- * "Shoppable Video" row (Fitzo landing). Each card autoplays a muted,
+ * "Shoppable Video" row (Fitxo landing). Each card autoplays a muted,
  * looping vertical clip from public/concept/video-N.mp4 with the product still
  * as the poster (so it looks right even before the clips are added). A small
  * product chip + name + price + Add-to-cart sits alongside. No play button —

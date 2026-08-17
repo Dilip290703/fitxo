@@ -74,7 +74,7 @@ export function StaffView() {
       </div>
 
       <p className="mt-5 rounded-2xl bg-cream px-5 py-4 text-[12px] leading-6 text-body">
-        Staff accounts are provisioned by the Fitzo team — to add or remove a manager,
+        Staff accounts are provisioned by the Fitxo team — to add or remove a manager,
         contact admin with their name and email. Self-serve invites are on the roadmap.
       </p>
     </div>

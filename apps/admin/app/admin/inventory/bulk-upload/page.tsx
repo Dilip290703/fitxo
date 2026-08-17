@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createClient } from '@fitzo/supabase/client';
+import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { useRouter } from 'next/navigation';
 import { logActivity } from '@/lib/activity';
@@ -69,7 +69,7 @@ export default function BulkUploadPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'fitzo-product-template.csv';
+    a.download = 'fitxo-product-template.csv';
     a.click();
     URL.revokeObjectURL(url);
   };

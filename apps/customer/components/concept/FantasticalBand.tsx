@@ -21,7 +21,7 @@ export function FantasticalBand({ image }: { image: string }) {
           Fantastical<br />Friends
         </h2>
         <p className="mt-5 max-w-[460px] text-[15px] text-white/85">
-          We love seeing how you style your Fitzo picks — tag us and get featured.
+          We love seeing how you style your Fitxo picks — tag us and get featured.
         </p>
         <button className="mt-8 inline-flex h-12 items-center border border-white/70 px-9 text-[12px] font-semibold uppercase tracking-[0.18em] transition hover:bg-white hover:text-[#1a1a1a]">
           Shop now

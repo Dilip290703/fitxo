@@ -7,12 +7,12 @@ import { NextResponse } from "next/server";
  * identifying User-Agent and rejects anonymous browser traffic, and calling it
  * from the client would also mean a cross-origin request on every detect tap.
  *
- * Keyless by design — Fitzo has no Maps key (see the agent-panel audit, which
+ * Keyless by design — Fitxo has no Maps key (see the agent-panel audit, which
  * reached the same conclusion for rider navigation).
  */
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/reverse";
-const CONTACT = "Fitzo (https://fitzo.in)";
+const CONTACT = "Fitxo (https://fitxo.co.in)";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

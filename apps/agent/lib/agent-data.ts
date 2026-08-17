@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import type { DeliveryStatus, DropAddress, OrderStatus } from "./deliveries";
 
 // ── Completed/earnings rows ──────────────────────────────────────────────

@@ -1,17 +1,17 @@
 /**
- * FitZo Pincode System — customer-app helpers.
+ * FitXo Pincode System — customer-app helpers.
  *
- * FitZo currently delivers ONLY in Pune.
+ * FitXo currently delivers ONLY in Pune.
  * All delivery logic across the app must use the helpers below.
  * Never hardcode ETA text or serviceability logic elsewhere.
  *
- * The pincode LIST itself lives in @fitzo/pincode (shared with the admin
+ * The pincode LIST itself lives in @fitxo/pincode (shared with the admin
  * panel's store-approval gate) — this module re-exports it and adds the
  * customer-facing delivery messaging.
  */
 
-export { punePincodes, isPunePincode } from "@fitzo/pincode";
-import { isPunePincode } from "@fitzo/pincode";
+export { punePincodes, isPunePincode } from "@fitxo/pincode";
+import { isPunePincode } from "@fitxo/pincode";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,6 +50,6 @@ export function getDeliveryStatus(pincode: string): DeliveryStatus {
   return {
     available: false,
     eta: null,
-    message: "FitZo is currently available only in Pune.",
+    message: "FitXo is currently available only in Pune.",
   };
 }

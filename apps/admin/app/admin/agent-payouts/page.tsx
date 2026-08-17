@@ -1,4 +1,4 @@
-import { createClient } from '@fitzo/supabase/server';
+import { createClient } from '@fitxo/supabase/server';
 import StatsCard from '@/components/admin/StatsCard';
 import { computeAgentPayables } from './compute';
 import AgentPayoutsClient, { type AgentPayableRow } from './AgentPayoutsClient';

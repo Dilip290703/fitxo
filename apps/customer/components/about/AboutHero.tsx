@@ -4,7 +4,7 @@ export function AboutHero() {
       <div className="section-frame">
         <div className="mx-auto max-w-[760px] text-center">
           <p className="fade-up text-[11px] font-extrabold uppercase tracking-[0.28em] text-[#8b7b69]">
-            About FitZo
+            About FitXo
           </p>
           <h1 className="fade-up fade-delay-1 mt-6 font-display text-[48px] leading-[0.94] font-medium tracking-[-0.05em] text-[#171717] sm:text-[72px]">
             Fashion that fits your life.

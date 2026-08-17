@@ -63,7 +63,7 @@ export function ReturnsView() {
       <PageHeader
         eyebrow="Returns"
         title="Returns management"
-        sub="Items customers chose to return — pickups are handled by Fitzo riders."
+        sub="Items customers chose to return — pickups are handled by Fitxo riders."
       />
 
       <div className="mt-6 flex flex-wrap gap-2">

@@ -3,9 +3,9 @@ import { Navbar } from "@/components/Navbar";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions – FitZo",
+  title: "Terms & Conditions – FitXo",
   description:
-    "Read the terms and conditions governing your use of FitZo's try-before-you-buy fashion delivery service in Pune.",
+    "Read the terms and conditions governing your use of FitXo's try-before-you-buy fashion delivery service in Pune.",
 };
 
 const sections = [
@@ -13,16 +13,16 @@ const sections = [
     id: "acceptance",
     title: "1. Acceptance of Terms",
     paragraphs: [
-      "By accessing or using the FitZo platform — including our website, mobile application, and doorstep try-on services — you agree to be bound by these Terms and Conditions. If you do not agree, please do not use the platform.",
-      "FitZo reserves the right to modify these terms at any time. Material changes will be communicated via email or a prominent notice on the platform at least 14 days before they take effect. Continued use of the platform after changes constitutes acceptance.",
+      "By accessing or using the FitXo platform — including our website, mobile application, and doorstep try-on services — you agree to be bound by these Terms and Conditions. If you do not agree, please do not use the platform.",
+      "FitXo reserves the right to modify these terms at any time. Material changes will be communicated via email or a prominent notice on the platform at least 14 days before they take effect. Continued use of the platform after changes constitutes acceptance.",
     ],
   },
   {
     id: "eligibility",
     title: "2. Eligibility",
     paragraphs: [
-      "You must be at least 16 years of age to use FitZo. By creating an account, you represent that you meet this age requirement and that all information provided is accurate and complete.",
-      "FitZo currently operates in Pune, Maharashtra. Services are available only within our active delivery zones. You can check availability by entering your pincode on the platform.",
+      "You must be at least 16 years of age to use FitXo. By creating an account, you represent that you meet this age requirement and that all information provided is accurate and complete.",
+      "FitXo currently operates in Pune, Maharashtra. Services are available only within our active delivery zones. You can check availability by entering your pincode on the platform.",
     ],
   },
   {
@@ -30,23 +30,23 @@ const sections = [
     title: "3. Account & Registration",
     paragraphs: [
       "You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Notify us immediately of any unauthorized use.",
-      "FitZo reserves the right to suspend or terminate accounts that violate these terms, engage in fraudulent activity, or misuse the try-before-you-buy service.",
+      "FitXo reserves the right to suspend or terminate accounts that violate these terms, engage in fraudulent activity, or misuse the try-before-you-buy service.",
     ],
   },
   {
     id: "try-before-you-buy",
     title: "4. Try-Before-You-Buy Service",
     paragraphs: [
-      "FitZo's core offering allows you to order fashion items, book a delivery slot, and try them on at your door while the rider waits (typically 7 minutes), paying only for the items you choose to keep. Items you do not wish to purchase are handed back to the rider at the same visit.",
+      "FitXo's core offering allows you to order fashion items, book a delivery slot, and try them on at your door while the rider waits (typically 7 minutes), paying only for the items you choose to keep. Items you do not wish to purchase are handed back to the rider at the same visit.",
       "You are expected to handle try-on items with reasonable care. Items must be returned in the same condition as delivered — unworn (beyond trying on), with all tags and packaging intact. Items that are damaged, stained, altered, or returned without original tags may not be eligible for return.",
-      "FitZo reserves the right to limit the number of items per try-on order and to restrict the service for accounts with a history of excessive returns or misuse.",
+      "FitXo reserves the right to limit the number of items per try-on order and to restrict the service for accounts with a history of excessive returns or misuse.",
     ],
   },
   {
     id: "orders-delivery",
     title: "5. Orders & Delivery",
     paragraphs: [
-      "FitZo aims to deliver orders within the delivery slot you select at checkout, subject to availability, partner store hours, and delivery zone coverage. Slot times are estimates and not guaranteed.",
+      "FitXo aims to deliver orders within the delivery slot you select at checkout, subject to availability, partner store hours, and delivery zone coverage. Slot times are estimates and not guaranteed.",
       "You must provide accurate delivery address and contact details. A valid phone number is required for delivery coordination. If delivery cannot be completed due to incorrect information or recipient unavailability, re-delivery charges may apply.",
       "Order confirmation constitutes a binding agreement to receive the items for try-on. Cancellation is free if made within 5 minutes of placing the order. After dispatch, cancellation may not be possible.",
     ],
@@ -55,9 +55,9 @@ const sections = [
     id: "pricing-payments",
     title: "6. Pricing & Payments",
     paragraphs: [
-      "All prices displayed on FitZo are in Indian Rupees (₹) and include applicable GST unless otherwise stated. Prices are set by our partner stores and may change without notice.",
+      "All prices displayed on FitXo are in Indian Rupees (₹) and include applicable GST unless otherwise stated. Prices are set by our partner stores and may change without notice.",
       "Payment is collected only for items you choose to keep after your try-on. Accepted payment methods include UPI, credit/debit cards, net banking, and digital wallets.",
-      "In the event of a payment failure or dispute, FitZo will work with you and our payment partners to resolve the issue. Refunds for returned items are processed within 5–7 business days to the original payment method.",
+      "In the event of a payment failure or dispute, FitXo will work with you and our payment partners to resolve the issue. Refunds for returned items are processed within 5–7 business days to the original payment method.",
     ],
   },
   {
@@ -65,7 +65,7 @@ const sections = [
     title: "7. Returns & Refunds",
     paragraphs: [
       "Items not kept during a doorstep try-on are returned immediately to the delivery partner at no cost to you. For items purchased and later found to be defective or incorrect, you may initiate a return within 7 days of delivery.",
-      "Refunds are processed to the original payment method within 5–7 business days after the returned item is inspected and approved. Shipping charges, if any, are non-refundable unless the return is due to a FitZo error.",
+      "Refunds are processed to the original payment method within 5–7 business days after the returned item is inspected and approved. Shipping charges, if any, are non-refundable unless the return is due to a FitXo error.",
       "Certain items — including innerwear, swimwear, customized products, and items marked as final sale — are not eligible for return. These exclusions are clearly indicated on the product page.",
     ],
   },
@@ -73,40 +73,40 @@ const sections = [
     id: "partner-stores",
     title: "8. Partner Stores",
     paragraphs: [
-      "FitZo operates as a marketplace connecting you with local fashion stores and boutiques in Pune. Product quality, authenticity, and descriptions are the responsibility of partner stores.",
-      "While FitZo vets partner stores and monitors quality, we act as an intermediary and are not the direct seller of products. Any warranty or guarantee on products is provided by the respective brand or store.",
+      "FitXo operates as a marketplace connecting you with local fashion stores and boutiques in Pune. Product quality, authenticity, and descriptions are the responsibility of partner stores.",
+      "While FitXo vets partner stores and monitors quality, we act as an intermediary and are not the direct seller of products. Any warranty or guarantee on products is provided by the respective brand or store.",
     ],
   },
   {
     id: "intellectual-property",
     title: "9. Intellectual Property",
     paragraphs: [
-      "All content on FitZo — including the logo, design, text, graphics, software, and user interface — is the property of FitZo or its licensors and is protected by copyright, trademark, and other intellectual property laws.",
-      "You may not reproduce, distribute, modify, create derivative works of, or commercially exploit any content from the platform without prior written consent from FitZo.",
+      "All content on FitXo — including the logo, design, text, graphics, software, and user interface — is the property of FitXo or its licensors and is protected by copyright, trademark, and other intellectual property laws.",
+      "You may not reproduce, distribute, modify, create derivative works of, or commercially exploit any content from the platform without prior written consent from FitXo.",
     ],
   },
   {
     id: "limitation-liability",
     title: "10. Limitation of Liability",
     paragraphs: [
-      "FitZo provides the platform on an \"as-is\" and \"as-available\" basis. We do not guarantee uninterrupted, error-free, or secure access to the platform at all times.",
-      "To the maximum extent permitted by law, FitZo shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the platform, including but not limited to loss of data, profits, or goodwill.",
-      "FitZo's total liability for any claim related to the platform or service shall not exceed the amount paid by you for the specific order giving rise to the claim.",
+      "FitXo provides the platform on an \"as-is\" and \"as-available\" basis. We do not guarantee uninterrupted, error-free, or secure access to the platform at all times.",
+      "To the maximum extent permitted by law, FitXo shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the platform, including but not limited to loss of data, profits, or goodwill.",
+      "FitXo's total liability for any claim related to the platform or service shall not exceed the amount paid by you for the specific order giving rise to the claim.",
     ],
   },
   {
     id: "prohibited-conduct",
     title: "11. Prohibited Conduct",
     paragraphs: [
-      "You agree not to: use the platform for any unlawful purpose; provide false or misleading information; attempt to access other users' accounts; interfere with platform security or performance; use automated tools to scrape or collect data; resell items purchased through FitZo for commercial purposes; or abuse the try-before-you-buy service through fraudulent returns.",
+      "You agree not to: use the platform for any unlawful purpose; provide false or misleading information; attempt to access other users' accounts; interfere with platform security or performance; use automated tools to scrape or collect data; resell items purchased through FitXo for commercial purposes; or abuse the try-before-you-buy service through fraudulent returns.",
     ],
   },
   {
     id: "governing-law",
     title: "12. Governing Law & Disputes",
     paragraphs: [
-      "These terms are governed by the laws of India. Any dispute arising from or related to these terms or your use of FitZo shall be subject to the exclusive jurisdiction of the courts in Pune, Maharashtra.",
-      "Before initiating legal proceedings, you agree to attempt resolution through FitZo's customer support and, if necessary, through mediation.",
+      "These terms are governed by the laws of India. Any dispute arising from or related to these terms or your use of FitXo shall be subject to the exclusive jurisdiction of the courts in Pune, Maharashtra.",
+      "Before initiating legal proceedings, you agree to attempt resolution through FitXo's customer support and, if necessary, through mediation.",
     ],
   },
   {
@@ -136,7 +136,7 @@ export default function TermsPage() {
             Terms & Conditions
           </h1>
           <p className="mt-6 max-w-2xl text-[16px] leading-8 text-[#5a554f]">
-            These terms govern your use of FitZo — the try-before-you-buy
+            These terms govern your use of FitXo — the try-before-you-buy
             fashion delivery platform operating in Pune, Maharashtra. Please
             read them carefully before using our services.
           </p>
@@ -191,17 +191,17 @@ export default function TermsPage() {
                       <p>
                         <strong>Email:</strong>{" "}
                         <a
-                          href="mailto:legal@fitzo.in"
+                          href="mailto:legal@fitxo.co.in"
                           className="text-[#3e6dd2] underline"
                         >
-                          legal@fitzo.in
+                          legal@fitxo.co.in
                         </a>
                       </p>
                       <p>
                         <strong>Phone:</strong> +91 98765 43210
                       </p>
                       <p>
-                        <strong>Address:</strong> FitZo Legal, Baner Road, Pune,
+                        <strong>Address:</strong> FitXo Legal, Baner Road, Pune,
                         Maharashtra 411045
                       </p>
                     </div>

@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 import { countPendingStoreOrders, loadStoreOrder } from "@/lib/orders";
 import { useStorePanel } from "@/components/panel/PanelContext";
 import { Icon } from "@/components/icons";
@@ -48,7 +48,7 @@ export function useOrderAlerts(): AlertsApi {
   return ctx;
 }
 
-const MUTE_KEY = "fitzo-store-alerts-muted";
+const MUTE_KEY = "fitxo-store-alerts-muted";
 
 /**
  * Live new-order alerts for the store. Mounted ONCE in the panel layout, so

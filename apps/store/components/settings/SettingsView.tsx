@@ -98,7 +98,7 @@ export function SettingsView() {
               </StatusBadge>
             </div>
             <p className="mt-3 rounded-xl bg-cream px-4 py-3 text-[12px] leading-5 text-body">
-              Your store name and URL are managed by the Fitzo team — contact admin to change them.
+              Your store name and URL are managed by the Fitxo team — contact admin to change them.
             </p>
           </section>
 

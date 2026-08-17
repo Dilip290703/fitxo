@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 const STEPS: { title: string; body: string; href?: string; cta?: string }[] = [
   {
     title: "Complete your store profile",
-    body: "Add your contact details and address so riders and the Fitzo team can reach you.",
+    body: "Add your contact details and address so riders and the Fitxo team can reach you.",
     href: "/settings",
     cta: "Open settings",
   },
@@ -45,8 +45,8 @@ export function OnboardingView() {
     <div className="mx-auto w-full max-w-[760px] px-5 py-8 sm:px-8 lg:py-10">
       <PageHeader
         eyebrow="Guide"
-        title="Selling on Fitzo"
-        sub="Fitzo brings the fitting room to your customers' doorstep: they order, try on while the rider waits, and keep only what they love. Here's how to run your store on it."
+        title="Selling on Fitxo"
+        sub="Fitxo brings the fitting room to your customers' doorstep: they order, try on while the rider waits, and keep only what they love. Here's how to run your store on it."
       />
 
       <ol className="mt-7 space-y-4">

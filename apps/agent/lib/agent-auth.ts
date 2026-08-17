@@ -1,4 +1,4 @@
-import { createClient } from "@fitzo/supabase/client";
+import { createClient } from "@fitxo/supabase/client";
 
 /**
  * A rider is a Supabase user with role 'rider' AND a `riders` row. They can only

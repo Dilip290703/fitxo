@@ -14,7 +14,7 @@ export default function OnboardingPage() {
       <main className="grid min-h-screen place-items-center bg-paper px-6">
         <div className="w-full max-w-[360px] rounded-2xl border border-danger-line bg-danger-bg p-6 text-center">
           <p className="text-[14px] font-medium text-danger">
-            We couldn&apos;t reach Fitzo — check your connection.
+            We couldn&apos;t reach Fitxo — check your connection.
           </p>
           <button
             type="button"

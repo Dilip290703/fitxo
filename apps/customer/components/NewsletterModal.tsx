@@ -75,7 +75,7 @@ export function NewsletterModal({
         </div>
         <div className="min-w-0">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#a48d78]">
-            FitZo update
+            FitXo update
           </p>
           <p className="mt-2 text-[14px] leading-6 text-[#221b13]">{message}</p>
         </div>

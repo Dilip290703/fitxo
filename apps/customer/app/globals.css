@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Fitzo palette — warm neutral, luxury-editorial.
+   Fitxo palette — warm neutral, luxury-editorial.
      Feather White  #faf9f6  page background
      Porcelain Mist #f4f1ea  section / tile background
      Creamed Oat    #e6dac8  borders, soft fills
@@ -231,14 +231,14 @@
    the final state; a per-element animation-delay gives the stagger.
    ============================================================ */
 .rise-in {
-  animation: fitzoRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fitxoRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Transform-only on purpose: opacity is never animated, so the content is
    visible even if the animation clock never advances (paused/background
    renderers, throttled webviews). Worst case it rests 12px lower — never
    invisible. */
-@keyframes fitzoRiseIn {
+@keyframes fitxoRiseIn {
   from {
     transform: translateY(12px);
   }

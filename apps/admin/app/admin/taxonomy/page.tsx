@@ -1,5 +1,5 @@
-import { createClient } from '@fitzo/supabase/server';
-import type { Category } from '@fitzo/supabase/types';
+import { createClient } from '@fitxo/supabase/server';
+import type { Category } from '@fitxo/supabase/types';
 import TaxonomyTabs from './TaxonomyTabs';
 
 function buildTree(categories: Category[]): Category[] {
