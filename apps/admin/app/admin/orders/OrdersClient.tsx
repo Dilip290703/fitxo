@@ -7,6 +7,7 @@ import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { logActivity } from '@/lib/activity';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 import type { OrderStatus } from '@fitxo/supabase/types';
 
 interface OrderRow {
@@ -68,6 +69,15 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  // Live list (audit §2.4). Until now the only thing that redrew this screen
+  // was `router.refresh()` after the admin's own bulk-confirm — so every change
+  // made anywhere else (customer cancels, store confirms, rider delivers, the
+  // try-window cron completes an order) left the list stale until someone
+  // reloaded by hand. Paused during a bulk write so a tick can't repaint the
+  // rows mid-update. Filters, search and the checkbox selection are client
+  // state and survive each refresh.
+  useLiveRefresh({ paused: bulkBusy });
 
   // Saved views (localStorage — 2 users, no need for a table).
   const [views, setViews] = useState<SavedView[]>([]);

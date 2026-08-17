@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import { logActivity } from '@/lib/activity';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 import { cancelOrderWithRefund } from '../actions';
 import type { OrderStatus } from '@fitxo/supabase/types';
 
@@ -39,6 +40,14 @@ export default function OrderActions({
   const [loading, setLoading] = useState(false);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [reason, setReason] = useState('');
+
+  // Live detail (audit §2.4). This screen decides whether the rider can be
+  // dispatched from `prepared_at` on every item — a flag the STORE panel sets,
+  // on a different screen, in a different app. Without a refresh the admin
+  // watches a stale "not all items ready" until they reload. Paused while an
+  // action is in flight so a tick can't land between the write and its own
+  // `router.refresh()`; the open dialog and any typed reason survive a refresh.
+  useLiveRefresh({ paused: loading });
 
   // Store fulfillment — the rider can't be dispatched until the store has
   // marked every line item ready for pickup (set on the Store panel).
