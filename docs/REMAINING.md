@@ -1,11 +1,42 @@
-# FITXO — What's Actually Remaining (audit draft)
+# FITXO — What's Actually Remaining
 
 **Audited 2026-08-12 against live code + the live dev database**, not against `PROGRESS.md`.
+**Reconciled 2026-08-17** after the rename landed — see "What changed since the audit" below.
 Owner tags: **J** = Jay · **D** = Dilip · **A** = Amit.
 
 > **How to read this:** every line marked ✅ *verified* was checked against real code or a real
 > DB query during this audit. Lines marked ⚠️ *unverified* are things I could **not** confirm from
 > this machine and someone must check by hand. Nothing here is assumed from the old docs.
+
+> ⚠️ **This file is partly a historical record — do not run a brand find-and-replace over it.**
+> Its subject *is* the old name, so a blind replace turns "the move off Fitzo" into "the move off
+> Fitxo" and "FITZO → FITXO" into "FITXO → FITXO". That is exactly what happened in PR #63 and
+> had to be undone by hand on 2026-08-17. Occurrences of **Fitzo** below are deliberate.
+
+---
+
+## What changed since the 2026-08-12 audit
+
+- ✅ **The rename landed** — PR #63 `rebrand: FITZO → FITXO across the monorepo`, 232 files,
+  merged to `main`. Phase 1 is **done**.
+- ✅ **Migration `059_rebrand_fitxo.sql` exists and is applied on dev.** Verified by query
+  2026-08-17: `site_name = "Fitxo"`, `contact_email = "support@fitxo.co.in"`. New orders get the
+  **`FTX-`** prefix; existing `FTZ-` order numbers are deliberately left alone.
+- ✅ **The domain is bought: `fitxo.co.in`** (with `store.` / `agent.` / `admin.` subdomains).
+  This is the name already hardcoded across the codebase and written into the DB — the audit's
+  open question of `fitxo.in` vs `.co.in` is **settled as `.co.in`**.
+- ✅ **Supabase moved to the new Fitxo email.** An org transfer keeps the project ref, so
+  `zqmggvuizjkxbrxlblzp` (dev) / `bozqclrtbxkjevgztruc` (prod) are unchanged and **no env file
+  needs editing** for this.
+- ⬜ **Razorpay: a new account under the Fitxo identity is still to be created.** This is not just
+  a login change — it reissues the **key id, key secret and webhook secret**, which live in *four*
+  places (customer env, admin env, Vault on dev, Vault on prod). Treat it as a full rotation and
+  follow `ENVIRONMENTS.md` → "Rotating the Razorpay keys"; a half-done rotation is the exact
+  silent-failure mode recorded in the 2026-07-21 decisions-log entry.
+- ⬜ **Hosting: Jay is standing the sites up shortly** (W2.2, §3.1) — still the biggest bottleneck.
+
+**Consequence for §2:** migration **059 is taken by the rebrand**, so the store-propagation work
+below is **060**, not 059.
 
 ---
 
@@ -27,26 +58,31 @@ rider pay **₹40**, caps **8 items / 1 active order / daily off**, offer expiry
 ⚠️ **Unverified: the prod project** (`bozqclrtbxkjevgztruc`). No prod credentials on this machine —
 **D must run the same check against prod** before trusting any "applied to prod" claim.
 
-**Next free migration number = 059.** (055 is a reserved hole for M4 tax; 043–054 + 056–058 exist.)
+**Next free migration number = 060.** (055 is a reserved hole for M4 tax; 043–054 + 056–059 exist
+— 059 is the rebrand.)
 
 ---
 
 ## PHASE 0 — Decide before writing any code
 
-### 0.1 — [A + J] Clear the name FITXO *before* the rename lands 🔴 BLOCKING
-The move off Fitxo happened because the name was contested. **Do not repeat the mistake in the
-other direction.** As of 2026-08-05 Amit was preparing the FITXO filing (Class 35 primary,
-Class 25 defensive, ₹4,500/class).
+### 0.1 — [A + J] Clear the name FITXO *before* the rename lands — ⚠️ PARTLY RESOLVED
+The move off **Fitzo** happened because that name was already registered. **Do not repeat the
+mistake in the other direction.** As of 2026-08-05 Amit was preparing the **FITZO** filing
+(Class 35 primary, Class 25 defensive, ₹4,500/class).
 
-- Confirm whether the **FITXO application was actually submitted**. If it was, that filing and fee
-  are now moot and the money is spent — decide whether to abandon or let it lapse.
-- Re-run the **Contains + Phonetic** search on **FITXO** across all classes (not exact-match —
-  exact-match is what hid the problem last time). Pull the **specification** of any cited mark
-  before calling it a blocker or a pass; the class number alone decides nothing.
-- Check **fitxo.in** (and .com) availability — the current codebase hardcodes `fitxo.co.in` in 45 places
-  and `support@fitxo.co.in` is live in the database.
+- ✅ **The name decision is made and the rename has shipped** — see "What changed" above.
+- ✅ **Domain secured: `fitxo.co.in`.** The `.in` vs `.co.in` question in the original audit is
+  closed; `.co.in` is what the code and the DB use.
+- ⬜ **[A] Still open — the trademark half.** Confirm whether the **FITZO** application was
+  actually submitted; if it was, that filing and fee are moot and the money is spent — decide
+  whether to abandon it or let it lapse. Then re-run the **Contains + Phonetic** search on
+  **FITXO** across all classes (not exact-match — exact-match is what hid the problem last time),
+  and pull the **specification** of any cited mark before calling it a blocker or a pass; the
+  class number alone decides nothing.
 
-⚠️ I cannot check the trademark registry or domain availability from here. This is a human step.
+⚠️ The trademark registry is not reachable from this machine. That bullet is a human step, and it
+is now the *only* part of 0.1 outstanding — note the code shipped ahead of it, which is a risk
+someone accepted rather than one that was checked off.
 
 ### 0.2 — [D] Verify prod matches dev
 Run the RPC/schema probe + `verify-env.sh` against prod. Everything below assumes dev ≡ prod;
@@ -54,31 +90,46 @@ if it doesn't, that's a hidden launch blocker.
 
 ---
 
-## PHASE 1 — The rename (only after 0.1 clears)
+## PHASE 1 — The rename — ✅ DONE (PR #63, merged)
 
-### 1.1 — [J] FITXO → FITXO across the codebase
-**Now is the cheapest possible moment: there is exactly one open PR (#62) and zero in-flight
-feature branches.** Every extra week of building makes this rename bigger.
+### 1.1 — [J] FITZO → FITXO across the codebase — ✅ DONE
+Shipped as **PR #63**, 232 files, while there was exactly one open PR (#62) and zero in-flight
+feature branches — the cheapest possible moment, as planned.
 
-✅ Verified scope (excluding `node_modules`, `.next`, and 224 stale files under `.claude/worktrees`):
+Original verified scope (excluding `node_modules`, `.next`, and 224 stale files under
+`.claude/worktrees`): ~523 brand strings in `apps/` + `packages/`, 181 `@fitzo/*` package names,
+45 `fitzo.in` domain refs, ~220 real files across all 4 apps.
 
-| What | Count | Notes |
-|---|---|---|
-| Brand strings in `apps/` + `packages/` | ~523 | user-visible — must change |
-| `@fitxo/*` package names | 181 | internal only; mechanical, do it in the same PR |
-| `fitxo.co.in` domain refs | 45 | blocked on owning fitxo.in |
-| Files touched | ~220 real files | across all 4 apps |
+**How each of the three traps actually resolved:**
 
-**Three traps that a find-and-replace will get wrong** — decide each explicitly:
+1. ⚠️ **localStorage keys — renamed with NO migration shim.** The keys are now
+   `AUTH_STORAGE_KEY = "fitxo-auth"` and `PINCODE_STORAGE_KEY = "fitxo-pincode"`
+   (`apps/customer/lib/mockData.ts`, and `PINCODE_STORAGE_KEY` again in
+   `apps/customer/store/locationStore.tsx`). Nothing reads the old `fitzo-*` keys.
+   **Decided 2026-08-17: accept it.** On deploy every existing session signs out and saved
+   pincodes clear — which is tolerable only because there are no real customers yet (23 test
+   users on dev). **If this ships after any real signup, it is a regression**, so if launch slips
+   past first real users, revisit before deploying.
+2. ✅ **`system_settings.contact_email`** could not be fixed by a code rename — handled by
+   **migration 059**, which rewrites `site_name` → `Fitxo` and `contact_email` →
+   `support@fitxo.co.in`, moves both column DEFAULTs, and flips `generate_order_number()` from the
+   `FTZ-` prefix to `FTX-`. Existing order numbers keep `FTZ-` on purpose (renumbering would break
+   every receipt, job card and Razorpay note). Applied and verified on dev; **⚠️ prod unverified.**
+3. ⬜ **Outside the repo entirely** — still outstanding in part: Supabase project names, the
+   **Razorpay account/business name (new account still to be created)**, the GitHub repo name, and
+   any verified-website entry at Razorpay. None of these change by editing code.
 
-1. ✅ **localStorage keys** — `lib/mockData.ts` defines `AUTH_STORAGE_KEY = "fitxo-auth"` and
-   `PINCODE_STORAGE_KEY = "fitxo-pincode"`. Renaming these **silently signs out every existing
-   session and clears saved pincodes**. Either keep the old key strings, or write a one-time
-   migration that reads the old key and rewrites it.
-2. ✅ **`system_settings.contact_email`** is live in the DB as `support@fitxo.co.in`. A code rename
-   does not touch it — it needs an Admin > Settings edit (see 6.1, it's a placeholder anyway).
-3. **Outside the repo entirely:** Supabase project names, Razorpay account/business name, the
-   GitHub repo name, and any verified-website entry at Razorpay. None of these change by editing code.
+**Two things the rename got wrong, fixed on 2026-08-17:**
+- It replaced brand strings inside **already-applied migrations' comments** and inside this audit
+  document, where the old name is history rather than branding. The migrations were left alone
+  (correct — they are immutable history); this file was un-mangled by hand.
+- It did **not** touch `cancel_order_by_admin` in migration 058, which builds customer- and
+  store-facing notification bodies reading *"was cancelled by Fitzo support."* Those run live.
+  Fixed in **migration 060** (§2.1).
+
+**Deliberately not renamed, and correctly so:** the HMAC salt `'fitzo-rotation-check'` in
+migration 057. Changing it changes every stored fingerprint and would make `pnpm razorpay:check`
+report a false mismatch during the Razorpay rotation.
 
 ---
 
@@ -109,10 +160,15 @@ manager. The row lands in the database. The store UI then **throws it away**. A 
 keeps picking and packing an order that no longer exists — and under the upfront-fee model that
 order already took the customer's ₹49.
 
+Migration **060** also recreates `cancel_order_by_admin` (058) to fix the leftover *"cancelled by
+**Fitzo** support"* wording in the two notification bodies it writes — one to the customer, one to
+every store manager. 059 did not touch that function, so until 060 lands, every admin cancellation
+tells the customer the old brand name.
+
 ### 2.2 — [D] No keep/return decision reaches the store at all
 ✅ Verified: `notify_rider_on_decision` (023) notifies **only** `rider_user_for_order`. There is no
 store-side equivalent. The store's stock moves (047 release triggers) and its earnings change,
-but its screen doesn't. Needs a new trigger (migration **059**) + widening the store's kind filter.
+but its screen doesn't. Needs a new trigger (migration **060**) + widening the store's kind filter.
 
 ### 2.3 — [D] Store panel has no live refresh on any screen
 Even with notifications fixed, `/orders` and `/returns` render once. Add the 4s-poll pattern the
@@ -133,14 +189,16 @@ Three separate things are stuck behind "there is no public URL":
 - **Prod admin MFA** can't be switched on (it's env-var driven, and there's no deployment).
 - The **stale-offer sweep** stays unscheduled (needs a job runner that can reach Razorpay).
 
-⚠️ Also verified on **your machine**: `apps/admin/.env.local` has **no Razorpay keys** and **no**
+⚠️ Machine drift (2026-08-12, **Jay's** machine — reconciled since: Dilip's machine has all of
+these present, so this was drift, not a missing config): `apps/admin/.env.local` has **no Razorpay keys** and **no**
 `NEXT_PUBLIC_ADMIN_REQUIRE_MFA` / `ADMIN_EMAIL_ALLOWLIST`. `apps/customer/.env.local` has **no**
 `RAZORPAY_WEBHOOK_SECRET` and none of the auth feature flags. So locally: admin refunds
 (migration 041) and the admin cancel-and-refund action (058) **will fail**, and admin MFA is off.
 This may just be your machine drifting from Dilip's — worth reconciling before you debug a ghost.
 
-### 3.2 — [J] W1.2 SMS/DLT (MSG91) + SMTP signup + **fitxo.in** domain
-Now depends on 0.1. Phone-OTP login is currently flag-disabled precisely because this is missing.
+### 3.2 — [J] W1.2 SMS/DLT (MSG91) + SMTP signup — ✅ domain no longer blocking
+**`fitxo.co.in` is bought**, so the domain half of this line is closed; SMS/DLT (MSG91) and SMTP
+remain. Phone-OTP login is currently flag-disabled precisely because these are missing.
 
 ### 3.3 — [J] W2.4 custom SMTP on both Supabase projects
 ✅ Verified: `mailer_autoconfirm` behaviour means **every account today is unverified**. Cannot turn
@@ -154,7 +212,7 @@ email confirmation on until real SMTP exists or signup breaks on the built-in se
 
 ## PHASE 4 — Customer panel features still missing
 
-### 4.1 — [J] W3.1 slot booking (A2) — needs migration 059+
+### 4.1 — [J] W3.1 slot booking (A2) — needs migration 060+
 ✅ Verified: **zero** slot-related code in `app/checkout/`. But the homepage and marketing copy
 already promise slot-based delivery. Today the customer picks nothing.
 
@@ -205,9 +263,10 @@ whose ₹49 is stuck — has no route in. This undercuts the whole runbook suppo
 ## PHASE 6 — Business (A + D, runs in parallel with all code work)
 
 - **[D] Support contact — last runbook gate.** ✅ Verified live in the DB *right now*:
-  `contact_email = "support@fitxo.co.in"` (placeholder), `support_phone = ""`. A customer with a
-  payment problem currently mails an address nobody has confirmed anyone reads. Also needs the
-  rename (0.1/1.1).
+  `contact_email = "support@fitxo.co.in"` (set by migration 059, still a **placeholder**),
+  `support_phone = ""`. The rename is done, so what remains is the real question: **make that
+  mailbox exist on the new Fitxo email and confirm somebody reads it**, then set a phone if there
+  is one. A customer with a payment problem currently mails an address nobody has confirmed.
 - **[A/D] Entity + GST + CA call** — still the gate on Razorpay live KYC and payouts.
 - **[D] W4.8 M4 tax provisions** (migration 055, the reserved hole) — needs CA input.
 - **[D] W5.2 Razorpay LIVE cutover** — the rotation runbook exists and was proven on test keys.
@@ -221,10 +280,10 @@ whose ₹49 is stuck — has no route in. This undercuts the whole runbook suppo
 
 | # | Task | Owner | Why this position |
 |---|---|---|---|
-| 1 | FITXO trademark + domain clearance | **A + J** | everything else is wasted work if the name moves again |
+| ~~1~~ | ~~FITXO domain clearance~~ — ✅ `fitxo.co.in` bought. **[A] trademark search still open** | **A** | the code shipped ahead of this; see 0.1 |
 | 2 | Verify prod = dev | **D** | cheap; removes a hidden unknown |
-| 3 | Codebase rename to FITXO | **J** | zero in-flight branches right now — cheapest it will ever be |
-| 4 | Store cancel/return propagation (2.1–2.3, mig 059) | **D** | live bug with money attached |
+| ~~3~~ | ~~Codebase rename to FITXO~~ — ✅ **DONE**, PR #63 + migration 059 | **J** | done 2026-08-16 |
+| 4 | Store cancel/return propagation (2.1–2.3, mig **060**) | **D** | live bug with money attached |
 | 5 | Netlify 4 sites (W2.2) | **J** | unblocks webhook + prod MFA + sweeps |
 | 6 | Reconcile `.env.local` across machines | **J + D** | stops you debugging phantom failures |
 | 7 | Prove the Razorpay webhook on a real URL | **D** | first thing possible once #5 lands |
@@ -236,15 +295,15 @@ whose ₹49 is stuck — has no route in. This undercuts the whole runbook suppo
 | 13 | Customer complaint UI (4.5) | **J** | needs a real support address (#14) |
 | 14 | Support contact + entity/GST/KYC | **A + D** | long lead time — start early, finishes late |
 | 15 | ESLint → CI lint job → Playwright E2E | **J/D** | |
-| 16 | Razorpay live cutover + dry-run | **D + J** | last |
+| 16 | Razorpay live cutover + dry-run | **D + J** | last — and note the **new Fitxo Razorpay account** reissues all three credentials, so treat it as a full 4-place rotation |
 
 ---
 
 ## What I could NOT verify (someone must check by hand)
 
 1. **Prod database state** — no prod credentials on this machine.
-2. **Trademark status of FITXO or FITXO** — registry is not reachable from here.
-3. **fitxo.in domain availability.**
+2. **Trademark status of FITZO or FITXO** — registry is not reachable from here.
+3. ~~fitxo.in domain availability~~ — ✅ resolved: **`fitxo.co.in` is bought**.
 4. **Whether pg_cron jobs are actually scheduled and firing** — not exposed over the REST API.
 5. **Anything requiring a login** — I verified all four panels boot and render clean (zero console
    errors), but everything behind the admin/store/rider sign-in walls is code-verified, not click-tested.
