@@ -1,0 +1,36 @@
+# Firebase App Hosting — admin panel (admin.fitxo.co.in)
+#
+# This is the ONLY backend that gets the service-role key. It is RUNTIME-only
+# and must never be marked BUILD, or Next would be free to inline it into a
+# client bundle.
+
+runConfig:
+  minInstances: 0
+  maxInstances: 3
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: NEXT_PUBLIC_SUPABASE_URL
+    secret: supabase-url
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    secret: supabase-anon-key
+    availability: [BUILD, RUNTIME]
+
+  - variable: SUPABASE_SERVICE_ROLE_KEY
+    secret: supabase-service-role-key
+    availability: [RUNTIME]
+
+  # Admin MFA + allowlist. Both are read app-side; setting them here is what
+  # actually switches enforcement on for the deployed panel.
+  # ⚠️ The allowlist must contain your own admin email or you lock yourself out.
+  - variable: NEXT_PUBLIC_ADMIN_REQUIRE_MFA
+    value: "true"
+    availability: [BUILD, RUNTIME]
+
+  - variable: ADMIN_EMAIL_ALLOWLIST
+    secret: admin-email-allowlist
+    availability: [RUNTIME]
