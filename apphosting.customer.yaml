@@ -1,0 +1,45 @@
+# Customer storefront → fitxo.co.in   (backend: fitxo-customer, environment: customer)
+# See apphosting.yaml for why this is a root-level, per-environment file.
+
+scripts:
+  # Runs from the repo root, so pnpm resolves the workspace packages.
+  buildCommand: pnpm --filter @fitxo/customer build
+  # NOT the package's own `start` script — admin/agent/store hardcode
+  # --port 3001/3002/3003 there so all four can run locally at once, and a
+  # container listening on 3001 fails App Hosting's health check. Bare
+  # `next start` reads PORT, which App Hosting sets to 8080.
+  runCommand: pnpm --filter @fitxo/customer exec next start
+
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: NEXT_PUBLIC_SUPABASE_URL
+    secret: supabase-url
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    secret: supabase-anon-key
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_RAZORPAY_KEY_ID
+    secret: razorpay-key-id
+    availability: [BUILD, RUNTIME]
+
+  # Server-only — never BUILD, or Next could inline it into the client bundle.
+  - variable: RAZORPAY_KEY_SECRET
+    secret: razorpay-key-secret
+    availability: [RUNTIME]
+
+  # Held back until the webhook exists: Razorpay generates this secret when the
+  # webhook is created, and creating it needs the public URL this deploy makes.
+  # A yaml entry pointing at a secret that does not exist fails the build.
+  #   firebase apphosting:secrets:set razorpay-webhook-secret --project fitxo-app
+  #   firebase apphosting:secrets:grantaccess razorpay-webhook-secret --backend fitxo-customer
+  # - variable: RAZORPAY_WEBHOOK_SECRET
+  #   secret: razorpay-webhook-secret
+  #   availability: [RUNTIME]
