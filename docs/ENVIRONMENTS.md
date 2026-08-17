@@ -397,11 +397,13 @@ SELECT order_number, reason, fee_amount, razorpay_payment_id FROM pending_fee_re
 ```
 
 That ₹49 has been owed since 2026-07-18 (it originally failed on an empty test
-balance). If the account switches with that row outstanding, it becomes a
-**permanently unclearable entry** in `pending_fee_refunds()` and a standing
-amber row on the admin dashboard. That is worse than losing the ₹49 of test
-money: an alert that can never be cleared is an alert everyone learns to ignore,
-and this queue is the mechanism that catches *real* stuck fees later.
+balance). It is **test money on dev**, so nothing of value is lost — but if the
+account switches with that row outstanding it becomes a **permanently
+unclearable entry** in `pending_fee_refunds()` and a standing amber row on the
+admin dashboard. That is the actual cost: an alert that can never be cleared is
+an alert everyone learns to ignore, and this queue is the mechanism that catches
+*real* stuck fees later. Clear it to keep the queue trustworthy, not to recover
+the ₹49.
 
 **So, in order:**
 
@@ -409,9 +411,17 @@ and this queue is the mechanism that catches *real* stuck fees later.
    the old account's test balance if that is what is blocking, refund through
    Admin → Payments, and confirm the queue returns zero rows.
 2. Only then create the new account.
-3. ⚠️ **On prod this is real money.** Prod state is unverified (nobody has run
-   the probe against `bozqclrtbxkjevgztruc`) — check its queue is empty before
-   the cutover, not after.
+3. ✅ **Prod carries no exposure today — verified 2026-08-17.** `bozqclrtbxkjevgztruc`
+   holds **0 orders and 0 stores**: it was created 2026-07-15 as schema-only from
+   `prod_bootstrap.sql` and has never been seeded (W5.3 is still open). No orders
+   means no payments, so `pending_fee_refunds()` there is necessarily empty and
+   **no real money is at risk in this switch.** The only outstanding row anywhere
+   is dev's test ₹49.
+
+   ⚠️ **That is a fact about today, not a standing exemption.** Once prod is
+   seeded (W5.3) and takes its first real payment, this becomes the most
+   expensive item on the page — a customer's money that no account can return.
+   Re-check the queue before any *later* account change.
 
 Stale `initiated` rows are a milder version of the same thing and can be left;
 they were never captured, so nothing is owed. Expect them to stay stuck forever.
