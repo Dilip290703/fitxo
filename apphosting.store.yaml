@@ -1,0 +1,24 @@
+# Store-manager panel → store.fitxo.co.in   (backend: fitxo-store, environment: store)
+
+scripts:
+  buildCommand: pnpm --filter @fitxo/store build
+  # NOT the package's own `start` script — it hardcodes a dev port so all four
+  # panels can run locally at once, and a container listening on that port
+  # fails App Hosting's health check. Bare `next start` reads PORT (8080).
+  runCommand: pnpm --filter @fitxo/store exec next start
+
+runConfig:
+  minInstances: 0
+  maxInstances: 5
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: NEXT_PUBLIC_SUPABASE_URL
+    secret: supabase-url
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    secret: supabase-anon-key
+    availability: [BUILD, RUNTIME]
