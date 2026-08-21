@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Pager from '@/components/admin/Pager';
+import { buildQuery, type PageInfo } from '@/lib/pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { useToast } from '@/components/admin/Toast';
 import { updateComplaint, type ComplaintStatus } from './actions';
@@ -34,38 +37,42 @@ function formatDateTime(ts: string) {
 
 export default function ComplaintsClient({
   complaints,
-  initialTab,
+  pageInfo,
+  activeStatus,
+  activeSearch,
 }: {
+  /** One page of rows — the status filter and search ran in the query. */
   complaints: ComplaintRow[];
-  initialTab?: string;
+  pageInfo: PageInfo;
+  activeStatus: string;
+  activeSearch: string;
 }) {
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [tab, setTab] = useState<ComplaintStatus | 'all'>(
-    STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as ComplaintStatus | 'all') : 'all',
+
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/complaints${qs}`, { scroll: false });
+    },
+    [router, searchParams],
   );
-  const [search, setSearch] = useState('');
+
+  const [search, setSearch] = useState(activeSearch);
+  useEffect(() => setSearch(activeSearch), [activeSearch]);
+  useEffect(() => {
+    if (search === activeSearch) return;
+    const t = setTimeout(() => push({ q: search || null }), 350);
+    return () => clearTimeout(t);
+  }, [search, activeSearch, push]);
 
   const [active, setActive] = useState<ComplaintRow | null>(null);
   const [status, setStatus] = useState<ComplaintStatus>('open');
   const [response, setResponse] = useState('');
 
-  const filtered = useMemo(() => {
-    return complaints.filter((c) => {
-      if (tab !== 'all' && c.status !== tab) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !c.subject.toLowerCase().includes(q) &&
-          !c.message.toLowerCase().includes(q) &&
-          !(c.user?.email ?? '').toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [complaints, tab, search]);
+  // No client-side filter: `complaints` is already the filtered page.
 
   const open = (c: ComplaintRow) => {
     setActive(c);
@@ -93,9 +100,9 @@ export default function ComplaintsClient({
           {STATUS_TABS.map((t) => (
             <button
               key={t.value}
-              onClick={() => setTab(t.value)}
+              onClick={() => push({ status: t.value })}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+                activeStatus === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {t.label}
@@ -123,10 +130,10 @@ export default function ComplaintsClient({
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {complaints.length === 0 ? (
               <tr><td colSpan={5} className="px-4 py-12 text-center text-muted">No complaints.</td></tr>
             ) : (
-              filtered.map((c) => (
+              complaints.map((c) => (
                 <tr key={c.id} className="border-b border-hairline hover:bg-cream transition-colors">
                   <td className="px-4 py-3">
                     <p className="text-sm text-ink">{c.subject}</p>
@@ -147,6 +154,13 @@ export default function ComplaintsClient({
           </tbody>
         </table>
       </div>
+
+      <Pager
+        page={pageInfo.page}
+        pageSize={pageInfo.pageSize}
+        total={pageInfo.total}
+        onPage={(p) => push({ page: p === 0 ? null : p + 1 })}
+      />
 
       {active && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !isPending && setActive(null)}>

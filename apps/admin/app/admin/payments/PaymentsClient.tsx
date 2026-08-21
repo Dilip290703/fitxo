@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import RefundDialog from './RefundDialog';
@@ -24,6 +24,8 @@ export interface PaymentRow {
   users: { name: string; email: string } | null;
 }
 
+import { buildQuery, type PageInfo } from '@/lib/pagination';
+
 const STATUS_TABS = [
   { label: 'All', value: 'all' },
   { label: 'Success', value: 'success' },
@@ -43,12 +45,36 @@ function formatDateTime(ts: string) {
   });
 }
 
-export default function PaymentsClient({ payments, initialTab }: { payments: PaymentRow[]; initialTab?: string }) {
+export default function PaymentsClient({
+  payments,
+  pageInfo,
+  activeStatus,
+  activeSearch,
+}: {
+  /** One page of rows — the status filter and search ran in the query. */
+  payments: PaymentRow[];
+  pageInfo: PageInfo;
+  activeStatus: string;
+  activeSearch: string;
+}) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>(
-    STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as string) : 'all',
+  const searchParams = useSearchParams();
+
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/payments${qs}`, { scroll: false });
+    },
+    [router, searchParams],
   );
-  const [search, setSearch] = useState('');
+
+  const [search, setSearch] = useState(activeSearch);
+  useEffect(() => setSearch(activeSearch), [activeSearch]);
+  useEffect(() => {
+    if (search === activeSearch) return;
+    const t = setTimeout(() => push({ q: search || null }), 350);
+    return () => clearTimeout(t);
+  }, [search, activeSearch, push]);
   const [refunding, setRefunding] = useState<PaymentRow | null>(null);
   const [syncing, startSync] = useTransition();
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -72,23 +98,7 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
     });
   };
 
-  const filtered = useMemo(() => {
-    return payments.filter((p) => {
-      if (activeTab !== 'all' && p.status !== activeTab) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !(p.razorpay_payment_id ?? '').toLowerCase().includes(q) &&
-          !(p.orders?.order_number ?? '').toLowerCase().includes(q) &&
-          !(p.users?.name ?? '').toLowerCase().includes(q) &&
-          !(p.users?.email ?? '').toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [payments, activeTab, search]);
+  // No client-side filter: `payments` is already the filtered page.
 
   const columns: Column<PaymentRow>[] = [
     {
@@ -167,9 +177,9 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
+              onClick={() => push({ status: tab.value })}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === tab.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+                activeStatus === tab.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {tab.label}
@@ -196,11 +206,24 @@ export default function PaymentsClient({ payments, initialTab }: { payments: Pay
       {syncMessage && <p className="text-xs text-muted">{syncMessage}</p>}
 
       <DataTable
-        data={filtered}
+        data={payments}
         columns={columns}
         keyField="id"
         emptyMessage="No payment records found."
         onRowClick={(row) => router.push(`/admin/orders/${row.order_id}`)}
+        server={{
+          page: pageInfo.page,
+          pageSize: pageInfo.pageSize,
+          total: pageInfo.total,
+          sortKey: pageInfo.sortKey,
+          sortDir: pageInfo.sortDir,
+          onPage: (p) => push({ page: p === 0 ? null : p + 1 }),
+          onSort: (key) =>
+            push({
+              sort: key,
+              dir: pageInfo.sortKey === key && pageInfo.sortDir === 'asc' ? 'desc' : 'asc',
+            }),
+        }}
       />
 
       {refunding && <RefundDialog payment={refunding} onClose={() => setRefunding(null)} />}

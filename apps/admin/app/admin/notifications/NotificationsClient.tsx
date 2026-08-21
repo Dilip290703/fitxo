@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Pager from '@/components/admin/Pager';
+import { buildQuery, type PageInfo } from '@/lib/pagination';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { useToast } from '@/components/admin/Toast';
 import { sendNotification, type NotifType, type SegmentRole, type Target } from './actions';
@@ -28,7 +31,29 @@ function formatDateTime(ts: string) {
   return new Date(ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function NotificationsClient({ notifications }: { notifications: NotificationRow[] }) {
+export default function NotificationsClient({
+  notifications,
+  pageInfo,
+  activeType,
+  activeSearch,
+}: {
+  /** One page of rows — the type filter and search ran in the query. */
+  notifications: NotificationRow[];
+  pageInfo: PageInfo;
+  activeType: string;
+  activeSearch: string;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/notifications${qs}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -41,26 +66,15 @@ export default function NotificationsClient({ notifications }: { notifications: 
   const [email, setEmail] = useState('');
 
   // List filters
-  const [tab, setTab] = useState<NotifType | 'all'>('all');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(activeSearch);
+  useEffect(() => setSearch(activeSearch), [activeSearch]);
+  useEffect(() => {
+    if (search === activeSearch) return;
+    const t = setTimeout(() => push({ q: search || null }), 350);
+    return () => clearTimeout(t);
+  }, [search, activeSearch, push]);
 
-  const filtered = useMemo(() => {
-    return notifications.filter((n) => {
-      if (tab !== 'all' && n.type !== tab) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !n.title.toLowerCase().includes(q) &&
-          !n.body.toLowerCase().includes(q) &&
-          !(n.user?.name ?? '').toLowerCase().includes(q) &&
-          !(n.user?.email ?? '').toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [notifications, tab, search]);
+  // No client-side filter: `notifications` is already the filtered page.
 
   const send = () => {
     const target: Target =
@@ -143,9 +157,9 @@ export default function NotificationsClient({ notifications }: { notifications: 
             {TYPE_TABS.map((t) => (
               <button
                 key={t.value}
-                onClick={() => setTab(t.value)}
+                onClick={() => push({ type: t.value })}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+                  activeType === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
                 }`}
               >
                 {t.label}
@@ -173,12 +187,12 @@ export default function NotificationsClient({ notifications }: { notifications: 
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {notifications.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-muted">No notifications yet.</td>
                 </tr>
               ) : (
-                filtered.map((n) => (
+                notifications.map((n) => (
                   <tr key={n.id} className="border-b border-hairline hover:bg-cream transition-colors">
                     <td className="px-4 py-3">
                       <p className="text-sm text-ink">{n.user?.name ?? '—'}</p>
@@ -199,6 +213,13 @@ export default function NotificationsClient({ notifications }: { notifications: 
             </tbody>
           </table>
         </div>
+
+        <Pager
+          page={pageInfo.page}
+          pageSize={pageInfo.pageSize}
+          total={pageInfo.total}
+          onPage={(p) => push({ page: p === 0 ? null : p + 1 })}
+        />
       </div>
     </div>
   );
