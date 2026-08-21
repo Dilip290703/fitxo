@@ -16,6 +16,12 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "rls-probe": "node scripts/supabase/rls-probe.mjs",
-    "razorpay:check": "node scripts/razorpay/check-key-sync.mjs"
+    "razorpay:check": "node scripts/razorpay/check-key-sync.mjs",
+    "e2e": "node scripts/e2e/run.mjs",
+    "e2e:preflight": "node scripts/e2e/run.mjs --preflight",
+    "e2e:sweep": "node scripts/e2e/run.mjs --sweep"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.107.0"
   }
 }
