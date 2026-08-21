@@ -45,11 +45,12 @@ export async function cancelSuite(world, report, ctx) {
   // The row 054 writes is the one the store panel used to discard (audit 2.1).
   if (ctx.manager) {
     const { data: notifs } = await admin
-      .from('notifications').select('type').eq('user_id', ctx.manager.id);
+      .from('notifications').select('type, data').eq('user_id', ctx.manager.id);
+    const kinds = (notifs ?? []).map((n) => n.data?.kind ?? `(${n.type})`);
     report.check(
       'the store is notified of the cancellation (054 — the row the UI used to drop)',
-      (notifs ?? []).some((n) => /cancel/i.test(n.type)),
-      `${(notifs ?? []).map((n) => n.type).join(',') || 'none'}`,
+      kinds.some((k) => /cancel/i.test(k)),
+      kinds.join(',') || 'none',
     );
   } else {
     report.skip('store cancellation notification', 'no store manager fixture');

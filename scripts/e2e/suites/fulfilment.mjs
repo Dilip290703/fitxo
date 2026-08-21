@@ -13,8 +13,8 @@ export async function fulfilmentSuite(world, report, ctx) {
 
   report.heading('delivery fee gate (G9/050)');
 
-  const manager = await world.createStoreManager(store.id);
-  ctx.manager = manager;
+  // Created in the previous stage, before the order existed — see order.mjs.
+  const manager = ctx.manager;
 
   const feeDue = Number(settings.first_order_free ? 0 : settings.delivery_fee) > 0;
 
@@ -60,12 +60,17 @@ export async function fulfilmentSuite(world, report, ctx) {
   report.check('order moved to confirmed', confirmed?.status === 'confirmed', `status=${confirmed?.status}`);
 
   // The store must have been told about the order in the first place.
+  // The notification KIND lives in data->>kind, not in `type` — every row
+  // these triggers write is type='order_update', and the kind is what the
+  // panels actually switch on. Asserting on `type` looks green-adjacent and
+  // proves nothing.
+  const kindsOf = (rows) => (rows ?? []).map((n) => n.data?.kind ?? `(${n.type})`);
   const { data: storeNotifs } = await admin
-    .from('notifications').select('type, title').eq('user_id', manager.id);
+    .from('notifications').select('type, data').eq('user_id', manager.id);
   report.check(
     'the store manager was notified of the new order',
-    (storeNotifs ?? []).some((n) => String(n.type).includes('store_order') || /order/i.test(n.title ?? '')),
-    `${(storeNotifs ?? []).length} notification(s): ${(storeNotifs ?? []).map((n) => n.type).join(',') || 'none'}`,
+    kindsOf(storeNotifs).includes('new_store_order'),
+    kindsOf(storeNotifs).join(',') || 'none',
   );
 
   report.heading('rider takes the job');
@@ -100,18 +105,71 @@ export async function fulfilmentSuite(world, report, ctx) {
 
   report.heading('try window opens on arrival, not at checkout');
 
+  // The store-fulfilment gate: nothing leaves the shop until the store has
+  // marked every line ready. This is the same condition the admin order screen
+  // surfaces as "Waiting for the store to mark all items ready (2/3)".
+  const { error: earlyPickup } = await rider.client.rpc('rider_mark_picked_up', { p_delivery_id: delivery.id });
+  report.expectError(
+    'the rider CANNOT pick up before the store marks the items ready',
+    earlyPickup,
+    'not marked all items ready',
+  );
+
+  const { error: prepErr } = await manager.client
+    .rpc('mark_order_items_prepared', { p_order_id: order.order_id, p_ready: true });
+  report.check('the store marks every item ready for pickup', !prepErr, prepErr?.message ?? 'all items prepared');
+
+  // Drive the REAL rider steps rather than calling start_try_window directly.
+  // It is granted to `authenticated`, so the service role gets "not authorised"
+  // — and going through the rider's own path is what makes the try window's
+  // "starts on arrival" claim mean anything.
+  const { error: pickErr } = await rider.client.rpc('rider_mark_picked_up', { p_delivery_id: delivery.id });
+  report.check('rider marks the order picked up', !pickErr, pickErr?.message ?? 'picked up');
+
+  const { error: arriveErr } = await rider.client.rpc('rider_mark_arrived', { p_delivery_id: delivery.id });
+  report.check('rider marks arrival at the door', !arriveErr, arriveErr?.message ?? 'arrived');
+
+  // The doorstep OTP is the customer's, read here as admin because this suite
+  // has no customer screen to read it off.
+  const { data: withOtp } = await admin
+    .from('deliveries').select('delivery_otp').eq('id', delivery.id).maybeSingle();
+  const { error: delivErr } = await rider.client
+    .rpc('rider_mark_delivered', { p_delivery_id: delivery.id, p_otp: withOtp?.delivery_otp ?? '' });
+  report.check('rider completes the handover (doorstep OTP)', !delivErr, delivErr?.message ?? `otp=${withOtp?.delivery_otp ?? 'none set'}`);
+
+  // The CUSTOMER opens the window, not the rider: 048 gates on
+  // `orders.user_id = auth.uid()`, and the call site is the customer's
+  // order-tracking page. Worth stating because it is easy to assume the person
+  // standing at the door is the one who starts the clock — they are not, and a
+  // rider calling this gets 'not authorised'.
   const before = new Date();
-  const { error: startErr } = await admin.rpc('start_try_window', { p_order_id: order.order_id });
-  report.check('start_try_window runs', !startErr, startErr?.message ?? 'started');
+  const { error: startErr } = await customer.client.rpc('start_try_window', { p_order_id: order.order_id });
+  report.check('the customer opens the try window from the tracking page', !startErr, startErr?.message ?? 'started');
+
+  const { data: openedOrder } = await admin.from('orders').select('status').eq('id', order.order_id).single();
+  report.check(
+    'the order is now in its try window',
+    openedOrder?.status === 'try_window_active',
+    `status=${openedOrder?.status}`,
+  );
 
   const { data: session } = await admin
     .from('try_sessions').select('started_at, deadline_at, status').eq('order_id', order.order_id).maybeSingle();
   if (session) {
     const mins = Math.round((new Date(session.deadline_at) - new Date(session.started_at)) / 60000);
+    // Two separate claims. The length one alone would pass against the
+    // PLACEHOLDER session place_order creates at checkout — so the second
+    // assertion, that the clock was (re)started at the door, is the one that
+    // actually tests the product's central promise.
     report.check(
-      'the window is settings-length and starts NOW, not at checkout',
-      mins === Number(settings.try_window_minutes) && new Date(session.started_at) >= new Date(before.getTime() - 60000),
-      `${mins}m, started_at=${session.started_at}`,
+      'the window is settings-length',
+      mins === Number(settings.try_window_minutes),
+      `${mins}m vs settings ${settings.try_window_minutes}m`,
+    );
+    report.check(
+      'the clock started at the DOOR, not at checkout',
+      new Date(session.started_at) >= new Date(before.getTime() - 2000),
+      `started_at=${session.started_at}, rider arrived ~${before.toISOString()}`,
     );
   }
 
@@ -132,19 +190,19 @@ export async function fulfilmentSuite(world, report, ctx) {
   // is the exact gap the store panel had: the row was written and the client
   // threw it away, so assert the ROW, which is what 060 guarantees.
   const { data: riderNotifs } = await admin
-    .from('notifications').select('type').eq('user_id', rider.id);
+    .from('notifications').select('type, data').eq('user_id', rider.id);
   report.check(
     'the rider is told about the decisions (023)',
-    (riderNotifs ?? []).some((n) => /item_(kept|returned)/.test(n.type)),
-    `${(riderNotifs ?? []).map((n) => n.type).join(',') || 'none'}`,
+    kindsOf(riderNotifs).some((k) => /item_(kept|returned)/.test(k)),
+    kindsOf(riderNotifs).join(',') || 'none',
   );
 
   const { data: mgrNotifs } = await admin
-    .from('notifications').select('type').eq('user_id', manager.id);
+    .from('notifications').select('type, data').eq('user_id', manager.id);
   report.check(
     'the STORE is told about the decisions (060 — this was the bug)',
-    (mgrNotifs ?? []).some((n) => /item_(kept|returned)/.test(n.type)),
-    `${(mgrNotifs ?? []).map((n) => n.type).join(',') || 'none'}`,
+    kindsOf(mgrNotifs).some((k) => /item_(kept|returned)/.test(k)),
+    kindsOf(mgrNotifs).join(',') || 'none',
   );
 
   report.heading('stock and settlement');
@@ -157,7 +215,7 @@ export async function fulfilmentSuite(world, report, ctx) {
     `reserved ${ctx.variantAfterOrder.reserved_qty} → ${variantNow.reserved_qty}, available=${variantNow.available_qty}`,
   );
 
-  const { error: finErr } = await admin.rpc('finalize_order_if_decided', { p_order_id: order.order_id });
+  const { error: finErr } = await customer.client.rpc('finalize_order_if_decided', { p_order_id: order.order_id });
   report.check('finalize_order_if_decided runs once every item is decided', !finErr, finErr?.message ?? 'finalized');
 
   const { data: finalOrder } = await admin.from('orders').select('status, payment_status').eq('id', order.order_id).single();

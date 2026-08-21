@@ -13,6 +13,14 @@ pnpm e2e:sweep       # delete leftovers from a run that died before teardown
 Exit `0` all passed · `1` at least one assertion failed · `2` the suite could
 not run (bad credentials, refused target).
 
+**Status: green on dev — 79 assertions, 0 failures, ~34s.** Verified end to end
+on 2026-08-22, twice consecutively, with the database confirmed byte-identical
+afterwards (60 orders, 19 payments, `pending_fee_refunds()` back to its single
+pre-existing row). One caveat that cannot be cleaned up: `generate_order_number`
+draws from a sequence, so a run permanently advances the order counter. Dev
+order numbers now start above FTX-2026-00074. That is cosmetic and unavoidable
+— sequences do not roll back — but do not be surprised by the gap.
+
 Credentials are read from `apps/customer/.env.local` and
 `apps/admin/.env.local` automatically, so there is no setup on a dev machine.
 `E2E_SUPABASE_URL` / `E2E_SUPABASE_ANON_KEY` / `E2E_SERVICE_ROLE_KEY` override
@@ -117,6 +125,21 @@ dies leaves the environment misconfigured for everyone.
 One consequence worth knowing: dev runs `max_active_orders = 1`, so each
 scenario gets **its own customer**. A suite that reused one account would start
 failing at the second order for a reason unrelated to what it was testing.
+
+## Two things the first run taught us
+
+Both were the suite being wrong about the product, and both are worth knowing
+before reading the code:
+
+- **The customer opens the try window, not the rider.** `start_try_window`
+  (048) gates on `orders.user_id = auth.uid()` and is called from the
+  customer's tracking page. It is natural to assume the person standing at the
+  door starts the clock; a rider calling it gets `not authorised`.
+- **Nothing leaves the shop until the store marks every line ready.**
+  `rider_mark_picked_up` refuses with *"The store has not marked all items ready
+  yet"*. This is the same gate the admin order screen shows as "Waiting for the
+  store to mark all items ready (2/3)". The suite now asserts the refusal AND
+  the happy path.
 
 ## Extending it
 

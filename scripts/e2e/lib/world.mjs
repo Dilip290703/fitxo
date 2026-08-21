@@ -20,6 +20,10 @@ export class World {
     this.report = report;
     this.runId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
     this.tag = `e2e-${this.runId}`;
+    // Per-FIXTURE counter, not just per-run. Several stages need a second store
+    // or a second manager, and slug/sku/email are all UNIQUE — namespacing on
+    // the run alone collides the moment a suite asks for two of anything.
+    this.seq = 0;
 
     // Service role: fixture construction and the assertions that must see rows
     // regardless of RLS. Never used to exercise the app's own code paths.
@@ -45,7 +49,8 @@ export class World {
    * rather than a schema test.
    */
   async createCustomer(label) {
-    const email = `${this.tag}+${label}@fitxo.test`;
+    const n = ++this.seq;
+    const email = `${this.tag}+${label}${n}@fitxo.test`;
     const password = `E2e!${this.runId}Pw`;
 
     const { data: created, error } = await this.admin.auth.admin.createUser({
@@ -71,7 +76,7 @@ export class World {
       .from('addresses')
       .insert({
         user_id: created.user.id, full_name: `E2E ${label}`, phone: '9000000000',
-        address_line1: '1 Test Lane', city: 'Pune', state: 'Maharashtra',
+        line1: '1 Test Lane', city: 'Pune', state: 'Maharashtra',
         pincode: '411001', is_default: true,
       })
       .select('id').single();
@@ -83,10 +88,11 @@ export class World {
 
   /** An approved, active, unpaused store with one product in stock. */
   async createStore({ stock = 20, price = 799, discounted = null } = {}) {
+    const n = ++this.seq;
     const { data: store, error } = await this.admin
       .from('stores')
       .insert({
-        name: `E2E Store ${this.runId}`, slug: `${this.tag}-store`,
+        name: `E2E Store ${this.runId}-${n}`, slug: `${this.tag}-store-${n}`,
         city: 'Pune', pincode: '411001', is_active: true, is_verified: true,
         onboarding_status: 'approved',
       })
@@ -97,7 +103,7 @@ export class World {
     const { data: product, error: pErr } = await this.admin
       .from('products')
       .insert({
-        store_id: store.id, name: `E2E Tee ${this.runId}`, slug: `${this.tag}-tee`,
+        store_id: store.id, name: `E2E Tee ${this.runId}-${n}`, slug: `${this.tag}-tee-${n}`,
         base_price: price, discounted_price: discounted, is_active: true, is_deleted: false,
       })
       .select('id').single();
@@ -113,7 +119,13 @@ export class World {
 
     const { data: variant, error: vErr } = await this.admin
       .from('product_variants')
-      .insert({ product_id: product.id, color_id: color.id, size: 'M', stock_qty: stock, reserved_qty: 0, is_available: true })
+      // sku is UNIQUE NOT NULL — namespaced like everything else so a crashed
+      // run cannot collide with the next one.
+      .insert({
+        product_id: product.id, color_id: color.id, size: 'M',
+        sku: `${this.tag}-${n}-M`,
+        stock_qty: stock, reserved_qty: 0, is_available: true,
+      })
       .select('id, stock_qty, reserved_qty, available_qty').single();
     if (vErr) throw new Error(`variant: ${vErr.message}`);
     this.created.variants.push(variant.id);
@@ -127,7 +139,7 @@ export class World {
     await this.admin.from('users').update({ role: 'store_manager' }).eq('id', mgr.id);
     const { data, error } = await this.admin
       .from('store_managers')
-      .insert({ user_id: mgr.id, store_id: storeId, is_active: true, role: 'owner' })
+      .insert({ user_id: mgr.id, store_id: storeId, is_active: true })
       .select('id').single();
     if (error) throw new Error(`store_manager: ${error.message}`);
     this.created.storeManagers.push(data.id);

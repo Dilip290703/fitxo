@@ -10,8 +10,14 @@ export async function orderSuite(world, report, ctx) {
   report.heading('place_order — happy path');
 
   const store = await world.createStore({ stock: 20, price: 799 });
+  // Created BEFORE the order: notify_store_on_new_order_item fires on item
+  // insert and targets the store's ACTIVE managers as they exist at that
+  // moment. A manager added afterwards is never told about the order, which is
+  // correct behaviour and was a bug in this suite's first draft.
+  const manager = await world.createStoreManager(store.id);
   const customer = await world.createCustomer('buyer');
   ctx.store = store;
+  ctx.manager = manager;
 
   // The client sends a price. It is a lie, on purpose: G2 says the server must
   // resolve price from the database and ignore whatever the cart claims.
@@ -135,7 +141,7 @@ export async function orderSuite(world, report, ctx) {
   );
 
   // Two stores in one cart (G1 backstop).
-  const store2 = await world.createStore({ stock: 5, price: 499 });
+  const store2 = await world.createStore({ stock: 2, price: 499 });
   await guard(
     'a mixed-store cart is rejected server-side (G1)',
     line().concat([{ product_id: store2.productId, quantity: 1 }]),
@@ -145,9 +151,12 @@ export async function orderSuite(world, report, ctx) {
   );
 
   // Out of stock: ask for more than exists.
+  // Quantity must stay UNDER max_items_per_order or the cap fires first and
+  // the stock guard is never reached — the first draft asked for 9 against a
+  // cap of 8 and "passed" on the wrong error.
   await guard(
     'ordering beyond available stock is rejected',
-    [{ product_id: store2.productId, quantity: 9 }],
+    [{ product_id: store2.productId, quantity: 3 }],
     fresh.addressId,
     'OUT_OF_STOCK',
     fresh.client,
