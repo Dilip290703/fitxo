@@ -37,3 +37,8 @@ next-env.d.ts
 # misc
 coverage/
 *.tsbuildinfo
+
+# Cloudflare Workers adapter output
+.open-next/
+.wrangler/
+.dev.vars
