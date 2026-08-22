@@ -1,7 +1,7 @@
 import 'server-only';
 
 import crypto from 'node:crypto';
-import Razorpay from 'razorpay';
+import { createRazorpayClient } from '@fitxo/razorpay';
 
 // Razorpay credentials. Key ID is also exposed to the browser (NEXT_PUBLIC_),
 // the secret is server-only and must never be sent to the client.
@@ -13,10 +13,7 @@ if (!keyId || !keySecret) {
   console.warn('[razorpay] Missing NEXT_PUBLIC_RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET');
 }
 
-export const razorpay = new Razorpay({
-  key_id: keyId ?? '',
-  key_secret: keySecret ?? '',
-});
+export const razorpay = createRazorpayClient(keyId ?? '', keySecret ?? '');
 
 export const RAZORPAY_KEY_ID = keyId ?? '';
 

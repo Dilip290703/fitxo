@@ -1,4 +1,4 @@
-import Razorpay from 'razorpay';
+import { createRazorpayClient } from '@fitxo/razorpay';
 
 // Server-side only — imported exclusively from 'use server' actions. The admin
 // panel never opens Razorpay Checkout in the browser, so unlike the customer
@@ -9,15 +9,13 @@ const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
 export const razorpayConfigured = Boolean(keyId && keySecret);
 
-export const razorpay = new Razorpay({
-  key_id: keyId ?? '',
-  key_secret: keySecret ?? '',
-});
+export const razorpay = createRazorpayClient(keyId ?? '', keySecret ?? '');
 
 /**
- * Razorpay's SDK rejects with a plain object ({ statusCode, error: { description } })
- * on API errors — unwrap it to a readable message (same handling as the
- * customer app's createKeepPayment).
+ * The client rejects with RazorpayError, which extends Error AND carries
+ * { statusCode, error: { description } } — the same shape the old SDK rejected
+ * with, so this unwrapping (and every call site that branches on it) is
+ * unchanged.
  */
 export function razorpayErrorMessage(e: unknown): string {
   if (e instanceof Error) return e.message;
