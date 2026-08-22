@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
 import StatusBadge from '@/components/admin/StatusBadge';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { logActivity } from '@/lib/activity';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
+import { buildQuery, type PageInfo } from '@/lib/pagination';
+import {
+  ORDER_STATUSES,
+  PAYMENT_FILTERS,
+  SEARCH_USER_LIMIT,
+  EXPORT_LIMIT,
+  buildSearchClause,
+} from './filters';
 import type { OrderStatus } from '@fitxo/supabase/types';
 
 interface OrderRow {
@@ -21,22 +30,20 @@ interface OrderRow {
   order_items: { id: string }[];
 }
 
-const STATUS_TABS: { label: string; value: OrderStatus | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Confirmed', value: 'confirmed' },
-  { label: 'Out for Delivery', value: 'out_for_delivery' },
-  { label: 'Try Window', value: 'try_window_active' },
-  { label: 'Return Requested', value: 'return_requested' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' },
-];
-
-const PAYMENT_FILTERS = ['all', 'paid', 'partially_paid', 'pending', 'refunded'] as const;
+const STATUS_LABELS: Record<string, string> = {
+  all: 'All',
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  out_for_delivery: 'Out for Delivery',
+  try_window_active: 'Try Window',
+  return_requested: 'Return Requested',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
 
 interface SavedView {
   name: string;
-  status: OrderStatus | 'all';
+  status: string;
   payment: string;
   search: string;
 }
@@ -56,42 +63,70 @@ function csvEscape(v: string | number) {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[]; initialTab?: string }) {
+export default function OrdersClient({
+  orders,
+  pageInfo,
+  counts,
+  activeStatus,
+  activePayment,
+  activeSearch,
+}: {
+  /** Exactly one page of rows — the filtering and slicing happened in the query. */
+  orders: OrderRow[];
+  pageInfo: PageInfo;
+  counts: Record<string, number>;
+  activeStatus: string;
+  activePayment: string;
+  activeSearch: string;
+}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const supabase = createClient();
 
-  const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>(
-    STATUS_TABS.some((t) => t.value === initialTab) ? (initialTab as OrderStatus | 'all') : 'all',
-  );
-  const [paymentFilter, setPaymentFilter] = useState<string>('all');
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedRows, setSelectedRows] = useState<Map<string, OrderRow>>(new Map());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  // Saved views (localStorage — 2 users, no need for a table).
+  // Live list (audit §2.4). `router.refresh()` re-runs the CURRENT url, so a
+  // polled refresh keeps the page, filters and sort the admin chose.
+  useLiveRefresh({ paused: bulkBusy || exporting });
+
+  // Every filter change is a URL change, because the query that reads them runs
+  // on the server. Anything but a page change also returns to page 1.
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/orders${qs}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  // ── Search (debounced — one query per pause, not per keystroke) ───────────
+  const [searchInput, setSearchInput] = useState(activeSearch);
+  useEffect(() => setSearchInput(activeSearch), [activeSearch]);
+  useEffect(() => {
+    if (searchInput === activeSearch) return;
+    const t = setTimeout(() => push({ q: searchInput || null }), 350);
+    return () => clearTimeout(t);
+  }, [searchInput, activeSearch, push]);
+
+  // ── Saved views (localStorage — 2 users, no need for a table) ─────────────
   const [views, setViews] = useState<SavedView[]>([]);
   const [savingView, setSavingView] = useState(false);
   const [viewName, setViewName] = useState('');
   useEffect(() => setViews(loadViews()), []);
 
-  const setTab = (tab: OrderStatus | 'all') => {
-    setActiveTab(tab);
-    // Keep the URL shareable without a server round-trip.
-    const url = tab === 'all' ? '/admin/orders' : `/admin/orders?status=${tab}`;
-    window.history.replaceState(null, '', url);
-  };
-
-  const applyView = (v: SavedView) => {
-    setTab(v.status);
-    setPaymentFilter(v.payment);
-    setSearch(v.search);
-  };
+  const applyView = (v: SavedView) =>
+    push({ status: v.status, payment: v.payment, q: v.search || null });
 
   const saveCurrentView = () => {
     const name = viewName.trim();
     if (!name) return;
-    const next = [...views.filter((v) => v.name !== name), { name, status: activeTab, payment: paymentFilter, search }];
+    const next = [
+      ...views.filter((v) => v.name !== name),
+      { name, status: activeStatus, payment: activePayment, search: activeSearch },
+    ];
     setViews(next);
     try {
       localStorage.setItem(VIEWS_KEY, JSON.stringify(next));
@@ -112,27 +147,56 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
     }
   };
 
-  const filtered = useMemo(() => {
-    return orders.filter((o) => {
-      if (activeTab !== 'all' && o.status !== activeTab) return false;
-      if (paymentFilter !== 'all' && o.payment_status !== paymentFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !o.order_number.toLowerCase().includes(q) &&
-          !(o.users?.name ?? '').toLowerCase().includes(q) &&
-          !(o.users?.phone ?? '').includes(q)
-        )
-          return false;
+  // ── Selection ────────────────────────────────────────────────────────────
+  // Rows, not just ids: a selection now spans pages, so "confirm the pending
+  // ones" cannot look up a status in a list that no longer holds every row.
+  const selected = useMemo(() => new Set(selectedRows.keys()), [selectedRows]);
+  const selectedList = useMemo(() => [...selectedRows.values()], [selectedRows]);
+  const selectedPending = selectedList.filter((o) => o.status === 'pending');
+
+  // A held selection goes stale when the 4s poll brings a changed row — the
+  // order someone else just confirmed must stop counting as pending here.
+  useEffect(() => {
+    setSelectedRows((prev) => {
+      if (prev.size === 0) return prev;
+      let changed = false;
+      const next = new Map(prev);
+      for (const o of orders) {
+        const held = next.get(o.id);
+        if (held && held.status !== o.status) {
+          next.set(o.id, o);
+          changed = true;
+        }
       }
-      return true;
+      return changed ? next : prev;
     });
-  }, [orders, activeTab, paymentFilter, search]);
+  }, [orders]);
+
+  const toggleRow = (id: string) =>
+    setSelectedRows((prev) => {
+      const next = new Map(prev);
+      if (next.has(id)) next.delete(id);
+      else {
+        const row = orders.find((o) => o.id === id);
+        if (row) next.set(id, row);
+      }
+      return next;
+    });
+
+  const toggleRows = (ids: string[], select: boolean) =>
+    setSelectedRows((prev) => {
+      const next = new Map(prev);
+      for (const id of ids) {
+        if (!select) next.delete(id);
+        else {
+          const row = orders.find((o) => o.id === id);
+          if (row) next.set(id, row);
+        }
+      }
+      return next;
+    });
 
   // ── Bulk actions ─────────────────────────────────────────────────────────
-  const selectedRows = orders.filter((o) => selected.has(o.id));
-  const selectedPending = selectedRows.filter((o) => o.status === 'pending');
-
   const bulkConfirm = async () => {
     if (selectedPending.length === 0) return;
     setBulkBusy(true);
@@ -149,35 +213,85 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
       new_value: { order_ids: ids },
     });
     toast(`Confirmed ${ids.length} order(s)`, 'success');
-    setSelected(new Set());
+    setSelectedRows(new Map());
     router.refresh();
   };
 
-  const exportCsv = () => {
-    const rows = selectedRows.length > 0 ? selectedRows : filtered;
-    const header = ['Order #', 'Customer', 'Phone', 'Items', 'Total', 'Status', 'Payment', 'Created'];
-    const lines = [
-      header.join(','),
-      ...rows.map((o) =>
-        [
-          csvEscape(o.order_number),
-          csvEscape(o.users?.name ?? ''),
-          csvEscape(o.users?.phone ?? ''),
-          o.order_items.length,
-          o.final_amount,
-          o.status,
-          o.payment_status,
-          csvEscape(new Date(o.created_at).toLocaleString('en-IN')),
-        ].join(','),
-      ),
-    ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fitxo-orders-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  /**
+   * Export what the filters MATCH, not what is on screen. With the list paged
+   * server-side the visible 25 rows are an arbitrary window, so the export
+   * re-runs the same query unpaged (capped at EXPORT_LIMIT) — otherwise
+   * "Export CSV" under a filter reading "412 matching" would hand over 25.
+   */
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      let rows: OrderRow[];
+
+      if (selectedList.length > 0) {
+        rows = selectedList;
+      } else {
+        let userIds: string[] = [];
+        if (activeSearch) {
+          const { data: matched } = await supabase
+            .from('users')
+            .select('id')
+            .or(`name.ilike.%${activeSearch}%,phone.ilike.%${activeSearch}%`)
+            .limit(SEARCH_USER_LIMIT);
+          userIds = (matched ?? []).map((u) => u.id);
+        }
+
+        let qb = supabase
+          .from('orders')
+          .select(`
+            id, order_number, status, final_amount, payment_status, created_at, try_deadline,
+            users(name, email, phone),
+            order_items(id)
+          `)
+          .order(pageInfo.sortKey, { ascending: pageInfo.sortDir === 'asc' })
+          .limit(EXPORT_LIMIT);
+
+        if (activeStatus !== 'all') qb = qb.eq('status', activeStatus);
+        if (activePayment !== 'all') qb = qb.eq('payment_status', activePayment);
+        if (activeSearch) qb = qb.or(buildSearchClause(activeSearch, userIds));
+
+        const { data, error } = await qb;
+        if (error) {
+          toast(error.message, 'error');
+          return;
+        }
+        rows = (data ?? []) as unknown as OrderRow[];
+        if (rows.length >= EXPORT_LIMIT) {
+          toast(`Export capped at ${EXPORT_LIMIT} rows — narrow the filters for the rest.`, 'error');
+        }
+      }
+
+      const header = ['Order #', 'Customer', 'Phone', 'Items', 'Total', 'Status', 'Payment', 'Created'];
+      const lines = [
+        header.join(','),
+        ...rows.map((o) =>
+          [
+            csvEscape(o.order_number),
+            csvEscape(o.users?.name ?? ''),
+            csvEscape(o.users?.phone ?? ''),
+            o.order_items.length,
+            o.final_amount,
+            o.status,
+            o.payment_status,
+            csvEscape(new Date(o.created_at).toLocaleString('en-IN')),
+          ].join(','),
+        ),
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fitxo-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
   };
 
   // ── Columns ──────────────────────────────────────────────────────────────
@@ -241,29 +355,26 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
     },
   ];
 
+  const tabs = ['all', ...ORDER_STATUSES];
+
   return (
     <div className="space-y-3">
-      {/* Status tabs */}
+      {/* Status tabs — counts come from the query and honour the other filters */}
       <div className="flex gap-1 overflow-x-auto pb-1">
-        {STATUS_TABS.map((tab) => {
-          const count = tab.value === 'all' ? orders.length : orders.filter((o) => o.status === tab.value).length;
-          return (
-            <button
-              key={tab.value}
-              onClick={() => setTab(tab.value)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab.value
-                  ? 'bg-ink text-white'
-                  : 'text-soft hover:text-ink hover:bg-cream'
-              }`}
-            >
-              {tab.label}
-              <span className={`px-1.5 py-0.5 rounded-full text-xs ${activeTab === tab.value ? 'bg-ink-soft text-white' : 'bg-hairline text-soft'}`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => push({ status: tab })}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+              activeStatus === tab ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+            }`}
+          >
+            {STATUS_LABELS[tab] ?? tab}
+            <span className={`px-1.5 py-0.5 rounded-full text-xs ${activeStatus === tab ? 'bg-ink-soft text-white' : 'bg-hairline text-soft'}`}>
+              {counts[tab] ?? 0}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Search + payment filter + saved views */}
@@ -271,13 +382,13 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
         <input
           type="text"
           placeholder="Search order #, name or phone…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="bg-white border border-line rounded-lg px-3 py-1.5 text-sm text-ink placeholder-faint w-72 focus:outline-none focus:border-ink"
         />
         <select
-          value={paymentFilter}
-          onChange={(e) => setPaymentFilter(e.target.value)}
+          value={activePayment}
+          onChange={(e) => push({ payment: e.target.value })}
           className="bg-white border border-line rounded-lg px-2 py-1.5 text-xs text-body focus:outline-none focus:border-ink"
         >
           {PAYMENT_FILTERS.map((p) => (
@@ -341,42 +452,47 @@ export default function OrdersClient({ orders, initialTab }: { orders: OrderRow[
           </button>
           <button
             onClick={exportCsv}
-            className="rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-body hover:border-ink hover:text-ink"
+            disabled={exporting}
+            className="rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-body hover:border-ink hover:text-ink disabled:opacity-40"
           >
-            Export CSV
+            {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
-          <button onClick={() => setSelected(new Set())} className="text-xs text-soft hover:text-ink">
+          <button onClick={() => setSelectedRows(new Map())} className="text-xs text-soft hover:text-ink">
             Clear
           </button>
         </div>
-      ) : null}
+      ) : (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={exportCsv}
+            disabled={exporting}
+            className="rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-body hover:border-ink hover:text-ink disabled:opacity-40"
+          >
+            {exporting ? 'Exporting…' : `Export CSV (${pageInfo.total})`}
+          </button>
+        </div>
+      )}
 
       <DataTable
-        data={filtered}
+        data={orders}
         columns={columns}
         keyField="id"
-        pageSize={25}
         emptyMessage="No orders found."
         onRowClick={(row) => router.push(`/admin/orders/${row.id}`)}
-        selection={{
-          selected,
-          onToggle: (id) =>
-            setSelected((prev) => {
-              const next = new Set(prev);
-              if (next.has(id)) next.delete(id);
-              else next.add(id);
-              return next;
-            }),
-          onToggleAll: (ids, select) =>
-            setSelected((prev) => {
-              const next = new Set(prev);
-              for (const id of ids) {
-                if (select) next.add(id);
-                else next.delete(id);
-              }
-              return next;
+        server={{
+          page: pageInfo.page,
+          pageSize: pageInfo.pageSize,
+          total: pageInfo.total,
+          sortKey: pageInfo.sortKey,
+          sortDir: pageInfo.sortDir,
+          onPage: (p) => push({ page: p === 0 ? null : p + 1 }),
+          onSort: (key) =>
+            push({
+              sort: key,
+              dir: pageInfo.sortKey === key && pageInfo.sortDir === 'asc' ? 'desc' : 'asc',
             }),
         }}
+        selection={{ selected, onToggle: toggleRow, onToggleAll: toggleRows }}
       />
     </div>
   );

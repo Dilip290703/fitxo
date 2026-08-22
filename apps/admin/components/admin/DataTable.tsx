@@ -17,6 +17,22 @@ interface DataTableProps<T> {
   pageSize?: number;
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
+  /**
+   * Server-driven paging. When present the component STOPS slicing and sorting
+   * locally: `data` is already exactly one page, `total` counts every row
+   * matching the current filters, and sorting is a server round-trip. Without
+   * this the page buttons would page over whatever subset happened to be
+   * fetched, which is the bug this prop exists to remove — see lib/pagination.
+   */
+  server?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    sortKey: string;
+    sortDir: 'asc' | 'desc';
+    onPage: (page: number) => void;
+    onSort: (key: string) => void;
+  };
   /** Optional row selection (adds a leading checkbox column) for bulk actions. */
   selection?: {
     selected: Set<string>;
@@ -43,12 +59,19 @@ export default function DataTable<T>({
   emptyMessage = 'No results found.',
   onRowClick,
   selection,
+  server,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
 
   const handleSort = (key: string) => {
+    // Server mode: sorting 25 of 5,000 rows in the browser would order the
+    // page, not the list. Hand it to the query instead.
+    if (server) {
+      server.onSort(key);
+      return;
+    }
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -58,7 +81,7 @@ export default function DataTable<T>({
     setPage(0);
   };
 
-  const sorted = [...data].sort((a, b) => {
+  const sorted = server ? data : [...data].sort((a, b) => {
     if (!sortKey) return 0;
     const av = getNestedValue(a, sortKey);
     const bv = getNestedValue(b, sortKey);
@@ -66,8 +89,16 @@ export default function DataTable<T>({
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
-  const totalPages = Math.ceil(sorted.length / pageSize);
-  const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
+  // In server mode every one of these comes from the query, not from `data`.
+  const currentPage = server ? server.page : page;
+  const rowsPerPage = server ? server.pageSize : pageSize;
+  const totalRows = server ? server.total : sorted.length;
+  const activeSortKey = server ? server.sortKey : sortKey;
+  const activeSortDir = server ? server.sortDir : sortDir;
+  const goToPage = (p: number) => (server ? server.onPage(p) : setPage(p));
+
+  const totalPages = Math.ceil(totalRows / rowsPerPage);
+  const paged = server ? data : sorted.slice(page * pageSize, (page + 1) * pageSize);
   const pagedIds = paged.map((row) => String(row[keyField]));
   const allPagedSelected = selection ? pagedIds.length > 0 && pagedIds.every((id) => selection.selected.has(id)) : false;
 
@@ -95,8 +126,8 @@ export default function DataTable<T>({
                   onClick={() => col.sortable && handleSort(String(col.key))}
                 >
                   {col.label}
-                  {col.sortable && sortKey === String(col.key) && (
-                    <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+                  {col.sortable && activeSortKey === String(col.key) && (
+                    <span className="ml-1">{activeSortDir === 'asc' ? '↑' : '↓'}</span>
                   )}
                 </th>
               ))}
@@ -145,32 +176,32 @@ export default function DataTable<T>({
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 text-sm text-soft">
           <span>
-            Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
+            Showing {currentPage * rowsPerPage + 1}–{Math.min((currentPage + 1) * rowsPerPage, totalRows)} of {totalRows}
           </span>
           <div className="flex gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
+              onClick={() => goToPage(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
               className="px-3 py-1.5 rounded border border-line hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ←
             </button>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const p = page < 3 ? i : page - 2 + i;
+              const p = currentPage < 3 ? i : currentPage - 2 + i;
               if (p >= totalPages) return null;
               return (
                 <button
                   key={p}
-                  onClick={() => setPage(p)}
-                  className={`px-3 py-1.5 rounded border ${p === page ? 'border-ink bg-ink text-white' : 'border-line hover:border-line-strong'}`}
+                  onClick={() => goToPage(p)}
+                  className={`px-3 py-1.5 rounded border ${p === currentPage ? 'border-ink bg-ink text-white' : 'border-line hover:border-line-strong'}`}
                 >
                   {p + 1}
                 </button>
               );
             })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
+              onClick={() => goToPage(Math.min(totalPages - 1, currentPage + 1))}
+              disabled={currentPage >= totalPages - 1}
               className="px-3 py-1.5 rounded border border-line hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed"
             >
               →

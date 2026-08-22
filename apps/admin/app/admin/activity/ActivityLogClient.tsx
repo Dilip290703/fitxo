@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useMemo, Fragment } from 'react';
+import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Pager from '@/components/admin/Pager';
+import { buildQuery, type PageInfo } from '@/lib/pagination';
 
 export interface ActivityRow {
   id: string;
@@ -28,34 +31,57 @@ function hasDiff(row: ActivityRow) {
   return Boolean(row.old_value || row.new_value);
 }
 
-export default function ActivityLogClient({ logs }: { logs: ActivityRow[] }) {
-  const [entityFilter, setEntityFilter] = useState<string>('all');
-  const [search, setSearch] = useState('');
+/**
+ * The vocabulary `logActivity` writes. Derived from the loaded rows before,
+ * which stops working the moment the list is one page: the chips would only
+ * offer the entity types that happen to appear in the newest 25 actions.
+ * Unioned with whatever is on screen, so an older or hand-written value still
+ * shows up while you are looking at it.
+ */
+const KNOWN_ENTITY_TYPES = [
+  'agent_payout', 'brand', 'category', 'complaint', 'content', 'coupon',
+  'customer', 'delivery', 'notification', 'order', 'payment', 'payout',
+  'product', 'report', 'rider', 'store', 'user',
+];
+
+export default function ActivityLogClient({
+  logs,
+  pageInfo,
+  activeEntity,
+  activeSearch,
+}: {
+  /** One page of rows — the entity filter and search ran in the query. */
+  logs: ActivityRow[];
+  pageInfo: PageInfo;
+  activeEntity: string;
+  activeSearch: string;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/activity${qs}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  const [search, setSearch] = useState(activeSearch);
+  useEffect(() => setSearch(activeSearch), [activeSearch]);
+  useEffect(() => {
+    if (search === activeSearch) return;
+    const t = setTimeout(() => push({ q: search || null }), 350);
+    return () => clearTimeout(t);
+  }, [search, activeSearch, push]);
+
   const entityTypes = useMemo(
-    () => Array.from(new Set(logs.map((l) => l.entity_type))).sort(),
+    () => Array.from(new Set([...KNOWN_ENTITY_TYPES, ...logs.map((l) => l.entity_type)])).sort(),
     [logs],
   );
 
-  const filtered = useMemo(() => {
-    return logs.filter((l) => {
-      if (entityFilter !== 'all' && l.entity_type !== entityFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !l.action.toLowerCase().includes(q) &&
-          !l.entity_type.toLowerCase().includes(q) &&
-          !(l.entity_id ?? '').toLowerCase().includes(q) &&
-          !(l.admin?.name ?? '').toLowerCase().includes(q) &&
-          !(l.admin?.email ?? '').toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [logs, entityFilter, search]);
+  // No client-side filter: `logs` is already the filtered page.
 
   return (
     <div className="space-y-4">
@@ -63,9 +89,9 @@ export default function ActivityLogClient({ logs }: { logs: ActivityRow[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex flex-wrap gap-1">
           <button
-            onClick={() => setEntityFilter('all')}
+            onClick={() => push({ entity: 'all' })}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              entityFilter === 'all' ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+              activeEntity === 'all' ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
             }`}
           >
             All
@@ -73,9 +99,9 @@ export default function ActivityLogClient({ logs }: { logs: ActivityRow[] }) {
           {entityTypes.map((t) => (
             <button
               key={t}
-              onClick={() => setEntityFilter(t)}
+              onClick={() => push({ entity: t })}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
-                entityFilter === t ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+                activeEntity === t ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {t}
@@ -104,14 +130,14 @@ export default function ActivityLogClient({ logs }: { logs: ActivityRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {logs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-muted">
                   No activity recorded yet.
                 </td>
               </tr>
             ) : (
-              filtered.map((row) => {
+              logs.map((row) => {
                 const isOpen = expanded === row.id;
                 const canExpand = hasDiff(row);
                 return (
@@ -164,6 +190,13 @@ export default function ActivityLogClient({ logs }: { logs: ActivityRow[] }) {
           </tbody>
         </table>
       </div>
+
+      <Pager
+        page={pageInfo.page}
+        pageSize={pageInfo.pageSize}
+        total={pageInfo.total}
+        onPage={(p) => push({ page: p === 0 ? null : p + 1 })}
+      />
     </div>
   );
 }

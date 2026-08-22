@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
+import Pager from '@/components/admin/Pager';
+import { buildQuery, type PageInfo } from '@/lib/pagination';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@fitxo/supabase/client';
 import { useToast } from '@/components/admin/Toast';
@@ -28,8 +30,26 @@ interface Delivery {
   riders: { id: string; users: { name: string; phone: string } | null } | null;
 }
 
-export default function DeliveriesClient({ deliveries, riders }: { deliveries: Delivery[]; riders: Rider[] }) {
+export default function DeliveriesClient({
+  deliveries,
+  riders,
+  pageInfo,
+}: {
+  /** One page of rows. */
+  deliveries: Delivery[];
+  riders: Rider[];
+  pageInfo: PageInfo;
+}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/deliveries${qs}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
   const { toast } = useToast();
   const supabase = createClient();
   const [assigning, setAssigning] = useState<string | null>(null);
@@ -211,6 +231,13 @@ export default function DeliveriesClient({ deliveries, riders }: { deliveries: D
           </table>
         </div>
       </div>
+
+      <Pager
+        page={pageInfo.page}
+        pageSize={pageInfo.pageSize}
+        total={pageInfo.total}
+        onPage={(p) => push({ page: p === 0 ? null : p + 1 })}
+      />
 
       <ConfirmDialog
         open={confirmAction !== null}

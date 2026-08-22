@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import StatusBadge from '@/components/admin/StatusBadge';
 import { useToast } from '@/components/admin/Toast';
 import { changeUserRole, type Role } from './actions';
@@ -22,6 +23,9 @@ export interface UserRow {
   riders: { id: string; is_verified: boolean }[];
 }
 
+import Pager from '@/components/admin/Pager';
+import { buildQuery, type PageInfo } from '@/lib/pagination';
+
 const ROLES: Role[] = ['customer', 'store_manager', 'rider', 'admin'];
 
 const ROLE_TABS: { label: string; value: Role | 'all' }[] = [
@@ -41,34 +45,47 @@ function linkedLabel(u: UserRow): string {
   return '—';
 }
 
-export default function UsersClient({ users, stores }: { users: UserRow[]; stores: StoreOption[] }) {
+export default function UsersClient({
+  users,
+  stores,
+  pageInfo,
+  activeRole,
+  activeSearch,
+}: {
+  /** One page of rows — the role filter and search ran in the query. */
+  users: UserRow[];
+  stores: StoreOption[];
+  pageInfo: PageInfo;
+  activeRole: string;
+  activeSearch: string;
+}) {
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const [tab, setTab] = useState<Role | 'all'>('all');
-  const [search, setSearch] = useState('');
+  const push = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      const qs = buildQuery(new URLSearchParams(searchParams.toString()), patch);
+      router.push(`/admin/users${qs}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  const [search, setSearch] = useState(activeSearch);
+  useEffect(() => setSearch(activeSearch), [activeSearch]);
+  useEffect(() => {
+    if (search === activeSearch) return;
+    const t = setTimeout(() => push({ q: search || null }), 350);
+    return () => clearTimeout(t);
+  }, [search, activeSearch, push]);
 
   // Change-role modal state
   const [target, setTarget] = useState<UserRow | null>(null);
   const [newRole, setNewRole] = useState<Role>('customer');
   const [storeId, setStoreId] = useState('');
 
-  const filtered = useMemo(() => {
-    return users.filter((u) => {
-      if (tab !== 'all' && u.role !== tab) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !(u.name ?? '').toLowerCase().includes(q) &&
-          !u.email.toLowerCase().includes(q) &&
-          !(u.phone ?? '').includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [users, tab, search]);
+  // No client-side filter: `users` is already the filtered page.
 
   const openModal = (u: UserRow) => {
     setTarget(u);
@@ -99,9 +116,9 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
           {ROLE_TABS.map((t) => (
             <button
               key={t.value}
-              onClick={() => setTab(t.value)}
+              onClick={() => push({ role: t.value })}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                tab === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
+                activeRole === t.value ? 'bg-ink text-white' : 'text-soft hover:text-ink hover:bg-cream'
               }`}
             >
               {t.label}
@@ -130,12 +147,12 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {users.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-muted">No users found.</td>
               </tr>
             ) : (
-              filtered.map((u) => (
+              users.map((u) => (
                 <tr key={u.id} className="border-b border-hairline hover:bg-cream transition-colors">
                   <td className="px-4 py-3">
                     <p className="text-sm text-ink">{u.name ?? '—'}</p>
@@ -155,6 +172,13 @@ export default function UsersClient({ users, stores }: { users: UserRow[]; store
           </tbody>
         </table>
       </div>
+
+      <Pager
+        page={pageInfo.page}
+        pageSize={pageInfo.pageSize}
+        total={pageInfo.total}
+        onPage={(p) => push({ page: p === 0 ? null : p + 1 })}
+      />
 
       {/* Change-role modal */}
       {target && (
